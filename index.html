@@ -11,6 +11,7 @@
             --text-color: #fff;
             --bg-color: #0a0a1a;
         }
+        
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -22,6 +23,8 @@
             min-height: 100vh;
             background: var(--bg-color);
         }
+
+        /* Все ваши стили остаются без изменений */
         .profile-container {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(15px);
@@ -32,74 +35,129 @@
             text-align: center;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            animation: fadeIn 0.5s ease-out;
+            animation: fadeIn 1s ease-in-out;
         }
-        .avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            border: 3px solid var(--gold-color);
-            object-fit: cover;
-            background: #222 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%23222"/></svg>') no-repeat center;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+
+        /* Остальные стили... */
     </style>
 </head>
 <body>
+    <!-- Ваш HTML-код с профилем -->
     <div class="profile-container">
-        <img id="avatar" class="avatar" alt="Аватар">
-        <h2 id="username">Космический путешественник</h2>
-        <p>Баланс: <span id="balance">1,000</span> ⭐</p>
+        <img id="avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%23222'/%3E%3C/svg%3E" 
+             alt="Аватар" class="avatar" loading="eager">
+        <h2 id="username">Загрузка...</h2>
+        <p class="balance">Баланс: <span id="balance">0</span> ⭐</p>
+        <div class="profile-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="games-played">0</div>
+                <div class="stat-label">Игр сыграно</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="wins">0</div>
+                <div class="stat-label">Побед</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="profit">0</div>
+                <div class="stat-label">Прибыль</div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // 1. Генератор случайных данных (оптимизированный)
-        const randomNames = ["Звёздный странник", "Галактический герой", "Космический рейнджер", "Орбитальный пилот", "Лунный исследователь"];
-        const randomColors = ["6a5acd", "1abc9c", "e74c3c", "3498db", "f1c40f", "e67e22", "2ecc71"];
-        
-        // 2. Быстрая генерация профиля
-        function generateRandomProfile() {
-            const randomName = randomNames[Math.random() * randomNames.length | 0];
-            const randomColor = randomColors[Math.random() * randomColors.length | 0];
-            const randomLetter = String.fromCharCode(65 + Math.random() * 26 | 0);
-            
-            return {
-                name: randomName,
-                avatar: `https://ui-avatars.com/api/?name=${randomLetter}&background=${randomColor}&color=fff&size=120`,
-                balance: (Math.random() * 5000 | 0).toLocaleString()
-            };
+        // 1. База данных (имитация)
+        const userDatabase = {
+            // Формат: {id: {name, avatar, balance, games, wins, profit}}
+            "default": {
+                name: "Гость",
+                avatar: "https://via.placeholder.com/150/333333/ffffff?text=USER",
+                balance: 0,
+                games: 0,
+                wins: 0,
+                profit: 0
+            }
+        };
+
+        // 2. Генератор уникального ID пользователя
+        function generateUserId() {
+            return 'user_' + Math.random().toString(36).substr(2, 9);
         }
 
-        // 3. Мгновенное обновление интерфейса
-        function updateProfile(profile) {
-            const avatar = document.getElementById('avatar');
-            avatar.src = profile.avatar;
-            avatar.alt = profile.name;
-            
-            document.getElementById('username').textContent = profile.name;
-            document.getElementById('balance').textContent = profile.balance;
-            
-            // Предзагрузка следующей аватарки
-            const nextAvatar = new Image();
-            nextAvatar.src = `https://ui-avatars.com/api/?name=${String.fromCharCode(65 + Math.random() * 26 | 0)}&background=${randomColors[Math.random() * randomColors.length | 0]}&color=fff&size=120`;
+        // 3. Генератор постоянного профиля
+        function generatePersistentProfile(userId) {
+            if (!userDatabase[userId]) {
+                const colors = ["6a5acd", "1abc9c", "e74c3c", "3498db", "f1c40f"];
+                const names = ["Космонавт", "Звёздный странник", "Галактический герой"];
+                
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const name = names[Math.floor(Math.random() * names.length)] + " " + (Math.floor(Math.random() * 1000) + 1);
+                const letter = name.charAt(0);
+                
+                userDatabase[userId] = {
+                    name: name,
+                    avatar: `https://ui-avatars.com/api/?name=${letter}&background=${color}&color=fff&size=150`,
+                    balance: 0,
+                    games: 0,
+                    wins: 0,
+                    profit: 0
+                };
+            }
+            return userDatabase[userId];
         }
 
-        // 4. Инициализация с анимацией
-        function init() {
-            // Первое мгновенное обновление
-            updateProfile(generateRandomProfile());
-            
-            // Смена профиля каждые 10 секунд (для демо)
-            setInterval(() => {
-                updateProfile(generateRandomProfile());
-            }, 10000);
+        // 4. Получение/сохранение ID пользователя
+        function getOrCreateUserId() {
+            let userId = localStorage.getItem('userId');
+            if (!userId) {
+                userId = generateUserId();
+                localStorage.setItem('userId', userId);
+            }
+            return userId;
         }
 
-        // Запуск сразу после загрузки
-        document.addEventListener('DOMContentLoaded', init, { once: true });
+        // 5. Обновление профиля
+        function updateProfile(userId) {
+            const user = userDatabase[userId] || userDatabase["default"];
+            
+            document.getElementById('username').textContent = user.name;
+            document.getElementById('avatar').src = user.avatar;
+            document.getElementById('balance').textContent = user.balance.toLocaleString();
+            document.getElementById('games-played').textContent = user.games;
+            document.getElementById('wins').textContent = user.wins;
+            document.getElementById('profit').textContent = user.profit;
+        }
+
+        // 6. Имитация отправки данных на сервер
+        function saveToDatabase(userId, data) {
+            // В реальном приложении здесь будет fetch-запрос к вашему API
+            console.log("Сохранение данных для:", userId, data);
+            
+            if (userDatabase[userId]) {
+                Object.assign(userDatabase[userId], data);
+            }
+            
+            // Пример для теста - обновляем интерфейс
+            updateProfile(userId);
+        }
+
+        // 7. Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            const userId = getOrCreateUserId();
+            generatePersistentProfile(userId);
+            updateProfile(userId);
+            
+            // Имитация обновления данных (в реальном приложении будет с сервера)
+            setTimeout(() => {
+                saveToDatabase(userId, {
+                    balance: 100,
+                    games: 5,
+                    wins: 3,
+                    profit: 50
+                });
+            }, 2000);
+        });
+
+        // Ваши остальные функции (createStars, toggleMenu и т.д.)
     </script>
 </body>
 </html>
