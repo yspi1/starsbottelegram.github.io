@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Космический профиль</title>
+    
+    <!-- Предзагрузка аватарок и критических ресурсов -->
+    <link rel="preload" href="https://via.placeholder.com/150/6a5acd/ffffff" as="image">
+    <link rel="preload" href="https://via.placeholder.com/150/333333/ffffff" as="image">
+    
     <style>
         :root {
             --primary-color: #007bff;
@@ -270,7 +275,7 @@
             <h1>Космический профиль</h1>
         </div>
         <div class="profile-content">
-            <img id="avatar" src="https://via.placeholder.com/150/333333/ffffff?text=USER" alt="Аватар" class="avatar">
+            <img id="avatar" src="https://via.placeholder.com/150/6a5acd/ffffff" alt="Аватар" class="avatar" loading="eager">
             <h2 id="username">Загрузка...</h2>
             <p class="balance">Баланс: <span id="balance">0</span> ⭐</p>
             
@@ -292,7 +297,70 @@
     </div>
 
     <script>
-        // Инициализация звездного фона
+        // 1. Оптимизированная загрузка данных (выполняется сразу)
+        (function init() {
+            // Загружаем данные до полной загрузки страницы
+            loadTelegramUserData();
+            
+            // Предварительная загрузка всех изображений
+            preloadImages();
+        })();
+
+        // 2. Предзагрузка изображений
+        function preloadImages() {
+            const images = [
+                'https://via.placeholder.com/150/6a5acd/ffffff',
+                'https://via.placeholder.com/150/333333/ffffff'
+            ];
+            
+            images.forEach(img => {
+                const image = new Image();
+                image.src = img;
+            });
+        }
+
+        // 3. Быстрая загрузка данных Telegram
+        function loadTelegramUserData() {
+            // Проверяем Telegram WebApp сразу при запуске
+            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+                const tg = Telegram.WebApp;
+                const user = tg.initDataUnsafe.user;
+                
+                // Мгновенное обновление UI
+                updateProfile({
+                    name: user.username || `${user.first_name || ''} ${user.last_name || ''}`.trim() || "Космонавт",
+                    avatar: user.photo_url || `https://via.placeholder.com/150/6a5acd/ffffff?text=${user.first_name?.charAt(0) || 'T'}`,
+                    balance: '1,500',
+                    games: '15',
+                    wins: '9',
+                    profit: '+750'
+                });
+                
+                tg.expand(); // Раскрываем WebApp
+            } else {
+                // Режим для тестирования вне Telegram
+                updateProfile({
+                    name: "Гость",
+                    avatar: "https://via.placeholder.com/150/333333/ffffff?text=USER",
+                    balance: '0',
+                    games: '0',
+                    wins: '0',
+                    profit: '0'
+                });
+            }
+        }
+
+        // 4. Мгновенное обновление интерфейса
+        function updateProfile(data) {
+            document.getElementById('username').textContent = data.name;
+            document.getElementById('avatar').src = data.avatar;
+            document.getElementById('balance').textContent = data.balance;
+            document.getElementById('games-played').textContent = data.games;
+            document.getElementById('wins').textContent = data.wins;
+            document.getElementById('profit').textContent = data.profit;
+        }
+
+        // 5. Остальные функции
         function createStars() {
             const container = document.getElementById('stars-container');
             const starCount = Math.floor(window.innerWidth / 3);
@@ -322,7 +390,6 @@
             }
         }
 
-        // Создать одну звезду
         function createStar() {
             const container = document.getElementById('stars-container');
             const star = document.createElement('div');
@@ -345,58 +412,9 @@
             });
         }
 
-        // Меню
         function toggleMenu() {
             const menu = document.getElementById('menu');
             menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-        }
-
-        // Закрыть меню при клике вне его
-        document.addEventListener('click', (e) => {
-            const menu = document.getElementById('menu');
-            const menuIcon = document.querySelector('.menu-icon');
-            
-            if (!menu.contains(e.target) && e.target !== menuIcon) {
-                menu.style.display = 'none';
-            }
-        });
-
-        // Получение данных пользователя из Telegram
-        function loadTelegramUserData() {
-            if (window.Telegram && Telegram.WebApp) {
-                const tg = Telegram.WebApp;
-                tg.expand(); // Раскрываем WebApp на весь экран
-                
-                const user = tg.initDataUnsafe.user;
-                if (user) {
-                    // Формируем имя пользователя
-                    let username = user.username || 
-                                [user.first_name, user.last_name].filter(Boolean).join(' ') || 
-                                "Космический странник";
-                    
-                    // Устанавливаем аватар
-                    const avatar = document.getElementById('avatar');
-                    if (user.photo_url) {
-                        avatar.src = user.photo_url;
-                    } else {
-                        avatar.src = `https://via.placeholder.com/150/6a5acd/ffffff?text=${username.charAt(0)}`;
-                    }
-                    
-                    // Обновляем UI
-                    document.getElementById('username').textContent = username;
-                    
-                    // Примерные данные (в реальном приложении нужно получать с сервера)
-                    document.getElementById('balance').textContent = '1,500';
-                    document.getElementById('games-played').textContent = '15';
-                    document.getElementById('wins').textContent = '9';
-                    document.getElementById('profit').textContent = '+750';
-                }
-            } else {
-                // Режим тестирования вне Telegram
-                document.getElementById('username').textContent = "Гость";
-                document.getElementById('avatar').src = "https://via.placeholder.com/150/333333/ffffff?text=USER";
-                console.log("Откройте страницу через Telegram-бота для доступа к данным профиля");
-            }
         }
 
         // Функции меню
@@ -416,10 +434,9 @@
             alert('История транзакций будет доступна в следующем обновлении');
         }
 
-        // Инициализация при загрузке
+        // Инициализация анимации после загрузки
         window.onload = function() {
             createStars();
-            loadTelegramUserData();
         };
     </script>
 </body>
