@@ -2,11 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Космический профиль</title>
-    <!-- Предзагрузка критических ресурсов -->
-    <link rel="preload" href="https://ui-avatars.com/api/?name=T&background=6a5acd&color=fff&size=150" as="image">
-    <link rel="preload" href="https://via.placeholder.com/150/333333/ffffff?text=USER" as="image">
     <style>
         :root {
             --primary-color: #007bff;
@@ -14,7 +11,6 @@
             --text-color: #fff;
             --bg-color: #0a0a1a;
         }
-        
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -26,173 +22,84 @@
             min-height: 100vh;
             background: var(--bg-color);
         }
-
-        /* Оптимизированные стили (оставлены только ключевые) */
+        .profile-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            animation: fadeIn 0.5s ease-out;
+        }
         .avatar {
             width: 120px;
             height: 120px;
             border-radius: 50%;
             border: 3px solid var(--gold-color);
             object-fit: cover;
-            background-color: #222;
-            /* Оптимизация отображения */
-            content-visibility: auto;
-            contain-intrinsic-size: 120px;
+            background: #222 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="%23222"/></svg>') no-repeat center;
         }
-
-        /* Остальные ваши стили... */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
-    <div class="menu-icon" onclick="toggleMenu()">☰</div>
-    <div class="menu" id="menu">
-        <!-- Ваше меню -->
-    </div>
-    <div class="stars" id="stars-container"></div>
     <div class="profile-container">
-        <div class="profile-header">
-            <h1>Космический профиль</h1>
-        </div>
-        <div class="profile-content">
-            <img id="avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%23222'/%3E%3C/svg%3E" 
-                 alt="Аватар" class="avatar" loading="eager" decoding="async">
-            <h2 id="username">...</h2>
-            <p class="balance">Баланс: <span id="balance">0</span> ⭐</p>
-            <div class="profile-stats">
-                <!-- Статистика -->
-            </div>
-        </div>
+        <img id="avatar" class="avatar" alt="Аватар">
+        <h2 id="username">Космический путешественник</h2>
+        <p>Баланс: <span id="balance">1,000</span> ⭐</p>
     </div>
 
     <script>
-        // 1. Мгновенная загрузка данных (не ждём DOMContentLoaded)
-        (function() {
-            // Минимальный HTML для быстрого отображения
-            document.getElementById('username').textContent = 'Загрузка...';
+        // 1. Генератор случайных данных (оптимизированный)
+        const randomNames = ["Звёздный странник", "Галактический герой", "Космический рейнджер", "Орбитальный пилот", "Лунный исследователь"];
+        const randomColors = ["6a5acd", "1abc9c", "e74c3c", "3498db", "f1c40f", "e67e22", "2ecc71"];
+        
+        // 2. Быстрая генерация профиля
+        function generateRandomProfile() {
+            const randomName = randomNames[Math.random() * randomNames.length | 0];
+            const randomColor = randomColors[Math.random() * randomColors.length | 0];
+            const randomLetter = String.fromCharCode(65 + Math.random() * 26 | 0);
             
-            // Пытаемся сразу получить данные Telegram
-            const tg = window.Telegram?.WebApp;
-            if (tg) {
-                tg.ready();
-                tg.expand();
-                
-                // Быстрое обновление интерфейса
-                setTimeout(() => loadUserData(tg), 0);
-            } else {
-                loadGuestData();
-            }
-            
-            // Запускаем анимацию звёзд после загрузки основного контента
-            requestIdleCallback(createStars);
-        })();
-
-        // 2. Оптимизированная загрузка данных пользователя
-        function loadUserData(tg) {
-            const user = tg.initDataUnsafe?.user || parseInitData(tg.initData);
-            
-            if (!user) {
-                loadGuestData();
-                return;
-            }
-            
-            // Формируем данные без лишних операций
-            const name = user.username || [user.first_name, user.last_name].filter(Boolean).join(' ') || "Игрок";
-            const avatar = user.photo_url || `https://ui-avatars.com/api/?name=${name.charAt(0)}&background=6a5acd&color=fff&size=150`;
-            
-            // Мгновенное обновление DOM
-            updateProfile({
-                name,
-                avatar,
-                balance: '1,500',
-                games: '15',
-                wins: '9',
-                profit: '+750'
-            });
-            
-            // Кнопка "Назад" (не блокирующая)
-            requestAnimationFrame(() => {
-                if (tg.BackButton) {
-                    tg.BackButton.show();
-                    tg.BackButton.onClick(() => tg.close());
-                }
-            });
+            return {
+                name: randomName,
+                avatar: `https://ui-avatars.com/api/?name=${randomLetter}&background=${randomColor}&color=fff&size=120`,
+                balance: (Math.random() * 5000 | 0).toLocaleString()
+            };
         }
 
-        // 3. Парсинг initData без блокировки потока
-        function parseInitData(initData) {
-            try {
-                const params = new URLSearchParams(initData);
-                return {
-                    id: params.get('user[id]'),
-                    first_name: params.get('user[first_name]'),
-                    last_name: params.get('user[last_name]'),
-                    username: params.get('user[username]'),
-                    photo_url: params.get('user[photo_url]')
-                };
-            } catch (e) {
-                return null;
-            }
-        }
-
-        // 4. Обновление интерфейса одним действием
-        function updateProfile(data) {
-            const domUpdates = [
-                [document.getElementById('username'), 'textContent', data.name],
-                [document.getElementById('avatar'), 'src', data.avatar],
-                [document.getElementById('balance'), 'textContent', data.balance],
-                [document.getElementById('games-played'), 'textContent', data.games],
-                [document.getElementById('wins'), 'textContent', data.wins],
-                [document.getElementById('profit'), 'textContent', data.profit]
-            ];
+        // 3. Мгновенное обновление интерфейса
+        function updateProfile(profile) {
+            const avatar = document.getElementById('avatar');
+            avatar.src = profile.avatar;
+            avatar.alt = profile.name;
             
-            // Батчинг DOM-операций
-            requestAnimationFrame(() => {
-                domUpdates.forEach(([el, prop, value]) => el[prop] = value);
-            });
-        }
-
-        // 5. Гостевая загрузка (минимальная)
-        function loadGuestData() {
-            updateProfile({
-                name: "Гость",
-                avatar: "https://via.placeholder.com/150/333333/ffffff?text=USER",
-                balance: '0',
-                games: '0',
-                wins: '0',
-                profit: '0'
-            });
-        }
-
-        // 6. Оптимизированная анимация звёзд
-        function createStars() {
-            const container = document.getElementById('stars-container');
-            const fragment = document.createDocumentFragment();
+            document.getElementById('username').textContent = profile.name;
+            document.getElementById('balance').textContent = profile.balance;
             
-            for (let i = 0; i < 50; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.style.cssText = `
-                    left: ${Math.random() * 100}%;
-                    top: ${Math.random() * 100}%;
-                    width: ${Math.random() * 3}px;
-                    height: ${Math.random() * 3}px;
-                    animation-duration: ${2 + Math.random() * 8}s;
-                    animation-delay: ${Math.random() * 5}s;
-                    opacity: ${Math.random()};
-                `;
-                fragment.appendChild(star);
-            }
+            // Предзагрузка следующей аватарки
+            const nextAvatar = new Image();
+            nextAvatar.src = `https://ui-avatars.com/api/?name=${String.fromCharCode(65 + Math.random() * 26 | 0)}&background=${randomColors[Math.random() * randomColors.length | 0]}&color=fff&size=120`;
+        }
+
+        // 4. Инициализация с анимацией
+        function init() {
+            // Первое мгновенное обновление
+            updateProfile(generateRandomProfile());
             
-            container.appendChild(fragment);
+            // Смена профиля каждые 10 секунд (для демо)
+            setInterval(() => {
+                updateProfile(generateRandomProfile());
+            }, 10000);
         }
 
-        // 7. Остальные функции
-        function toggleMenu() {
-            const menu = document.getElementById('menu');
-            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-        }
-
-        // ... остальные ваши функции
+        // Запуск сразу после загрузки
+        document.addEventListener('DOMContentLoaded', init, { once: true });
     </script>
 </body>
 </html>
