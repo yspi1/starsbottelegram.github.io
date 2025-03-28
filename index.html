@@ -7,7 +7,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
     <style>
-        /* Все стили остаются без изменений */
         :root {
             --primary-color: #007bff;
             --gold-color: #ffdd57;
@@ -27,7 +26,269 @@
             background: var(--bg-color);
         }
 
-        /* ... (все остальные стили остаются точно такими же) ... */
+        /* Меню */
+        .menu-icon {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            cursor: pointer;
+            font-size: 24px;
+            z-index: 100;
+            transition: transform 0.3s ease;
+            color: var(--gold-color);
+        }
+
+        .menu-icon:hover {
+            transform: scale(1.2);
+        }
+
+        .menu {
+            position: fixed;
+            top: 60px;
+            left: 20px;
+            background: rgba(10, 10, 30, 0.95);
+            border-radius: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            padding: 15px;
+            z-index: 100;
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            min-width: 200px;
+        }
+
+        .menu button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 16px;
+            cursor: pointer;
+            text-align: left;
+            padding: 8px 12px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        /* Звездный фон */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #fff;
+            border-radius: 50%;
+            animation: fly linear forwards, fadeOut ease-in-out forwards;
+        }
+
+        @keyframes fly {
+            0% {
+                transform: translateX(-100%) translateY(-100%);
+            }
+            100% {
+                transform: translateX(100vw) translateY(100vh);
+            }
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* Профиль */
+        .profile-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            animation: fadeIn 1s ease-in-out;
+            margin: 20px;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s ease;
+            display: none;
+        }
+
+        .profile-container.visible {
+            display: block;
+        }
+
+        .profile-header h1 {
+            font-size: 26px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: var(--gold-color);
+            text-shadow: 0 2px 8px rgba(255, 221, 87, 0.5);
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid var(--gold-color);
+            box-shadow: 0 4px 20px rgba(255, 221, 87, 0.3);
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            object-fit: cover;
+            background-color: #222;
+        }
+
+        .avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 221, 87, 0.7);
+        }
+
+        #username {
+            font-size: 22px;
+            margin: 15px 0;
+            color: var(--text-color);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .balance {
+            font-size: 20px;
+            color: var(--text-color);
+            margin: 20px 0 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .balance span {
+            font-weight: bold;
+            color: var(--gold-color);
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Статистика */
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-3px);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--gold-color);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 5px;
+        }
+
+        /* Экран входа */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(10, 10, 30, 0.9);
+            z-index: 1000;
+        }
+
+        .login-title {
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: var(--gold-color);
+            text-align: center;
+        }
+
+        .login-btn {
+            padding: 15px 30px;
+            background: var(--gold-color);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .login-btn:hover {
+            background: #ffd700;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 221, 87, 0.4);
+        }
+
+        @media (max-width: 480px) {
+            .profile-container {
+                padding: 20px;
+                width: 85%;
+            }
+            
+            .profile-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .avatar {
+                width: 100px;
+                height: 100px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -81,7 +342,7 @@
     </div>
 
     <script>
-        // Конфигурация Firebase с вашими данными
+        // Конфигурация Firebase
         const firebaseConfig = {
             apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
             databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
@@ -104,7 +365,7 @@
             profit: document.getElementById('profit')
         };
 
-        // Данные пользователя (все значения 0 по умолчанию)
+        // Данные пользователя
         let userData = {
             userId: null,
             name: "Гость",
@@ -130,7 +391,7 @@
                 const tgUser = Telegram.WebApp.initDataUnsafe.user;
                 userData.userId = tgUser.id.toString();
                 
-                // Проверяем существование пользователя в базе
+                // Получаем или создаем профиль
                 database.ref('users/' + userData.userId).once('value').then(snapshot => {
                     if (snapshot.exists()) {
                         // Загружаем существующие данные
@@ -145,7 +406,7 @@
                                   `https://via.placeholder.com/150/6a5acd/ffffff?text=${userData.name.charAt(0)}`
                         };
                     } else {
-                        // Создаем новый профиль с нулевыми значениями
+                        // Создаем новый профиль
                         userData.name = tgUser.username || 
                                       `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
                                       "Космонавт";
@@ -190,7 +451,7 @@
             }
         }
 
-        // Функции для изменения данных (примеры)
+        // Функции для изменения данных
         function addBalance(amount) {
             userData.balance += amount;
             if (amount > 0) {
@@ -214,7 +475,7 @@
             showProfile();
         }
 
-        // Остальные функции (звезды, меню и т.д.) остаются без изменений
+        // Создание звездного фона
         function createStars() {
             const container = document.getElementById('stars-container');
             const starCount = Math.floor(window.innerWidth / 3);
@@ -266,6 +527,7 @@
             });
         }
 
+        // Функции меню
         function toggleMenu() {
             const menu = document.getElementById('menu');
             menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
