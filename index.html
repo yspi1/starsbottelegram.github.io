@@ -4,14 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Космический профиль</title>
-    
-    <!-- Подключаем Telegram WebApp SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- Предзагрузка аватарок и критических ресурсов -->
-    <link rel="preload" href="https://via.placeholder.com/150/6a5acd/ffffff" as="image">
-    <link rel="preload" href="https://via.placeholder.com/150/333333/ffffff" as="image">
-    
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
     <style>
         :root {
             --primary-color: #007bff;
@@ -32,7 +26,6 @@
             background: var(--bg-color);
         }
 
-        /* Экран входа */
         .login-screen {
             position: fixed;
             top: 0;
@@ -47,13 +40,6 @@
             z-index: 1000;
         }
 
-        .login-title {
-            font-size: 28px;
-            margin-bottom: 30px;
-            color: var(--gold-color);
-            text-align: center;
-        }
-
         .login-btn {
             padding: 15px 30px;
             background: var(--gold-color);
@@ -63,106 +49,7 @@
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .login-btn:hover {
-            background: #ffd700;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(255, 221, 87, 0.4);
-        }
-
-        /* Остальные ваши оригинальные стили остаются без изменений */
-        .menu-icon {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            cursor: pointer;
-            font-size: 24px;
-            z-index: 100;
-            transition: transform 0.3s ease;
-            color: var(--gold-color);
-        }
-
-        .menu-icon:hover {
-            transform: scale(1.2);
-        }
-
-        .menu {
-            position: fixed;
-            top: 60px;
-            left: 20px;
-            background: rgba(10, 10, 30, 0.95);
-            border-radius: 10px;
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            padding: 15px;
-            z-index: 100;
-            border: 1px solid var(--primary-color);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            min-width: 200px;
-        }
-
-        .menu button {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            font-size: 16px;
-            cursor: pointer;
-            text-align: left;
-            padding: 8px 12px;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .menu button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--primary-color);
-            transform: translateX(5px);
-        }
-
-        .stars {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-
-        .star {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: #fff;
-            border-radius: 50%;
-            animation: fly linear forwards, fadeOut ease-in-out forwards;
-        }
-
-        @keyframes fly {
-            0% {
-                transform: translateX(-100%) translateY(-100%);
-            }
-            100% {
-                transform: translateX(100vw) translateY(100vh);
-            }
-        }
-
-        @keyframes fadeOut {
-            0% {
-                opacity: 1;
-            }
-            100% {
-                opacity: 0;
-            }
+            transition: all 0.3s;
         }
 
         .profile-container {
@@ -173,26 +60,7 @@
             width: 90%;
             max-width: 400px;
             text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            animation: fadeIn 1s ease-in-out;
-            margin: 20px;
-            position: relative;
-            z-index: 1;
-            transition: transform 0.3s ease;
             display: none;
-        }
-
-        .profile-container.visible {
-            display: block;
-        }
-
-        .profile-header h1 {
-            font-size: 26px;
-            margin-bottom: 20px;
-            font-weight: bold;
-            color: var(--gold-color);
-            text-shadow: 0 2px 8px rgba(255, 221, 87, 0.5);
         }
 
         .avatar {
@@ -200,46 +68,7 @@
             height: 120px;
             border-radius: 50%;
             border: 3px solid var(--gold-color);
-            box-shadow: 0 4px 20px rgba(255, 221, 87, 0.3);
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
             object-fit: cover;
-            background-color: #222;
-        }
-
-        .avatar:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 30px rgba(255, 221, 87, 0.7);
-        }
-
-        #username {
-            font-size: 22px;
-            margin: 15px 0;
-            color: var(--text-color);
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .balance {
-            font-size: 20px;
-            color: var(--text-color);
-            margin: 20px 0 0;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .balance span {
-            font-weight: bold;
-            color: var(--gold-color);
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .profile-stats {
@@ -247,106 +76,57 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 15px;
             margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .stat-item {
-            text-align: center;
-            padding: 10px;
             background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
             border-radius: 8px;
-            transition: transform 0.3s ease;
-        }
-
-        .stat-item:hover {
-            transform: translateY(-3px);
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .stat-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: var(--gold-color);
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-top: 5px;
-        }
-
-        @media (max-width: 480px) {
-            .profile-container {
-                padding: 20px;
-                width: 85%;
-            }
-            
-            .profile-stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .avatar {
-                width: 100px;
-                height: 100px;
-            }
         }
     </style>
 </head>
 <body>
-    <!-- Экран входа (всегда видим при запуске) -->
+    <!-- Экран входа -->
     <div class="login-screen" id="loginScreen">
-        <h1 class="login-title">Добро пожаловать в Космический Профиль!</h1>
-        <button class="login-btn" id="loginBtn">
-            <span>🚀</span> Войти через Telegram
-        </button>
+        <button class="login-btn" id="loginBtn">🚀 Войти в профиль</button>
     </div>
 
-    <!-- Иконка меню -->
-    <div class="menu-icon" onclick="toggleMenu()">☰</div>
-
-    <!-- Выпадающее меню -->
-    <div class="menu" id="menu">
-        <button onclick="window.location.href='index.html'"><span>🎮</span> Игры</button>
-        <button onclick="window.location.href='profile.html'"><span>👤</span> Профиль</button>
-        <button onclick="openWithdraw()"><span>💳</span> Вывод</button>
-        <button onclick="openDeposit()"><span>💰</span> Депозит</button>
-        <button onclick="openSupport()"><span>🛟</span> Поддержка</button>
-        <button onclick="openHistory()"><span>📊</span> История</button>
-    </div>
-
-    <!-- Звездный фон -->
-    <div class="stars" id="stars-container"></div>
-
-    <!-- Контейнер профиля (изначально скрыт) -->
+    <!-- Профиль -->
     <div class="profile-container" id="profileContainer">
-        <div class="profile-header">
-            <h1>Космический профиль</h1>
-        </div>
-        <div class="profile-content">
-            <img id="avatar" src="https://via.placeholder.com/150/6a5acd/ffffff" alt="Аватар" class="avatar" loading="eager">
-            <h2 id="username">Загрузка...</h2>
-            <p class="balance">Баланс: <span id="balance">0</span> ⭐</p>
-            
-            <div class="profile-stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="games-played">0</div>
-                    <div class="stat-label">Игр сыграно</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="wins">0</div>
-                    <div class="stat-label">Побед</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="profit">0</div>
-                    <div class="stat-label">Прибыль</div>
-                </div>
+        <img id="avatar" src="" alt="Аватар" class="avatar">
+        <h2 id="username"></h2>
+        <p>Баланс: <span id="balance">0</span> ⭐</p>
+        
+        <div class="profile-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="games-played">0</div>
+                <div>Игр сыграно</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="wins">0</div>
+                <div>Побед</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="profit">0</div>
+                <div>Прибыль</div>
             </div>
         </div>
+        
+        <button id="saveBtn" style="margin-top: 20px;">Сохранить прогресс</button>
     </div>
 
     <script>
-        // Основные элементы
+        // Конфигурация Firebase с вашими данными
+        const firebaseConfig = {
+            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
+            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
+        };
+
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Элементы интерфейса
         const elements = {
             loginScreen: document.getElementById('loginScreen'),
             loginBtn: document.getElementById('loginBtn'),
@@ -356,137 +136,86 @@
             balance: document.getElementById('balance'),
             gamesPlayed: document.getElementById('games-played'),
             wins: document.getElementById('wins'),
-            profit: document.getElementById('profit')
+            profit: document.getElementById('profit'),
+            saveBtn: document.getElementById('saveBtn')
         };
 
-        // Инициализация при загрузке
-        document.addEventListener('DOMContentLoaded', function() {
-            createStars();
-            
-            // Всегда показываем экран входа при запуске
+        // Данные пользователя
+        let userData = {
+            name: "Гость",
+            avatar: "https://via.placeholder.com/150/333333/ffffff?text=USER",
+            balance: 1000,
+            gamesPlayed: 0,
+            wins: 0,
+            profit: 0,
+            userId: null
+        };
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
             elements.loginScreen.style.display = 'flex';
             elements.profileContainer.style.display = 'none';
             
-            // Назначаем обработчик для кнопки входа
             elements.loginBtn.addEventListener('click', handleLogin);
+            elements.saveBtn.addEventListener('click', saveUserData);
         });
 
-        // Обработка входа через Telegram
+        // Обработка входа
         function handleLogin() {
-            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-                const user = Telegram.WebApp.initDataUnsafe.user;
-                
-                // Формируем данные пользователя
-                const userData = {
-                    name: user.username || `${user.first_name || ''} ${user.last_name || ''}`.trim() || "Космонавт",
-                    avatar: user.photo_url || `https://via.placeholder.com/150/6a5acd/ffffff?text=${user.first_name?.charAt(0) || 'T'}`,
-                    balance: '1,500',
-                    games: '15',
-                    wins: '9',
-                    profit: '+750'
-                };
-                
-                // Показываем профиль
-                showProfile(userData);
-                
-                // Раскрываем WebApp на весь экран
-                Telegram.WebApp.expand();
-            } else {
-                alert('Пожалуйста, откройте приложение через Telegram для входа');
-            }
-        }
-
-        // Показать профиль с данными пользователя
-        function showProfile(data) {
-            elements.loginScreen.style.display = 'none';
-            elements.profileContainer.style.display = 'block';
-            updateProfile(data);
-        }
-
-        // Обновление данных профиля
-        function updateProfile(data) {
-            elements.username.textContent = data.name;
-            elements.avatar.src = data.avatar;
-            elements.balance.textContent = data.balance;
-            elements.gamesPlayed.textContent = data.games;
-            elements.wins.textContent = data.wins;
-            elements.profit.textContent = data.profit;
-        }
-
-        // Анимация звезд
-        function createStars() {
-            const container = document.getElementById('stars-container');
-            const starCount = Math.floor(window.innerWidth / 3);
+            // Генерируем случайный ID пользователя (в реальном приложении используйте Firebase Auth)
+            userData.userId = 'user_' + Math.random().toString(36).substr(2, 9);
             
-            for (let i = 0; i < starCount; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
+            // Загружаем данные пользователя из Firebase
+            database.ref('users/' + userData.userId).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    // Если пользователь уже существует, загружаем его данные
+                    const data = snapshot.val();
+                    userData = {
+                        ...userData,
+                        ...data
+                    };
+                }
                 
-                const size = Math.random() * 3;
-                const duration = 2 + Math.random() * 8;
-                const delay = Math.random() * 5;
-                
-                star.style.left = `${Math.random() * 100}%`;
-                star.style.top = `${Math.random() * 100}%`;
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                star.style.animationDuration = `${duration}s`;
-                star.style.animationDelay = `${delay}s`;
-                star.style.opacity = Math.random();
-                
-                container.appendChild(star);
-                
-                star.addEventListener('animationend', () => {
-                    star.remove();
-                    createStar();
-                });
-            }
-        }
-
-        function createStar() {
-            const container = document.getElementById('stars-container');
-            const star = document.createElement('div');
-            star.className = 'star';
-            
-            const size = Math.random() * 3;
-            const duration = 2 + Math.random() * 8;
-            
-            star.style.left = `${Math.random() * 100}%`;
-            star.style.top = `-10px`;
-            star.style.width = `${size}px`;
-            star.style.height = `${size}px`;
-            star.style.animationDuration = `${duration}s`;
-            star.style.opacity = Math.random();
-            
-            container.appendChild(star);
-            
-            star.addEventListener('animationend', () => {
-                star.remove();
+                showProfile();
             });
         }
 
-        function toggleMenu() {
-            const menu = document.getElementById('menu');
-            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+        // Показать профиль
+        function showProfile() {
+            elements.loginScreen.style.display = 'none';
+            elements.profileContainer.style.display = 'block';
+            
+            // Обновляем интерфейс
+            elements.avatar.src = userData.avatar;
+            elements.username.textContent = userData.name;
+            elements.balance.textContent = userData.balance;
+            elements.gamesPlayed.textContent = userData.gamesPlayed;
+            elements.wins.textContent = userData.wins;
+            elements.profit.textContent = userData.profit;
         }
 
-        // Функции меню
-        function openWithdraw() {
-            alert('Функция вывода средств будет доступна в следующем обновлении');
+        // Сохранить данные в Firebase
+        function saveUserData() {
+            // Обновляем данные перед сохранением
+            userData.balance += 100;
+            userData.gamesPlayed += 1;
+            userData.profit += 50;
+            
+            // Сохраняем в Firebase
+            database.ref('users/' + userData.userId).set(userData)
+                .then(() => alert('Данные сохранены!'))
+                .catch(error => console.error('Ошибка сохранения:', error));
+            
+            // Обновляем интерфейс
+            showProfile();
         }
 
-        function openDeposit() {
-            alert('Функция пополнения баланса будет доступна в следующем обновлении');
-        }
-
-        function openSupport() {
-            alert('Свяжитесь с поддержкой через Telegram: @support');
-        }
-
-        function openHistory() {
-            alert('История транзакций будет доступна в следующем обновлении');
+        // Для тестирования - имитация победы в игре
+        function addWin() {
+            userData.wins += 1;
+            userData.balance += 200;
+            showProfile();
         }
     </script>
 </body>
-</html>
 </html>
