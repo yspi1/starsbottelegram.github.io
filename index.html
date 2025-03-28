@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Космический профиль</title>
     
+    <!-- Подключаем Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
     <!-- Предзагрузка аватарок и критических ресурсов -->
     <link rel="preload" href="https://via.placeholder.com/150/6a5acd/ffffff" as="image">
     <link rel="preload" href="https://via.placeholder.com/150/333333/ffffff" as="image">
@@ -185,16 +188,11 @@
             position: relative;
             z-index: 1;
             transition: transform 0.3s ease;
-            display: none; /* Сначала скрываем профиль */
+            display: none;
         }
 
         .profile-container.visible {
-            display: block; /* Показываем после входа */
-        }
-
-        .profile-container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            display: block;
         }
 
         .profile-header h1 {
@@ -363,7 +361,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             createStars();
             
-            // Проверяем, есть ли уже данные пользователя (например, при обновлении страницы)
+            // Проверяем, есть ли уже данные пользователя
             const savedUserData = localStorage.getItem('telegramUserData');
             if (savedUserData) {
                 const userData = JSON.parse(savedUserData);
@@ -379,51 +377,64 @@
 
         // 2. Обработка входа через Telegram
         function handleLogin() {
+            // Проверяем, доступен ли Telegram WebApp
             if (window.Telegram && window.Telegram.WebApp) {
                 const tg = Telegram.WebApp;
                 
-                // Проверяем, есть ли данные пользователя
+                // Проверяем, инициализированы ли данные пользователя
                 if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                     const user = tg.initDataUnsafe.user;
                     
-                    // Собираем данные пользователя
+                    // Формируем данные пользователя
                     const userData = {
                         id: user.id,
-                        name: user.username || `${user.first_name || ''} ${user.last_name || ''}`.trim() || "Космонавт",
-                        avatar: user.photo_url || `https://via.placeholder.com/150/6a5acd/ffffff?text=${user.first_name?.charAt(0) || 'T'}`,
-                        balance: '1,500',
-                        games: '15',
-                        wins: '9',
-                        profit: '+750'
+                        username: user.username || '',
+                        firstName: user.first_name || '',
+                        lastName: user.last_name || '',
+                        photoUrl: user.photo_url || '',
+                        balance: 1500,
+                        gamesPlayed: 15,
+                        wins: 9,
+                        profit: 750
                     };
                     
-                    // Сохраняем данные в localStorage
+                    // Генерируем имя для отображения
+                    const displayName = userData.username || 
+                                      `${userData.firstName} ${userData.lastName}`.trim() || 
+                                      "Космонавт";
+                    
+                    // Генерируем URL аватарки или используем заглушку
+                    const avatarUrl = userData.photoUrl || 
+                                    `https://via.placeholder.com/150/6a5acd/ffffff?text=${displayName.charAt(0)}`;
+                    
+                    // Сохраняем данные
                     localStorage.setItem('telegramUserData', JSON.stringify(userData));
                     
-                    // Показываем профиль
-                    showProfile(userData);
+                    // Показываем профиль с реальными данными
+                    showProfile({
+                        name: displayName,
+                        avatar: avatarUrl,
+                        balance: userData.balance.toLocaleString(),
+                        games: userData.gamesPlayed,
+                        wins: userData.wins,
+                        profit: `+${userData.profit}`
+                    });
                     
                     // Раскрываем WebApp на весь экран
                     tg.expand();
+                    
+                    // Выводим данные в консоль для отладки
+                    console.log('Telegram User Data:', user);
+                    console.log('Processed User Data:', userData);
                 } else {
-                    alert('Не удалось получить данные пользователя. Пожалуйста, попробуйте снова.');
+                    // Если данные пользователя не доступны
+                    alert('Не удалось получить данные пользователя. Пожалуйста, убедитесь, что вы открываете приложение через Telegram.');
+                    console.error('Telegram WebApp user data not available:', tg.initDataUnsafe);
                 }
             } else {
-                // Режим для тестирования вне Telegram
-                const testUserData = {
-                    id: 'test123',
-                    name: "Гость",
-                    avatar: "https://via.placeholder.com/150/333333/ffffff?text=USER",
-                    balance: '0',
-                    games: '0',
-                    wins: '0',
-                    profit: '0'
-                };
-                
-                localStorage.setItem('telegramUserData', JSON.stringify(testUserData));
-                showProfile(testUserData);
-                
-                alert('Это демо-режим. В реальном приложении будут использоваться данные из Telegram.');
+                // Если WebApp не доступен
+                alert('Это приложение работает только внутри Telegram. Пожалуйста, откройте его через Telegram бота.');
+                console.error('Telegram WebApp not detected');
             }
         }
 
@@ -447,25 +458,9 @@
             document.getElementById('games-played').textContent = data.games;
             document.getElementById('wins').textContent = data.wins;
             document.getElementById('profit').textContent = data.profit;
-            
-            // Выводим ID пользователя в консоль для отладки
-            console.log('User ID:', data.id);
         }
 
-        // 5. Предзагрузка изображений
-        function preloadImages() {
-            const images = [
-                'https://via.placeholder.com/150/6a5acd/ffffff',
-                'https://via.placeholder.com/150/333333/ffffff'
-            ];
-            
-            images.forEach(img => {
-                const image = new Image();
-                image.src = img;
-            });
-        }
-
-        // 6. Анимация звезд
+        // 5. Анимация звезд
         function createStars() {
             const container = document.getElementById('stars-container');
             const starCount = Math.floor(window.innerWidth / 3);
