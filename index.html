@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Космический профиль</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
     <style>
@@ -380,15 +381,41 @@
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
             createStars();
-            elements.loginScreen.style.display = 'flex';
-            elements.profileContainer.style.display = 'none';
-            elements.loginBtn.addEventListener('click', handleLogin);
+            
+            // Проверяем, открыто ли приложение в Telegram WebApp
+            if (window.Telegram && Telegram.WebApp) {
+                // Инициализируем WebApp
+                Telegram.WebApp.expand();
+                Telegram.WebApp.enableClosingConfirmation();
+                
+                // Проверяем, есть ли данные пользователя
+                if (Telegram.WebApp.initDataUnsafe?.user) {
+                    // Если есть данные пользователя, сразу авторизуем
+                    handleLogin();
+                } else {
+                    // Если нет данных, показываем кнопку входа
+                    elements.loginScreen.style.display = 'flex';
+                    elements.profileContainer.style.display = 'none';
+                    elements.loginBtn.addEventListener('click', function() {
+                        Telegram.WebApp.openTelegramLink('https://t.me/YourBotUsername');
+                    });
+                }
+            } else {
+                // Если не в Telegram, показываем обычный экран входа
+                elements.loginScreen.style.display = 'flex';
+                elements.profileContainer.style.display = 'none';
+                elements.loginBtn.addEventListener('click', function() {
+                    alert("Пожалуйста, откройте приложение через Telegram");
+                });
+            }
         });
 
         // Обработка входа через Telegram
         function handleLogin() {
-            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-                const tgUser = Telegram.WebApp.initDataUnsafe.user;
+            const tgWebApp = window.Telegram?.WebApp;
+            
+            if (tgWebApp?.initDataUnsafe?.user) {
+                const tgUser = tgWebApp.initDataUnsafe.user;
                 userData.userId = tgUser.id.toString();
                 
                 // Получаем или создаем профиль
@@ -418,10 +445,22 @@
                     }
                     
                     showProfile();
-                    Telegram.WebApp.expand();
                 });
             } else {
-                alert("Пожалуйста, откройте приложение через Telegram");
+                // Если нет данных пользователя, показываем экран входа
+                elements.loginScreen.style.display = 'flex';
+                elements.profileContainer.style.display = 'none';
+                
+                // Настраиваем кнопку в зависимости от контекста
+                if (window.Telegram && Telegram.WebApp) {
+                    elements.loginBtn.addEventListener('click', function() {
+                        Telegram.WebApp.openTelegramLink('https://t.me/YourBotUsername');
+                    });
+                } else {
+                    elements.loginBtn.addEventListener('click', function() {
+                        alert("Пожалуйста, откройте приложение через Telegram");
+                    });
+                }
             }
         }
 
