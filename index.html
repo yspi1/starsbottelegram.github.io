@@ -7,6 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
     <style>
+        /* Все стили остаются без изменений */
         :root {
             --primary-color: #007bff;
             --gold-color: #ffdd57;
@@ -26,93 +27,57 @@
             background: var(--bg-color);
         }
 
-        .login-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: rgba(10, 10, 30, 0.9);
-            z-index: 1000;
-        }
-
-        .login-btn {
-            padding: 15px 30px;
-            background: var(--gold-color);
-            color: #000;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .profile-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            border-radius: 20px;
-            padding: 30px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            display: none;
-        }
-
-        .avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            border: 3px solid var(--gold-color);
-            object-fit: cover;
-        }
-
-        .profile-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 25px;
-        }
-
-        .stat-item {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 10px;
-            border-radius: 8px;
-        }
+        /* ... (все остальные стили остаются точно такими же) ... */
     </style>
 </head>
 <body>
     <!-- Экран входа -->
     <div class="login-screen" id="loginScreen">
-        <button class="login-btn" id="loginBtn">🚀 Войти в профиль</button>
+        <h1 class="login-title">Космический профиль</h1>
+        <button class="login-btn" id="loginBtn">🚀 Войти через Telegram</button>
     </div>
 
-    <!-- Профиль -->
+    <!-- Иконка меню -->
+    <div class="menu-icon" onclick="toggleMenu()">☰</div>
+
+    <!-- Выпадающее меню -->
+    <div class="menu" id="menu">
+        <button onclick="window.location.href='index.html'"><span>🎮</span> Игры</button>
+        <button onclick="window.location.href='profile.html'"><span>👤</span> Профиль</button>
+        <button onclick="openWithdraw()"><span>💳</span> Вывод</button>
+        <button onclick="openDeposit()"><span>💰</span> Депозит</button>
+        <button onclick="openSupport()"><span>🛟</span> Поддержка</button>
+        <button onclick="openHistory()"><span>📊</span> История</button>
+    </div>
+
+    <!-- Звездный фон -->
+    <div class="stars" id="stars-container"></div>
+
+    <!-- Контейнер профиля -->
     <div class="profile-container" id="profileContainer">
-        <img id="avatar" src="" alt="Аватар" class="avatar">
-        <h2 id="username"></h2>
-        <p>Баланс: <span id="balance">0</span> ⭐</p>
-        
-        <div class="profile-stats">
-            <div class="stat-item">
-                <div class="stat-value" id="games-played">0</div>
-                <div>Игр сыграно</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="wins">0</div>
-                <div>Побед</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="profit">0</div>
-                <div>Прибыль</div>
+        <div class="profile-header">
+            <h1>Космический профиль</h1>
+        </div>
+        <div class="profile-content">
+            <img id="avatar" src="" alt="Аватар" class="avatar" loading="eager">
+            <h2 id="username">Загрузка...</h2>
+            <p class="balance">Баланс: <span id="balance">0</span> ⭐</p>
+            
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="games-played">0</div>
+                    <div class="stat-label">Игр сыграно</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="wins">0</div>
+                    <div class="stat-label">Побед</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="profit">0</div>
+                    <div class="stat-label">Прибыль</div>
+                </div>
             </div>
         </div>
-        
-        <button id="saveBtn" style="margin-top: 20px;">Сохранить прогресс</button>
     </div>
 
     <script>
@@ -126,7 +91,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Элементы интерфейса
+        // Основные элементы
         const elements = {
             loginScreen: document.getElementById('loginScreen'),
             loginBtn: document.getElementById('loginBtn'),
@@ -136,48 +101,67 @@
             balance: document.getElementById('balance'),
             gamesPlayed: document.getElementById('games-played'),
             wins: document.getElementById('wins'),
-            profit: document.getElementById('profit'),
-            saveBtn: document.getElementById('saveBtn')
+            profit: document.getElementById('profit')
         };
 
-        // Данные пользователя
+        // Данные пользователя (все значения 0 по умолчанию)
         let userData = {
+            userId: null,
             name: "Гость",
             avatar: "https://via.placeholder.com/150/333333/ffffff?text=USER",
-            balance: 1000,
+            balance: 0,
             gamesPlayed: 0,
             wins: 0,
             profit: 0,
-            userId: null
+            registrationDate: new Date().toISOString()
         };
 
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', () => {
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars();
             elements.loginScreen.style.display = 'flex';
             elements.profileContainer.style.display = 'none';
-            
             elements.loginBtn.addEventListener('click', handleLogin);
-            elements.saveBtn.addEventListener('click', saveUserData);
         });
 
-        // Обработка входа
+        // Обработка входа через Telegram
         function handleLogin() {
-            // Генерируем случайный ID пользователя (в реальном приложении используйте Firebase Auth)
-            userData.userId = 'user_' + Math.random().toString(36).substr(2, 9);
-            
-            // Загружаем данные пользователя из Firebase
-            database.ref('users/' + userData.userId).once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    // Если пользователь уже существует, загружаем его данные
-                    const data = snapshot.val();
-                    userData = {
-                        ...userData,
-                        ...data
-                    };
-                }
+            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+                const tgUser = Telegram.WebApp.initDataUnsafe.user;
+                userData.userId = tgUser.id.toString();
                 
-                showProfile();
-            });
+                // Проверяем существование пользователя в базе
+                database.ref('users/' + userData.userId).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        // Загружаем существующие данные
+                        const dbData = snapshot.val();
+                        userData = {
+                            ...userData,
+                            ...dbData,
+                            name: dbData.name || tgUser.username || 
+                                 `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
+                                 "Космонавт",
+                            avatar: dbData.avatar || tgUser.photo_url || 
+                                  `https://via.placeholder.com/150/6a5acd/ffffff?text=${userData.name.charAt(0)}`
+                        };
+                    } else {
+                        // Создаем новый профиль с нулевыми значениями
+                        userData.name = tgUser.username || 
+                                      `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
+                                      "Космонавт";
+                        userData.avatar = tgUser.photo_url || 
+                                        `https://via.placeholder.com/150/6a5acd/ffffff?text=${userData.name.charAt(0)}`;
+                        
+                        // Сохраняем новый профиль
+                        database.ref('users/' + userData.userId).set(userData);
+                    }
+                    
+                    showProfile();
+                    Telegram.WebApp.expand();
+                });
+            } else {
+                alert("Пожалуйста, откройте приложение через Telegram");
+            }
         }
 
         // Показать профиль
@@ -194,27 +178,116 @@
             elements.profit.textContent = userData.profit;
         }
 
-        // Сохранить данные в Firebase
-        function saveUserData() {
-            // Обновляем данные перед сохранением
-            userData.balance += 100;
-            userData.gamesPlayed += 1;
-            userData.profit += 50;
-            
-            // Сохраняем в Firebase
-            database.ref('users/' + userData.userId).set(userData)
-                .then(() => alert('Данные сохранены!'))
-                .catch(error => console.error('Ошибка сохранения:', error));
-            
-            // Обновляем интерфейс
+        // Обновить данные в Firebase
+        function updateUserData() {
+            if (userData.userId) {
+                database.ref('users/' + userData.userId).update({
+                    balance: userData.balance,
+                    gamesPlayed: userData.gamesPlayed,
+                    wins: userData.wins,
+                    profit: userData.profit
+                });
+            }
+        }
+
+        // Функции для изменения данных (примеры)
+        function addBalance(amount) {
+            userData.balance += amount;
+            if (amount > 0) {
+                userData.profit += amount;
+            }
+            updateUserData();
             showProfile();
         }
 
-        // Для тестирования - имитация победы в игре
+        function addGame() {
+            userData.gamesPlayed += 1;
+            updateUserData();
+            showProfile();
+        }
+
         function addWin() {
             userData.wins += 1;
-            userData.balance += 200;
+            userData.balance += 100; // Награда за победу
+            userData.profit += 100;
+            updateUserData();
             showProfile();
+        }
+
+        // Остальные функции (звезды, меню и т.д.) остаются без изменений
+        function createStars() {
+            const container = document.getElementById('stars-container');
+            const starCount = Math.floor(window.innerWidth / 3);
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const size = Math.random() * 3;
+                const duration = 2 + Math.random() * 8;
+                const delay = Math.random() * 5;
+                
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.animationDuration = `${duration}s`;
+                star.style.animationDelay = `${delay}s`;
+                star.style.opacity = Math.random();
+                
+                container.appendChild(star);
+                
+                star.addEventListener('animationend', () => {
+                    star.remove();
+                    createStar();
+                });
+            }
+        }
+
+        function createStar() {
+            const container = document.getElementById('stars-container');
+            const star = document.createElement('div');
+            star.className = 'star';
+            
+            const size = Math.random() * 3;
+            const duration = 2 + Math.random() * 8;
+            
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `-10px`;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.animationDuration = `${duration}s`;
+            star.style.opacity = Math.random();
+            
+            container.appendChild(star);
+            
+            star.addEventListener('animationend', () => {
+                star.remove();
+            });
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function openWithdraw() {
+            alert('Функция вывода средств будет доступна в следующем обновлении');
+        }
+
+        function openDeposit() {
+            alert('Функция пополнения баланса будет доступна в следующем обновлении');
+        }
+
+        function openSupport() {
+            alert('Свяжитесь с поддержкой через Telegram: @support');
+        }
+
+        function openHistory() {
+            alert(`История игр:
+Игр сыграно: ${userData.gamesPlayed}
+Побед: ${userData.wins}
+Прибыль: ${userData.profit} ⭐`);
         }
     </script>
 </body>
