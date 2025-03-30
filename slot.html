@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Stars Slot</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -187,42 +184,46 @@
             background: rgba(30, 30, 46, 0.7);
             border: 2px solid var(--primary-color);
             border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 40px;
             overflow: hidden;
             position: relative;
             box-shadow: 0 0 15px rgba(106, 76, 255, 0.3);
             transform-style: preserve-3d;
         }
 
-        .slot .symbols {
+        .slot-window {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .slot-reel {
+            position: absolute;
+            width: 100%;
             transition: transform 2s cubic-bezier(0.1, 0.7, 0.1, 1);
         }
 
-        .slot .symbol {
+        .slot-symbol {
+            height: 90px;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 90px;
-            transform: translateZ(15px);
+            font-size: 40px;
             text-shadow: 0 0 10px currentColor;
         }
 
         /* Подсветка выпавшего символа */
-        .slot .symbol.active {
+        .slot-symbol.active {
             animation: pulse 0.5s 3;
             color: var(--gold);
         }
 
         @keyframes pulse {
-            0%, 100% { transform: translateZ(15px) scale(1); }
-            50% { transform: translateZ(15px) scale(1.2); }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
         }
 
         .result {
@@ -434,7 +435,7 @@
         
         <div class="balance">
             <i class="fas fa-coins"></i>
-            <span id="balance">0</span> ⭐
+            <span id="balance">1000</span> ⭐
         </div>
         
         <div class="bet-input">
@@ -458,39 +459,57 @@
         
         <div class="slot-machine">
             <div class="slot" id="slot1">
-                <div class="symbols" id="symbols1">
-                    <div class="symbol">🍒</div>
-                    <div class="symbol">💎</div>
-                    <div class="symbol">💰</div>
-                    <div class="symbol">🍎</div>
-                    <div class="symbol">🍀</div>
-                    <div class="symbol">🎰</div>
-                    <div class="symbol">⭐</div>
-                    <div class="symbol">🍋</div>
+                <div class="slot-window">
+                    <div class="slot-reel" id="reel1">
+                        <div class="slot-symbol">🍒</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">🍎</div>
+                        <div class="slot-symbol">🍀</div>
+                        <div class="slot-symbol">🎰</div>
+                        <div class="slot-symbol">⭐</div>
+                        <div class="slot-symbol">🍋</div>
+                        <!-- Дублируем символы для плавного перехода -->
+                        <div class="slot-symbol">🍒</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                    </div>
                 </div>
             </div>
             <div class="slot" id="slot2">
-                <div class="symbols" id="symbols2">
-                    <div class="symbol">🍒</div>
-                    <div class="symbol">💎</div>
-                    <div class="symbol">💰</div>
-                    <div class="symbol">🍎</div>
-                    <div class="symbol">🍀</div>
-                    <div class="symbol">🎰</div>
-                    <div class="symbol">⭐</div>
-                    <div class="symbol">🍋</div>
+                <div class="slot-window">
+                    <div class="slot-reel" id="reel2">
+                        <div class="slot-symbol">🍒</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">🍎</div>
+                        <div class="slot-symbol">🍀</div>
+                        <div class="slot-symbol">🎰</div>
+                        <div class="slot-symbol">⭐</div>
+                        <div class="slot-symbol">🍋</div>
+                        <!-- Дублируем символы для плавного перехода -->
+                        <div class="slot-symbol">🍒</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                    </div>
                 </div>
             </div>
             <div class="slot" id="slot3">
-                <div class="symbols" id="symbols3">
-                    <div class="symbol">🍒</div>
-                    <div class="symbol">💎</div>
-                    <div class="symbol">💰</div>
-                    <div class="symbol">🍎</div>
-                    <div class="symbol">🍀</div>
-                    <div class="symbol">🎰</div>
-                    <div class="symbol">⭐</div>
-                    <div class="symbol">🍋</div>
+                <div class="slot-window">
+                    <div class="slot-reel" id="reel3">
+                        <div class="slot-symbol">🍒</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                        <div class="slot-symbol">🍎</div>
+                        <div class="slot-symbol">🍀</div>
+                        <div class="slot-symbol">🎰</div>
+                        <div class="slot-symbol">⭐</div>
+                        <div class="slot-symbol">🍋</div>
+                        <!-- Дублируем символы для плавного перехода -->
+                        <div class="slot-symbol">🍒</div>
+                        <div class="slot-symbol">💎</div>
+                        <div class="slot-symbol">💰</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -499,19 +518,8 @@
     </div>
 
     <script>
-        // Инициализация Firebase с вашими учетными данными
-        const firebaseConfig = {
-            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
-            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com/"
-        };
-        
-        // Инициализация Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
         // Переменные игры
-        let balance = 0;
-        let userId = null;
+        let balance = 1000;
         let isSpinning = false;
         const minBet = 10;
         const maxBet = 100000;
@@ -553,62 +561,6 @@
             }
         }
 
-        // Получение ID пользователя
-        function getUserId() {
-            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-                return Telegram.WebApp.initDataUnsafe.user.id.toString();
-            }
-            return 'demo_user_' + Math.random().toString(36).substr(2, 8);
-        }
-
-        // Загрузка данных пользователя из Firebase
-        function loadUserData() {
-            userId = getUserId();
-            const userRef = database.ref('users/' + userId);
-            
-            userRef.on('value', (snapshot) => {
-                const userData = snapshot.val();
-                if (userData) {
-                    balance = userData.balance || 0;
-                    updateBalance();
-                } else {
-                    // Создаем нового пользователя без стартового баланса
-                    balance = 0;
-                    const userData = {
-                        balance: balance,
-                        username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || 'Player',
-                        registrationDate: new Date().toISOString(),
-                        lastActive: firebase.database.ServerValue.TIMESTAMP
-                    };
-                    userRef.set(userData)
-                        .then(() => updateBalance())
-                        .catch(error => {
-                            console.error("Ошибка создания пользователя:", error);
-                            showNotification("Ошибка загрузки данных", "error");
-                        });
-                }
-            }, (error) => {
-                console.error("Ошибка чтения данных:", error);
-                showNotification("Ошибка загрузки данных", "error");
-            });
-        }
-
-        // Обновление баланса в Firebase
-        function updateUserBalance() {
-            if (!userId) return;
-            
-            const updates = {
-                balance: balance,
-                lastActive: firebase.database.ServerValue.TIMESTAMP
-            };
-            
-            database.ref('users/' + userId).update(updates)
-                .catch(error => {
-                    console.error("Ошибка сохранения баланса:", error);
-                    showNotification("Ошибка сохранения данных", "error");
-                });
-        }
-
         // Вращение барабанов
         function spin() {
             if (isSpinning) return;
@@ -642,55 +594,61 @@
             // Снимаем ставку
             balance -= bet;
             updateBalance();
-            updateUserBalance();
 
             // Анимация вращения
-            const slots = ["slot1", "slot2", "slot3"];
+            const reels = ["reel1", "reel2", "reel3"];
             const results = [];
             let spinsCompleted = 0;
 
-            slots.forEach((slotId, index) => {
-                const slot = document.getElementById(slotId);
-                const symbolsElement = slot.querySelector('.symbols');
+            reels.forEach((reelId, index) => {
+                const reel = document.getElementById(reelId);
+                const slot = document.getElementById(`slot${index+1}`);
                 
                 // Добавляем эффект тряски
                 slot.classList.add('shaking');
                 
                 // Случайное количество прокруток (5-8 полных оборотов)
                 const spins = 5 + Math.floor(Math.random() * 3);
-                const targetPosition = (spins * symbols.length + Math.floor(Math.random() * symbols.length)) * 90;
+                const targetPosition = (spins * 8 + Math.floor(Math.random() * 8)) * 90;
                 
-                // Анимация с эффектом замедления
-                symbolsElement.style.transition = `transform ${1.5 + index * 0.2}s cubic-bezier(0.2, 0.8, 0.2, 1)`;
-                symbolsElement.style.transform = `translateY(-${targetPosition}px)`;
+                // Сбрасываем трансформацию перед началом анимации
+                reel.style.transition = 'none';
+                reel.style.transform = 'translateY(0)';
                 
-                // Определяем выпавший символ
+                // Даем время для сброса
                 setTimeout(() => {
-                    const symbolIndex = Math.floor((targetPosition % (symbols.length * 90)) / 90);
-                    results[index] = symbols[symbolIndex];
-                    spinsCompleted++;
+                    // Запускаем анимацию с эффектом замедления
+                    reel.style.transition = `transform ${1.5 + index * 0.2}s cubic-bezier(0.2, 0.8, 0.2, 1)`;
+                    reel.style.transform = `translateY(-${targetPosition}px)`;
                     
-                    // Убираем тряску
-                    slot.classList.remove('shaking');
-                    
-                    // Подсветка выпавшего символа
-                    const activeSymbol = symbolsElement.children[symbolIndex];
-                    activeSymbol.classList.add('active');
-                    
-                    // Эффект "подпрыгивания" при остановке
-                    slot.style.transform = 'translateY(-5px)';
+                    // Определяем выпавший символ
                     setTimeout(() => {
-                        slot.style.transform = 'translateY(0)';
-                        activeSymbol.classList.remove('active');
-                    }, 300);
-                    
-                    // Когда все барабаны остановились
-                    if (spinsCompleted === slots.length) {
-                        checkWin(results, bet);
-                        isSpinning = false;
-                        spinButton.disabled = false;
-                    }
-                }, 1500 + index * 200);
+                        const symbolIndex = Math.floor((targetPosition % (8 * 90)) / 90;
+                        results[index] = symbols[symbolIndex];
+                        spinsCompleted++;
+                        
+                        // Убираем тряску
+                        slot.classList.remove('shaking');
+                        
+                        // Подсветка выпавшего символа
+                        const activeSymbol = reel.children[symbolIndex];
+                        activeSymbol.classList.add('active');
+                        
+                        // Эффект "подпрыгивания" при остановке
+                        slot.style.transform = 'translateY(-5px)';
+                        setTimeout(() => {
+                            slot.style.transform = 'translateY(0)';
+                            activeSymbol.classList.remove('active');
+                        }, 300);
+                        
+                        // Когда все барабаны остановились
+                        if (spinsCompleted === reels.length) {
+                            checkWin(results, bet);
+                            isSpinning = false;
+                            spinButton.disabled = false;
+                        }
+                    }, 1500 + index * 200);
+                }, 10);
             });
         }
 
@@ -716,7 +674,6 @@
             if (winAmount > 0) {
                 balance += winAmount;
                 updateBalance();
-                updateUserBalance();
                 showResult(`Выигрыш: ${winAmount} ⭐`, true);
                 
                 // Специальные эффекты для разных выигрышей
@@ -938,13 +895,7 @@
         // Инициализация
         document.addEventListener('DOMContentLoaded', () => {
             createStars();
-            loadUserData();
-            
-            // Инициализация Telegram WebApp если есть
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.expand();
-                Telegram.WebApp.enableClosingConfirmation();
-            }
+            updateBalance();
         });
     </script>
 </body>
