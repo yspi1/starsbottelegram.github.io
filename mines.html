@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cosmic Mines</title>
+    <style>
+        :root {
+            --tg-bg: #0f0f1a;
+            --tg-text: #ffffff;
+            --tg-hint: #a0a8c0;
+            --tg-primary: #6a4cff;
+            --tg-secondary: #1e1e2e;
+            --accent: #00e0ff;
+            --danger: #ff4d6d;
+            --success: #00e676;
+            --star: #ffd700;
+            --disabled: #3a3a4a;
+            --purple: #a45cff;
+            --pink: #ff6b9d;
+            --menu-bg: rgba(15, 15, 26, 0.95);
+            --menu-border: #6a4cff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-bg);
+            color: var(--tg-text);
+            font-size: 14px;
+            line-height: 1.4;
+            padding: 12px 10px 70px;
+            height: 100%;
+            touch-action: manipulation;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(106, 76, 255, 0.15) 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, rgba(255, 107, 157, 0.15) 0%, transparent 30%);
+        }
+
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 12px;
+            padding: 0 5px;
+            position: relative;
+        }
+
+        .game-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: transparent;
+            background: linear-gradient(90deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-shadow: 0 0 10px rgba(106, 76, 255, 0.3);
+            letter-spacing: 1px;
+        }
+
+        .balance-panel {
+            display: flex;
+            justify-content: space-between;
+            background-color: var(--tg-secondary);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(106, 76, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .balance-item {
+            text-align: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .balance-item:first-child::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 60%;
+            width: 1px;
+            background: rgba(106, 76, 255, 0.3);
+        }
+
+        .balance-label {
+            font-size: 12px;
+            color: var(--tg-hint);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .balance-value {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            color: var(--star);
+        }
+
+        .game-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin: 0 auto 16px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, var(--tg-secondary), #25253a);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            position: relative;
+            transition: transform 0.1s, background-color 0.2s, box-shadow 0.2s;
+            user-select: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(106, 76, 255, 0.1);
+        }
+
+        .cell:active:not(.revealed) {
+            transform: scale(0.95);
+        }
+
+        .cell.revealed {
+            background: rgba(30, 30, 46, 0.7);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .cell.star {
+            color: var(--star);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .cell.bomb {
+            color: var(--danger);
+            text-shadow: 0 0 10px rgba(255, 77, 109, 0.5);
+        }
+
+        .cell-stars {
+            position: absolute;
+            bottom: 4px;
+            font-size: 10px;
+            color: var(--star);
+            font-weight: 600;
+            text-shadow: 0 0 4px rgba(255, 215, 0, 0.7);
+        }
+
+        .current-win {
+            text-align: center;
+            margin: 12px 0 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--star);
+            min-height: 24px;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+        }
+
+        .info-panel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 0 auto 16px;
+            width: 100%;
+            max-width: 300px;
+            padding: 0 5px;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, var(--tg-secondary), #25253a);
+            border-radius: 10px;
+            padding: 10px 4px;
+            text-align: center;
+            border: 1px solid rgba(106, 76, 255, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--tg-hint);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            color: var(--accent);
+        }
+
+        .controls {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+            padding: 0 5px;
+        }
+
+        .bet-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bet-amount {
+            flex: 1;
+            text-align: center;
+            font-weight: 600;
+            font-size: 16px;
+            padding: 10px;
+            background: linear-gradient(135deg, var(--tg-secondary), #25253a);
+            border-radius: 10px;
+            border: 1px solid rgba(106, 76, 255, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            color: var(--accent);
+        }
+
+        .btn {
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            transition: all 0.2s;
+            text-align: center;
+            flex: 1;
+            user-select: none;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--purple), var(--tg-primary));
+            color: white;
+        }
+
+        .btn-primary:active {
+            background: linear-gradient(135deg, var(--tg-primary), var(--purple));
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #3a3a5a, var(--tg-secondary));
+            color: white;
+        }
+
+        .btn-disabled {
+            background: var(--disabled);
+            color: var(--tg-hint);
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #00c968);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #ff2d54);
+            color: white;
+        }
+
+        .btn-icon {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            padding: 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Меню */
+        .menu-icon {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            cursor: pointer;
+            font-size: 24px;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(30, 30, 46, 0.8);
+            border-radius: 50%;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            color: var(--accent);
+            transition: transform 0.2s;
+        }
+
+        .menu-icon:active {
+            transform: scale(0.9);
+        }
+
+        .menu {
+            position: fixed;
+            top: 70px;
+            left: 16px;
+            background: var(--menu-bg);
+            border-radius: 14px;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            padding: 12px;
+            z-index: 100;
+            border: 1px solid var(--menu-border);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            width: 220px;
+            transform-origin: top left;
+            animation: menuFadeIn 0.3s ease-out forwards;
+        }
+
+        @keyframes menuFadeIn {
+            from { opacity: 0; transform: scale(0.8) translateY(-10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .menu-item {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            text-align: left;
+            padding: 12px 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .menu-item:hover {
+            background: rgba(106, 76, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .menu-divider {
+            height: 1px;
+            background: rgba(106, 76, 255, 0.3);
+            margin: 4px 0;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 30, 46, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            animation: slideIn 0.3s ease-out forwards;
+            max-width: 90%;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .notification.hide {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+
+        @keyframes slideOut {
+            from { opacity: 1; transform: translateX(-50%) translateY(0); }
+            to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
+
+        .notification-icon {
+            font-size: 20px;
+        }
+
+        .notification-success {
+            border-left-color: var(--success);
+        }
+
+        .notification-error {
+            border-left-color: var(--danger);
+        }
+
+        .notification-warning {
+            border-left-color: var(--star);
+        }
+
+        .reveal-animation {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Анимация звезды */
+        @keyframes starPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .star-pulse {
+            animation: starPulse 1s infinite;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <!-- Иконки -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Иконка меню -->
+    <div class="menu-icon" onclick="toggleMenu()">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Выпадающее меню -->
+    <div class="menu" id="menu">
+        <button class="menu-item" onclick="window.location.href='index.html'">
+            <i class="fas fa-home"></i> Главная
+        </button>
+        <button class="menu-item" onclick="window.location.href='profile.html'">
+            <i class="fas fa-user"></i> Профиль
+        </button>
+        <button class="menu-item" onclick="window.location.href='games.html'">
+            <i class="fas fa-gamepad"></i> Игры
+        </button>
+        <div class="menu-divider"></div>
+        <button class="menu-item" onclick="openDeposit()">
+            <i class="fas fa-wallet"></i> Пополнить
+        </button>
+        <button class="menu-item" onclick="openWithdraw()">
+            <i class="fas fa-money-bill-wave"></i> Вывод
+        </button>
+        <div class="menu-divider"></div>
+        <button class="menu-item" onclick="openHistory()">
+            <i class="fas fa-history"></i> История
+        </button>
+        <button class="menu-item" onclick="openSupport()">
+            <i class="fas fa-headset"></i> Поддержка
+        </button>
+    </div>
+
+    <!-- Уведомление -->
+    <div class="notification" id="notification" style="display: none;">
+        <i class="fas fa-check-circle notification-icon"></i>
+        <span id="notification-message">Сообщение</span>
+    </div>
+
+    <div class="container">
+        <div class="game-header">
+            <h1 class="game-title">COSMIC MINES</h1>
+        </div>
+
+        <div class="balance-panel">
+            <div class="balance-item">
+                <div class="balance-label">Баланс</div>
+                <div class="balance-value">⭐<span id="balance">0</span></div>
+            </div>
+            <div class="balance-item">
+                <div class="balance-label">Макс выигрыш</div>
+                <div class="balance-value">⭐<span id="max-win">0</span></div>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="game-grid" id="grid"></div>
+
+            <div class="current-win" id="current-win"></div>
+
+            <div class="info-panel">
+                <div class="info-card">
+                    <div class="info-label" id="star-label-1">1⭐</div>
+                    <div class="info-value">×<span id="mult-1">1.0</span></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label" id="star-label-2">2⭐</div>
+                    <div class="info-value">×<span id="mult-2">1.5</span></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label" id="star-label-3">3⭐</div>
+                    <div class="info-value">×<span id="mult-3">2.0</span></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label" id="star-label-4">4⭐</div>
+                    <div class="info-value">×<span id="mult-4">3.0</span></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="bet-control">
+                    <button class="btn btn-secondary btn-icon" id="bomb-dec">-</button>
+                    <div class="bet-amount" id="bombs-display">5</div>
+                    <button class="btn btn-secondary btn-icon" id="bomb-inc">+</button>
+                </div>
+                <div class="bet-control">
+                    <button class="btn btn-secondary btn-icon" id="bet-dec">-</button>
+                    <div class="bet-amount" id="current-bet">100</div>
+                    <button class="btn btn-secondary btn-icon" id="bet-inc">+</button>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="start-btn">ИГРАТЬ</button>
+                    <button class="btn btn-disabled" id="cashout-btn" disabled>ЗАБРАТЬ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
+            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com/"
+        };
+
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Конфигурация игры
+        const config = {
+            minBet: 10,
+            maxBet: 10000,
+            betStep: 10,
+            minBombs: 1,
+            maxBombs: 24,
+            gridSize: 5,
+            baseRiskMultiplier: 0.3,
+            minMultiplier: 0.5,
+            maxMultiplier: 5.88
+        };
+
+        // Состояние игры
+        const state = {
+            bet: 100,
+            bombs: 5,
+            multiplier: 1,
+            revealed: 0,
+            gameActive: false,
+            cells: [],
+            balance: 0,
+            maxWin: 0,
+            wins: 0,
+            currentMultipliers: [1.0, 1.5, 2.0, 3.0],
+            currentWin: 0,
+            starOffset: 0,
+            userId: null
+        };
+
+        // Элементы DOM
+        const elements = {
+            grid: document.getElementById('grid'),
+            bombsDisplay: document.getElementById('bombs-display'),
+            currentBet: document.getElementById('current-bet'),
+            startBtn: document.getElementById('start-btn'),
+            cashoutBtn: document.getElementById('cashout-btn'),
+            bombDec: document.getElementById('bomb-dec'),
+            bombInc: document.getElementById('bomb-inc'),
+            betDec: document.getElementById('bet-dec'),
+            betInc: document.getElementById('bet-inc'),
+            balance: document.getElementById('balance'),
+            maxWin: document.getElementById('max-win'),
+            currentWin: document.getElementById('current-win'),
+            starLabels: [
+                document.getElementById('star-label-1'),
+                document.getElementById('star-label-2'),
+                document.getElementById('star-label-3'),
+                document.getElementById('star-label-4')
+            ],
+            multipliers: [
+                document.getElementById('mult-1'),
+                document.getElementById('mult-2'),
+                document.getElementById('mult-3'),
+                document.getElementById('mult-4')
+            ],
+            menu: document.getElementById('menu'),
+            notification: document.getElementById('notification'),
+            notificationMsg: document.getElementById('notification-message'),
+            notificationIcon: document.querySelector('.notification-icon')
+        };
+
+        // Показать уведомление
+        function showNotification(message, type = 'success', duration = 3000) {
+            elements.notification.className = 'notification';
+            elements.notification.classList.add(`notification-${type}`);
+            
+            // Устанавливаем иконку в зависимости от типа
+            switch(type) {
+                case 'success':
+                    elements.notificationIcon.className = 'fas fa-check-circle notification-icon';
+                    break;
+                case 'error':
+                    elements.notificationIcon.className = 'fas fa-times-circle notification-icon';
+                    break;
+                case 'warning':
+                    elements.notificationIcon.className = 'fas fa-exclamation-circle notification-icon';
+                    break;
+                default:
+                    elements.notificationIcon.className = 'fas fa-info-circle notification-icon';
+            }
+            
+            elements.notificationMsg.textContent = message;
+            elements.notification.style.display = 'flex';
+            
+            // Скрываем уведомление через указанное время
+            setTimeout(() => {
+                elements.notification.classList.add('hide');
+                setTimeout(() => {
+                    elements.notification.style.display = 'none';
+                    elements.notification.classList.remove('hide');
+                }, 300);
+            }, duration);
+        }
+
+        // Функции меню
+        function toggleMenu() {
+            elements.menu.style.display = elements.menu.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function openWithdraw() {
+            showNotification('Функция вывода доступна в разделе "Профиль"', 'info');
+            toggleMenu();
+        }
+
+        function openDeposit() {
+            showNotification('Функция пополнения доступна в разделе "Профиль"', 'info');
+            toggleMenu();
+        }
+
+        function openSupport() {
+            showNotification('Поддержка: @cosmic_support', 'info');
+            toggleMenu();
+        }
+
+        function openHistory() {
+            showNotification('История игр будет доступна в следующем обновлении', 'warning');
+            toggleMenu();
+        }
+
+        // Закрыть меню при клике вне его
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.menu') && !e.target.closest('.menu-icon')) {
+                elements.menu.style.display = 'none';
+            }
+        });
+
+        // Получаем ID пользователя
+        function getUserId() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                return Telegram.WebApp.initDataUnsafe.user?.id.toString() || 'user_' + Math.random().toString(36).substr(2, 9);
+            }
+            return 'user_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Загружаем данные пользователя
+        function loadUserData() {
+            state.userId = getUserId();
+            const userRef = database.ref('users/' + state.userId);
+
+            userRef.on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData) {
+                    state.balance = userData.balance || 1000;
+                    state.maxWin = userData.maxWin || 0;
+                    state.wins = userData.wins || 0;
+                    updateUI();
+                } else {
+                    // Создаем нового пользователя
+                    const initialData = {
+                        balance: 1000,
+                        maxWin: 0,
+                        wins: 0,
+                        username: window.Telegram?.WebApp.initDataUnsafe.user?.username || 'Player'
+                    };
+                    userRef.set(initialData)
+                        .then(() => {
+                            state.balance = initialData.balance;
+                            state.maxWin = initialData.maxWin;
+                            state.wins = initialData.wins;
+                            updateUI();
+                        })
+                        .catch(error => {
+                            console.error("Ошибка при создании пользователя:", error);
+                            showNotification('Ошибка загрузки данных', 'error');
+                        });
+                }
+            }, (error) => {
+                console.error("Ошибка при чтении данных:", error);
+                showNotification('Ошибка загрузки данных', 'error');
+            });
+        }
+
+        // Сохраняем данные пользователя
+        function saveUserData() {
+            if (!state.userId) return;
+            
+            const updates = {
+                balance: state.balance,
+                maxWin: state.maxWin,
+                wins: state.wins,
+                lastPlayed: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            database.ref('users/' + state.userId).update(updates)
+                .catch(error => {
+                    console.error("Ошибка при сохранении данных:", error);
+                });
+        }
+
+        // Инициализация игры
+        function init() {
+            loadUserData();
+            createGrid();
+            setupEventListeners();
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+            }
+        }
+
+        // Создание игровой сетки
+        function createGrid() {
+            elements.grid.innerHTML = '';
+            state.cells = [];
+            
+            for (let i = 0; i < config.gridSize * config.gridSize; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                
+                const starsLabel = document.createElement('div');
+                starsLabel.className = 'cell-stars';
+                
+                cell.appendChild(starsLabel);
+                cell.addEventListener('click', () => handleCellClick(i));
+                
+                elements.grid.appendChild(cell);
+                state.cells.push({
+                    element: cell,
+                    starsLabel: starsLabel,
+                    isBomb: false,
+                    revealed: false
+                });
+            }
+            
+            calculateMultipliers();
+        }
+
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            elements.startBtn.addEventListener('click', startGame);
+            elements.cashoutBtn.addEventListener('click', cashOut);
+            elements.betDec.addEventListener('click', () => changeBet(-config.betStep));
+            elements.betInc.addEventListener('click', () => changeBet(config.betStep));
+            elements.bombDec.addEventListener('click', () => changeBombs(-1));
+            elements.bombInc.addEventListener('click', () => changeBombs(1));
+            
+            // Проверка баланса при изменении ставки
+            elements.startBtn.addEventListener('click', checkBalance);
+        }
+
+        // Проверка баланса перед началом игры
+        function checkBalance() {
+            if (state.bet > state.balance) {
+                showNotification('Недостаточно средств. Пополните баланс', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // Расчет множителей
+        function calculateMultipliers() {
+            if (state.bombs === 24) {
+                state.currentMultipliers = [config.maxMultiplier, 0, 0, 0];
+            } else {
+                const riskFactor = state.bombs / config.maxBombs;
+                const baseMultiplier = config.minMultiplier + 
+                    (config.baseRiskMultiplier * riskFactor * 10);
+                
+                const progression = 1 + (state.starOffset * 0.1);
+                
+                state.currentMultipliers = [
+                    parseFloat((baseMultiplier * 0.8 * progression).toFixed(2)),
+                    parseFloat((baseMultiplier * 1.2 * progression).toFixed(2)),
+                    parseFloat((baseMultiplier * 1.6 * progression).toFixed(2)),
+                    parseFloat((baseMultiplier * 2.0 * progression).toFixed(2))
+                ];
+            }
+            updateMultipliersDisplay();
+        }
+
+        // Обновление отображения множителей
+        function updateMultipliersDisplay() {
+            for (let i = 0; i < 4; i++) {
+                elements.starLabels[i].textContent = `${state.starOffset + i + 1}⭐`;
+                elements.multipliers[i].textContent = state.currentMultipliers[i] || '-';
+            }
+        }
+
+        // Изменение ставки
+        function changeBet(delta) {
+            if (state.gameActive) return;
+            
+            const newBet = state.bet + delta;
+            if (newBet >= config.minBet && newBet <= config.maxBet) {
+                state.bet = newBet;
+                elements.currentBet.textContent = state.bet;
+            }
+        }
+
+        // Изменение количества бомб
+        function changeBombs(delta) {
+            if (state.gameActive) return;
+            
+            const newBombs = state.bombs + delta;
+            if (newBombs >= config.minBombs && newBombs <= config.maxBombs) {
+                state.bombs = newBombs;
+                elements.bombsDisplay.textContent = state.bombs;
+                calculateMultipliers();
+            }
+        }
+
+        // Начало игры
+        function startGame() {
+            if (state.gameActive || !checkBalance()) return;
+            
+            state.gameActive = true;
+            state.revealed = 0;
+            state.multiplier = 1;
+            state.currentWin = 0;
+            state.starOffset = 0;
+            updateCurrentWin();
+            
+            // Сброс всех клеток
+            state.cells.forEach(cell => {
+                cell.isBomb = false;
+                cell.revealed = false;
+                cell.element.className = 'cell';
+                cell.element.textContent = '';
+                cell.starsLabel.textContent = '';
+            });
+            
+            // Размещение бомб
+            let bombsPlaced = 0;
+            while (bombsPlaced < state.bombs) {
+                const randomIndex = Math.floor(Math.random() * state.cells.length);
+                if (!state.cells[randomIndex].isBomb) {
+                    state.cells[randomIndex].isBomb = true;
+                    bombsPlaced++;
+                }
+            }
+            
+            // Списание ставки
+            state.balance -= state.bet;
+            updateBalance();
+            saveUserData();
+            
+            disableControls(true);
+            calculateMultipliers();
+            
+            showNotification(`Игра началась! Ставка: ⭐${state.bet}`, 'success');
+        }
+
+        // Обработка клика по клетке
+        function handleCellClick(index) {
+            if (!state.gameActive || state.cells[index].revealed) return;
+            
+            const cell = state.cells[index];
+            cell.revealed = true;
+            cell.element.classList.add('revealed', 'reveal-animation');
+            
+            if (cell.isBomb) {
+                // Клетка с бомбой
+                cell.element.textContent = '💣';
+                cell.element.classList.add('bomb');
+                endGame(false);
+                showNotification('Вы проиграли! Попробуйте еще раз', 'error');
+            } else {
+                // Клетка с звездой
+                state.revealed++;
+                state.starOffset++;
+                
+                if (state.bombs === 24) {
+                    state.multiplier = config.maxMultiplier;
+                } else {
+                    state.multiplier = state.currentMultipliers[Math.min(state.revealed - 1, 3)];
+                }
+                
+                cell.element.textContent = '⭐';
+                cell.element.classList.add('star', 'star-pulse');
+                const winAmount = Math.floor(state.bet * state.multiplier);
+                cell.starsLabel.textContent = `+${winAmount}`;
+                
+                calculateMultipliers();
+                updateCurrentWin();
+                
+                // Активируем кнопку "Забрать"
+                elements.cashoutBtn.classList.remove('btn-disabled');
+                elements.cashoutBtn.classList.add('btn-success');
+                elements.cashoutBtn.disabled = false;
+                
+                // Если открыты все безопасные клетки
+                if (state.revealed === (config.gridSize * config.gridSize - state.bombs)) {
+                    endGame(true);
+                    showNotification(`Победа! Выигрыш: ⭐${state.currentWin}`, 'success');
+                } else {
+                    showNotification(`+${winAmount} звезд!`, 'success', 1000);
+                }
+            }
+        }
+
+        // Завершение игры
+        function endGame(isWin) {
+            state.gameActive = false;
+            
+            if (isWin) {
+                const winAmount = Math.floor(state.bet * state.multiplier);
+                state.balance += winAmount;
+                state.wins += 1;
+                
+                if (winAmount > state.maxWin) {
+                    state.maxWin = winAmount;
+                }
+                
+                updateBalance();
+                saveUserData();
+            }
+            
+            disableControls(false);
+            resetCashoutButton();
+        }
+
+        // Забрать выигрыш
+        function cashOut() {
+            if (!state.gameActive) return;
+            
+            const winAmount = Math.floor(state.bet * state.multiplier);
+            state.balance += winAmount;
+            state.wins += 1;
+            
+            if (winAmount > state.maxWin) {
+                state.maxWin = winAmount;
+            }
+            
+            updateBalance();
+            saveUserData();
+            
+            endGame(false);
+            showNotification(`Вы забрали ⭐${winAmount}!`, 'success');
+        }
+
+        // Управление элементами управления
+        function disableControls(disabled) {
+            elements.bombDec.disabled = disabled;
+            elements.bombInc.disabled = disabled;
+            elements.betDec.disabled = disabled;
+            elements.betInc.disabled = disabled;
+        }
+
+        // Сброс кнопки "Забрать"
+        function resetCashoutButton() {
+            elements.cashoutBtn.classList.add('btn-disabled');
+            elements.cashoutBtn.classList.remove('btn-success');
+            elements.cashoutBtn.disabled = true;
+        }
+
+        // Обновление текущего выигрыша
+        function updateCurrentWin() {
+            state.currentWin = Math.floor(state.bet * state.multiplier);
+            elements.currentWin.textContent = state.gameActive 
+                ? `Текущий выигрыш: ⭐${state.currentWin}` 
+                : '';
+        }
+
+        // Обновление интерфейса
+        function updateBalance() {
+            elements.balance.textContent = state.balance;
+            elements.maxWin.textContent = state.maxWin;
+            elements.currentBet.textContent = state.bet;
+            elements.bombsDisplay.textContent = state.bombs;
+            
+            // Изменяем цвет кнопки "Играть" если недостаточно средств
+            if (state.bet > state.balance) {
+                elements.startBtn.classList.remove('btn-primary');
+                elements.startBtn.classList.add('btn-danger');
+            } else {
+                elements.startBtn.classList.remove('btn-danger');
+                elements.startBtn.classList.add('btn-primary');
+            }
+        }
+
+        // Запуск игры
+        init();
+    </script>
+</body>
+</html>
