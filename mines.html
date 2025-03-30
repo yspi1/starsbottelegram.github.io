@@ -467,14 +467,65 @@
         .star-pulse {
             animation: starPulse 1s infinite;
         }
+
+        /* Экран входа */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(10, 10, 30, 0.9);
+            z-index: 1000;
+        }
+
+        .login-title {
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: var(--gold-color);
+            text-align: center;
+        }
+
+        .login-btn {
+            padding: 15px 30px;
+            background: var(--gold-color);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .login-btn:hover {
+            background: #ffd700;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 221, 87, 0.4);
+        }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Иконки -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
+    <!-- Экран входа -->
+    <div class="login-screen" id="loginScreen">
+        <h1 class="login-title">Cosmic Mines</h1>
+        <button class="login-btn" id="loginBtn">🚀 Войти через Telegram</button>
+    </div>
+
     <!-- Иконка меню -->
     <div class="menu-icon" onclick="toggleMenu()">
         <i class="fas fa-bars"></i>
@@ -513,7 +564,7 @@
         <span id="notification-message">Сообщение</span>
     </div>
 
-    <div class="container">
+    <div class="container" id="gameContainer" style="display: none;">
         <div class="game-header">
             <h1 class="game-title">COSMIC MINES</h1>
         </div>
@@ -610,7 +661,8 @@
             currentMultipliers: [1.0, 1.5, 2.0, 3.0],
             currentWin: 0,
             starOffset: 0,
-            userId: null
+            userId: null,
+            username: "Гость"
         };
 
         // Элементы DOM
@@ -642,7 +694,10 @@
             menu: document.getElementById('menu'),
             notification: document.getElementById('notification'),
             notificationMsg: document.getElementById('notification-message'),
-            notificationIcon: document.querySelector('.notification-icon')
+            notificationIcon: document.querySelector('.notification-icon'),
+            loginScreen: document.getElementById('loginScreen'),
+            loginBtn: document.getElementById('loginBtn'),
+            gameContainer: document.getElementById('gameContainer')
         };
 
         // Показать уведомление
@@ -710,25 +765,68 @@
             }
         });
 
-        // Получаем ID пользователя
+        // Получаем ID пользователя из Telegram WebApp
         function getUserId() {
             if (window.Telegram && window.Telegram.WebApp) {
-                return Telegram.WebApp.initDataUnsafe.user?.id.toString() || 'user_' + Math.random().toString(36).substr(2, 9);
+                const tgUser = Telegram.WebApp.initDataUnsafe?.user;
+                if (tgUser) {
+                    return tgUser.id.toString();
+                }
             }
-            return 'user_' + Math.random().toString(36).substr(2, 9);
+            return null;
+        }
+
+        // Получаем имя пользователя
+        function getUsername() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                const tgUser = Telegram.WebApp.initDataUnsafe?.user;
+                if (tgUser) {
+                    return tgUser.username || 
+                           `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
+                           "Игрок";
+                }
+            }
+            return "Гость";
+        }
+
+        // Проверяем авторизацию через Telegram
+        function checkTelegramAuth() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                
+                const tgUser = Telegram.WebApp.initDataUnsafe?.user;
+                if (tgUser) {
+                    // Пользователь авторизован
+                    state.userId = tgUser.id.toString();
+                    state.username = getUsername();
+                    loadUserData();
+                    return true;
+                }
+            }
+            return false;
         }
 
         // Загружаем данные пользователя
         function loadUserData() {
-            state.userId = getUserId();
+            if (!state.userId) {
+                showNotification('Не удалось получить ID пользователя', 'error');
+                return;
+            }
+
             const userRef = database.ref('users/' + state.userId);
 
             userRef.on('value', (snapshot) => {
                 const userData = snapshot.val();
                 if (userData) {
+                    // Обновляем состояние игры данными из базы
                     state.balance = userData.balance || 1000;
                     state.maxWin = userData.maxWin || 0;
                     state.wins = userData.wins || 0;
+                    
+                    // Показываем игровой интерфейс
+                    elements.loginScreen.style.display = 'none';
+                    elements.gameContainer.style.display = 'block';
                     updateUI();
                 } else {
                     // Создаем нового пользователя
@@ -736,13 +834,19 @@
                         balance: 1000,
                         maxWin: 0,
                         wins: 0,
-                        username: window.Telegram?.WebApp.initDataUnsafe.user?.username || 'Player'
+                        username: state.username,
+                        registrationDate: new Date().toISOString()
                     };
+                    
                     userRef.set(initialData)
                         .then(() => {
                             state.balance = initialData.balance;
                             state.maxWin = initialData.maxWin;
                             state.wins = initialData.wins;
+                            
+                            // Показываем игровой интерфейс
+                            elements.loginScreen.style.display = 'none';
+                            elements.gameContainer.style.display = 'block';
                             updateUI();
                         })
                         .catch(error => {
@@ -775,14 +879,29 @@
 
         // Инициализация игры
         function init() {
-            loadUserData();
+            // Проверяем авторизацию через Telegram
+            const isAuthorized = checkTelegramAuth();
+            
+            if (isAuthorized) {
+                // Если авторизованы, загружаем данные пользователя
+                loadUserData();
+            } else {
+                // Если не авторизованы, показываем экран входа
+                elements.loginScreen.style.display = 'flex';
+                elements.gameContainer.style.display = 'none';
+                
+                // Настраиваем кнопку входа
+                elements.loginBtn.addEventListener('click', function() {
+                    if (window.Telegram && Telegram.WebApp) {
+                        Telegram.WebApp.openTelegramLink('https://t.me/YourBotUsername');
+                    } else {
+                        alert("Пожалуйста, откройте приложение через Telegram");
+                    }
+                });
+            }
+            
             createGrid();
             setupEventListeners();
-            
-            if (window.Telegram && window.Telegram.WebApp) {
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-            }
         }
 
         // Создание игровой сетки
@@ -820,9 +939,6 @@
             elements.betInc.addEventListener('click', () => changeBet(config.betStep));
             elements.bombDec.addEventListener('click', () => changeBombs(-1));
             elements.bombInc.addEventListener('click', () => changeBombs(1));
-            
-            // Проверка баланса при изменении ставки
-            elements.startBtn.addEventListener('click', checkBalance);
         }
 
         // Проверка баланса перед началом игры
