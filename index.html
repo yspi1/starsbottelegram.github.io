@@ -566,25 +566,25 @@
         }
 
         // Функции меню
-        function toggleMenu() {
-            const menu = document.getElementById('menu');
-            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-        }
+    function toggleMenu() {
+        const menu = document.getElementById('menu');
+        menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
 
-        function openWithdraw() {
-            alert('Функция вывода средств будет доступна в следующем обновлении');
-        }
+    function openWithdraw() {
+        window.location.href = 'conclusion.html';
+    }
 
-        function openDeposit() {
-            alert('Функция пополнения баланса будет доступна в следующем обновлении');
-        }
+    function openDeposit() {
+        window.location.href = 'replenishment.html';
+    }
 
-        function openSupport() {
-            alert('Свяжитесь с поддержкой через Telegram: @support');
-        }
+    function openSupport() {
+        alert('Свяжитесь с поддержкой через Telegram: @support');
+    }
 
-        function openHistory() {
-            alert(`История игр:
+    function openHistory() {
+        alert(`История игр:
 Игр сыграно: ${userData.gamesPlayed}
 Побед: ${userData.wins}
 Прибыль: ${userData.profit} ⭐`);
