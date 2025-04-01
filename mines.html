@@ -20,6 +20,7 @@
             --pink: #ff6b9d;
             --menu-bg: rgba(15, 15, 26, 0.95);
             --menu-border: #6a4cff;
+            --exchange-color: #ff4d4d;
         }
 
         * {
@@ -486,14 +487,14 @@
         .login-title {
             font-size: 28px;
             margin-bottom: 30px;
-            color: var(--gold-color);
+            color: var(--star);
             text-align: center;
         }
 
         .login-btn {
             padding: 15px 30px;
-            background: var(--gold-color);
-            color: #000;
+            background: var(--tg-primary);
+            color: white;
             border: none;
             border-radius: 10px;
             font-size: 18px;
@@ -506,9 +507,9 @@
         }
 
         .login-btn:hover {
-            background: #ffd700;
+            background: var(--purple);
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(255, 221, 87, 0.4);
+            box-shadow: 0 5px 15px rgba(106, 76, 255, 0.4);
         }
     </style>
     <!-- Firebase SDK -->
@@ -533,14 +534,8 @@
 
     <!-- Выпадающее меню -->
     <div class="menu" id="menu">
-        <button class="menu-item" onclick="window.location.href='index.html'">
-            <i class="fas fa-home"></i> Главная
-        </button>
         <button class="menu-item" onclick="window.location.href='profile.html'">
             <i class="fas fa-user"></i> Профиль
-        </button>
-        <button class="menu-item" onclick="window.location.href='games.html'">
-            <i class="fas fa-gamepad"></i> Игры
         </button>
         <div class="menu-divider"></div>
         <button class="menu-item" onclick="openDeposit()">
@@ -550,11 +545,11 @@
             <i class="fas fa-money-bill-wave"></i> Вывод
         </button>
         <div class="menu-divider"></div>
-        <button class="menu-item" onclick="openHistory()">
-            <i class="fas fa-history"></i> История
-        </button>
         <button class="menu-item" onclick="openSupport()">
             <i class="fas fa-headset"></i> Поддержка
+        </button>
+        <button class="menu-item" style="color: var(--exchange-color);" onclick="openExchanger()">
+            <i class="fas fa-exchange-alt"></i> Обменник
         </button>
     </div>
 
@@ -753,8 +748,8 @@
             toggleMenu();
         }
 
-        function openHistory() {
-            showNotification('История игр будет доступна в следующем обновлении', 'warning');
+        function openExchanger() {
+            showNotification('Обменник будет доступен в следующем обновлении', 'warning');
             toggleMenu();
         }
 
@@ -835,7 +830,9 @@
                         maxWin: 0,
                         wins: 0,
                         username: state.username,
-                        registrationDate: new Date().toISOString()
+                        registrationDate: new Date().toISOString(),
+                        lastPlayed: firebase.database.ServerValue.TIMESTAMP,
+                        gamesPlayed: 0
                     };
                     
                     userRef.set(initialData)
@@ -875,6 +872,33 @@
                 .catch(error => {
                     console.error("Ошибка при сохранении данных:", error);
                 });
+        }
+
+        // Записываем историю игры
+        function saveGameHistory(isWin, amount) {
+            if (!state.userId) return;
+            
+            const gameRef = database.ref('gameHistory/' + state.userId).push();
+            const gameData = {
+                gameType: 'mines',
+                bet: state.bet,
+                result: isWin ? 'win' : 'loss',
+                amount: amount,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                bombs: state.bombs,
+                starsRevealed: state.revealed,
+                multiplier: state.multiplier
+            };
+            
+            gameRef.set(gameData)
+                .catch(error => {
+                    console.error("Ошибка при сохранении истории игры:", error);
+                });
+            
+            // Увеличиваем счетчик игр
+            database.ref('users/' + state.userId + '/gamesPlayed').transaction((current) => {
+                return (current || 0) + 1;
+            });
         }
 
         // Инициализация игры
@@ -1055,6 +1079,7 @@
                 // Клетка с бомбой
                 cell.element.textContent = '💣';
                 cell.element.classList.add('bomb');
+                saveGameHistory(false, 0);
                 endGame(false);
                 showNotification('Вы проиграли! Попробуйте еще раз', 'error');
             } else {
@@ -1083,6 +1108,7 @@
                 
                 // Если открыты все безопасные клетки
                 if (state.revealed === (config.gridSize * config.gridSize - state.bombs)) {
+                    saveGameHistory(true, state.currentWin);
                     endGame(true);
                     showNotification(`Победа! Выигрыш: ⭐${state.currentWin}`, 'success');
                 } else {
@@ -1126,6 +1152,7 @@
             
             updateBalance();
             saveUserData();
+            saveGameHistory(true, winAmount);
             
             endGame(false);
             showNotification(`Вы забрали ⭐${winAmount}!`, 'success');
