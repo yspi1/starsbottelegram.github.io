@@ -27,7 +27,6 @@
             overflow-x: hidden;
         }
 
-        /* Космический фон */
         .space-background {
             position: fixed;
             width: 100vw;
@@ -37,21 +36,6 @@
                 radial-gradient(circle at 80% 20%, var(--neon-blue), transparent 30%),
                 linear-gradient(to bottom, #000000, var(--space-dark));
             z-index: -1;
-        }
-
-        .stars {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(2px 2px at 20% 30%, white, rgba(255,255,255,0.3)),
-                radial-gradient(2px 2px at 80% 70%, white, rgba(255,255,255,0.3));
-            animation: stars 50s linear infinite;
-        }
-
-        @keyframes stars {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
         }
 
         .container {
@@ -198,22 +182,13 @@
             color: white;
             transition: all 0.3s ease;
         }
-
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: var(--neon-blue);
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
-        }
     </style>
 </head>
 <body>
-    <div class="space-background">
-        <div class="stars"></div>
-    </div>
+    <div class="space-background"></div>
 
     <div id="loadingScreen" class="container" style="color: white; text-align: center; padding-top: 100px;">
-        <h2>🛰 Загрузка космической станции...</h2>
-        <div class="spinner" style="border-top-color: var(--neon-blue); margin: 20px auto;"></div>
+        <h2>🛰 Инициализация системы...</h2>
     </div>
 
     <div id="appContent" style="display: none;">
@@ -246,7 +221,7 @@
                     <h2 style="color: var(--planet-purple);">👾 Панель управления</h2>
                     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                         <input type="text" id="adminSearch" placeholder="Поиск по запросам..." style="flex: 1;">
-                        <select id="filterStatus" style="width: 200px;">
+                        <select id="filterStatus">
                             <option value="all">Все статусы</option>
                             <option value="open">Открытые</option>
                             <option value="closed">Закрытые</option>
@@ -266,26 +241,24 @@
             databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
         };
 
-        const adminIds = ['1290724329', '1062148525'];
-        let currentUser = { id: null, username: 'Космический путешественник', isAdmin: false };
+        const ADMIN_IDS = ['1290724329', '1062148525'];
+        let currentUser = { id: null, username: 'Гость', isAdmin: false };
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Инициализация приложения
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                initTelegram();
-                await checkAdminStatus();
+                await initUser();
                 setupEventListeners();
                 renderContent();
                 toggleLoader(false);
             } catch (error) {
-                showNotification('🌌 Ошибка инициализации', 'error');
+                showNotification('❌ Ошибка инициализации', 'error');
             }
         });
 
-        function initTelegram() {
+        async function initUser() {
             if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
                 const tgUser = Telegram.WebApp.initDataUnsafe.user;
                 currentUser.id = tgUser.id.toString();
@@ -295,10 +268,11 @@
             } else {
                 currentUser.id = 'guest_' + Math.random().toString(36).substr(2, 9);
             }
+            currentUser.isAdmin = ADMIN_IDS.includes(currentUser.id);
+            toggleAdminPanel();
         }
 
-        async function checkAdminStatus() {
-            currentUser.isAdmin = adminIds.includes(currentUser.id);
+        function toggleAdminPanel() {
             document.querySelector('.admin-panel').classList.toggle('hidden', !currentUser.isAdmin);
             document.querySelector('.user-interface').classList.toggle('hidden', currentUser.isAdmin);
         }
@@ -312,9 +286,8 @@
 
         async function handleSubmit(e) {
             e.preventDefault();
-            const newTicket = createTicketObject();
-            
             try {
+                const newTicket = createTicketObject();
                 await database.ref(`tickets/${newTicket.id}`).set(newTicket);
                 document.getElementById('ticketForm').reset();
                 showNotification('🚀 Запрос успешно отправлен!');
@@ -357,24 +330,32 @@
         }
 
         async function renderAdminTickets() {
-            const allTickets = await database.ref('tickets').once('value')
-                .then(snap => parseFirebaseData(snap).filter(t => !adminIds.includes(t.userId)));
-            
-            const filtered = filterTickets(allTickets);
+            const snapshot = await database.ref('tickets').once('value');
+            const allTickets = parseFirebaseData(snapshot);
+            const filteredTickets = filterTickets(allTickets);
             document.getElementById('adminTicketsContainer').innerHTML = 
-                filtered.map(t => createAdminTicketElement(t)).join('');
+                filteredTickets.map(t => createAdminTicketElement(t)).join('');
         }
 
         function filterTickets(tickets) {
             const searchTerm = document.getElementById('adminSearch').value.toLowerCase();
             const statusFilter = document.getElementById('filterStatus').value;
             
-            return tickets.filter(t => 
-                (statusFilter === 'all' || t.status === statusFilter) &&
-                (t.userId.includes(searchTerm) || 
-                t.subject.toLowerCase().includes(searchTerm) || 
-                t.problem.toLowerCase().includes(searchTerm))
-            );
+            return tickets
+                .filter(t => !ADMIN_IDS.includes(t.userId))
+                .filter(t => statusFilter === 'all' || t.status === statusFilter)
+                .filter(t => 
+                    t.userId.includes(searchTerm) ||
+                    t.subject.toLowerCase().includes(searchTerm) ||
+                    t.problem.toLowerCase().includes(searchTerm)
+                );
+        }
+
+        function renderUserTickets(tickets) {
+            const container = document.getElementById('ticketsContainer');
+            container.innerHTML = tickets.length ? 
+                tickets.sort(sortByDate).map(t => createUserTicketElement(t)).join('') : 
+                '<p>Нет активных запросов</p>';
         }
 
         function createUserTicketElement(ticket) {
@@ -389,7 +370,7 @@
                     </div>
                     <div class="ticket-body">
                         <div class="messages">${renderMessages(ticket)}</div>
-                        ${ticket.status === 'open' ? createUserReplyForm(ticket.id) : ''}
+                        ${ticket.status === 'open' ? createReplyForm(ticket.id, false) : ''}
                     </div>
                 </div>
             `;
@@ -413,18 +394,24 @@
                     </div>
                     <div class="ticket-body">
                         <div class="messages">${renderMessages(ticket)}</div>
-                        ${createAdminReplyForm(ticket)}
+                        ${createReplyForm(ticket.id, true, ticket.status)}
                     </div>
                 </div>
             `;
+        }
+
+        function createAdminControls(ticket) {
+            return ticket.status === 'open' ? 
+                `<button class="btn btn-danger close-btn" data-id="${ticket.id}">Закрыть</button>` :
+                `<button class="btn btn-success reopen-btn" data-id="${ticket.id}">Открыть</button>`;
         }
 
         function handleActions(e) {
             const actions = {
                 'close-btn': closeTicket,
                 'reopen-btn': reopenTicket,
-                'send-reply': sendAdminReply,
-                'send-user-reply': sendUserReply
+                'send-reply': (id) => sendReply(id, true),
+                'send-user-reply': (id) => sendReply(id, false)
             };
 
             Object.entries(actions).forEach(([cls, action]) => {
@@ -434,20 +421,43 @@
             });
         }
 
-        async function sendReply(ticketId, isAdmin = false) {
-            const text = document.getElementById(`${isAdmin ? 'admin' : 'user'}Reply-${ticketId}`).value.trim();
+        async function sendReply(ticketId, isAdmin) {
+            const textareaId = isAdmin ? `adminReply-${ticketId}` : `userReply-${ticketId}`;
+            const text = document.getElementById(textareaId)?.value.trim();
             if (!text) return;
 
-            const reply = {
-                message: text,
-                timestamp: new Date().toISOString(),
-                isAdmin
-            };
+            try {
+                await database.ref(`tickets/${ticketId}/messages`).push({
+                    message: text,
+                    timestamp: new Date().toISOString(),
+                    isAdmin
+                });
+                await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
+                document.getElementById(textareaId).value = '';
+                showNotification(isAdmin ? '👾 Ответ отправлен' : '🚀 Сообщение доставлено');
+                renderContent();
+            } catch (error) {
+                showNotification('❌ Ошибка отправки', 'error');
+            }
+        }
 
-            await database.ref(`tickets/${ticketId}/messages`).push(reply);
-            await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
-            renderContent();
-            showNotification(isAdmin ? '👾 Ответ отправлен' : '🚀 Сообщение доставлено');
+        async function closeTicket(ticketId) {
+            await updateTicketStatus(ticketId, 'closed', '🔒 Запрос закрыт');
+        }
+
+        async function reopenTicket(ticketId) {
+            await updateTicketStatus(ticketId, 'open', '🔓 Запрос открыт');
+        }
+
+        async function updateTicketStatus(ticketId, status, message) {
+            try {
+                await database.ref(`tickets/${ticketId}/status`).set(status);
+                await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
+                showNotification(message);
+                renderContent();
+            } catch (error) {
+                showNotification('❌ Ошибка обновления', 'error');
+            }
         }
 
         // Вспомогательные функции
@@ -455,17 +465,51 @@
             return snapshot.val() ? Object.values(snapshot.val()) : [];
         }
 
+        function sortByDate(a, b) {
+            return new Date(b.updatedAt) - new Date(a.updatedAt);
+        }
+
         function getPriorityLabel(priority) {
             return {
                 low: '🌌 Низкий',
                 medium: '🛸 Средний',
                 high: '🚨 Высокий'
-            }[priority] || '🛸 Средний';
+            }[priority];
         }
 
         function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleString('ru-RU');
+            return new Date(dateString).toLocaleString('ru-RU');
+        }
+
+        function renderMessages(ticket) {
+            return [
+                createMessage(ticket.problem, ticket.username, ticket.createdAt, false),
+                ...(ticket.messages || []).map(msg => 
+                    createMessage(msg.message, msg.isAdmin ? 'Администратор' : ticket.username, msg.timestamp, msg.isAdmin)
+            ].join('');
+        }
+
+        function createMessage(text, author, date, isAdmin) {
+            return `
+                <div class="message ${isAdmin ? 'admin-message' : 'user-message'}">
+                    <div class="message-text">${text}</div>
+                    <div class="message-info">${author} • ${formatDate(date)}</div>
+                </div>
+            `;
+        }
+
+        function createReplyForm(ticketId, isAdmin, status = 'open') {
+            if (status !== 'open') return '';
+            return `
+                <div class="reply-form">
+                    <textarea id="${isAdmin ? 'admin' : 'user'}Reply-${ticketId}" 
+                              placeholder="${isAdmin ? 'Ваш ответ...' : 'Ваше сообщение...'}"></textarea>
+                    <button class="btn ${isAdmin ? 'btn-success' : ''} ${isAdmin ? 'send-reply' : 'send-user-reply'}" 
+                            data-id="${ticketId}">
+                        ${isAdmin ? '📡 Ответить' : '📤 Отправить'}
+                    </button>
+                </div>
+            `;
         }
 
         function showNotification(message, type = 'success') {
@@ -479,63 +523,9 @@
             element.closest('.ticket-card').classList.toggle('ticket-expanded');
         };
 
-        // Firebase операции
-        async function closeTicket(ticketId) {
-            await database.ref(`tickets/${ticketId}/status`).set('closed');
-            await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
-            renderContent();
-            showNotification('🔒 Запрос закрыт');
-        }
-
-        async function reopenTicket(ticketId) {
-            await database.ref(`tickets/${ticketId}/status`).set('open');
-            await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
-            renderContent();
-            showNotification('🔓 Запрос открыт');
-        }
-
         function toggleLoader(show = true) {
             document.getElementById('loadingScreen').style.display = show ? 'block' : 'none';
             document.getElementById('appContent').style.display = show ? 'none' : 'block';
-        }
-
-        function renderMessages(ticket) {
-            return [
-                createMessageElement(ticket.problem, ticket.username, ticket.createdAt, false),
-                ...ticket.messages.map(msg => createMessageElement(msg.message, msg.isAdmin ? 'Администратор' : ticket.username, msg.timestamp, msg.isAdmin))
-            ].join('');
-        }
-
-        function createMessageElement(text, author, date, isAdmin) {
-            return `
-                <div class="message ${isAdmin ? 'admin-message' : 'user-message'}">
-                    <div class="message-text">${text}</div>
-                    <div class="message-info">${author} • ${formatDate(date)}</div>
-                </div>
-            `;
-        }
-
-        function createUserReplyForm(ticketId) {
-            return `
-                <div class="user-reply">
-                    <textarea id="userReply-${ticketId}" placeholder="Ваш ответ..."></textarea>
-                    <button class="btn send-user-reply" data-id="${ticketId}">📤 Отправить</button>
-                </div>
-            `;
-        }
-
-        function createAdminReplyForm(ticket) {
-            return ticket.status === 'open' ? `
-                <div class="admin-reply">
-                    <textarea id="adminReply-${ticket.id}" placeholder="Ваш ответ..."></textarea>
-                    <button class="btn btn-success send-reply" data-id="${ticket.id}">📡 Ответить</button>
-                    <button class="btn btn-danger close-btn" data-id="${ticket.id}">🔒 Закрыть</button>
-                </div>
-            ` : `
-                <div class="admin-reply">
-                    <button class="btn btn-success reopen-btn" data-id="${ticket.id}">🔓 Открыть</button>
-                </div>
-            `;
         }
     </script>
 </body>
