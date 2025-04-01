@@ -7,77 +7,118 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #007bff;
-            --gold-color: #ffdd57;
-            --text-color: #fff;
-            --bg-color: #0a0a1a;
+            --primary-color: #6a4cff;
+            --neon-color: #00e0ff;
+            --text-color: #ffffff;
+            --bg-color: #0f0f1a;
+            --button-bg: rgba(30, 30, 46, 0.7);
+            --button-hover: rgba(106, 76, 255, 0.3);
+            --menu-bg: rgba(15, 15, 26, 0.95);
+            --menu-border: #6a4cff;
+            --danger: #ff4d6d;
+            --success: #00e676;
+            --card-bg: rgba(30, 30, 46, 0.8);
         }
         
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
+            padding: 0;
             overflow: hidden;
             color: var(--text-color);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             min-height: 100vh;
             background: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(106, 76, 255, 0.15) 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, rgba(255, 107, 157, 0.15) 0%, transparent 30%);
         }
 
         /* Меню */
         .menu-icon {
             position: fixed;
-            top: 20px;
-            left: 20px;
+            top: 16px;
+            left: 16px;
             cursor: pointer;
             font-size: 24px;
             z-index: 100;
-            transition: transform 0.3s ease;
-            color: var(--gold-color);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(30, 30, 46, 0.8);
+            border-radius: 50%;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            color: var(--neon-color);
+            transition: transform 0.2s;
         }
 
         .menu-icon:hover {
-            transform: scale(1.2);
+            transform: scale(1.1);
         }
 
         .menu {
             position: fixed;
-            top: 60px;
-            left: 20px;
-            background: rgba(10, 10, 30, 0.95);
-            border-radius: 10px;
+            top: 70px;
+            left: 16px;
+            background: var(--menu-bg);
+            border-radius: 14px;
             display: none;
             flex-direction: column;
-            gap: 8px;
-            padding: 15px;
+            gap: 4px;
+            padding: 12px;
             z-index: 100;
-            border: 1px solid var(--primary-color);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            min-width: 200px;
+            border: 1px solid var(--menu-border);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            width: 220px;
+            transform-origin: top left;
+            animation: menuFadeIn 0.3s ease-out forwards;
         }
 
-        .menu button {
+        @keyframes menuFadeIn {
+            from { opacity: 0; transform: scale(0.8) translateY(-10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .menu-item {
             background: none;
             border: none;
-            color: var(--text-color);
-            font-size: 16px;
+            color: white;
+            font-size: 15px;
             cursor: pointer;
             text-align: left;
-            padding: 8px 12px;
-            border-radius: 5px;
-            transition: all 0.3s ease;
+            padding: 12px 16px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            transition: all 0.2s;
         }
 
-        .menu button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--primary-color);
-            transform: translateX(5px);
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .menu-item:hover {
+            background: rgba(106, 76, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .menu-divider {
+            height: 1px;
+            background: rgba(106, 76, 255, 0.3);
+            margin: 4px 0;
         }
 
         /* Звездный фон */
@@ -118,118 +159,231 @@
             }
         }
 
+        /* Основной контент */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
         /* Профиль */
-        .profile-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
+        .profile-card {
+            background: var(--card-bg);
             border-radius: 20px;
             padding: 30px;
             width: 90%;
             max-width: 400px;
             text-align: center;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            animation: fadeIn 1s ease-in-out;
-            margin: 20px;
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(106, 76, 255, 0) 0%,
+                rgba(106, 76, 255, 0.1) 50%,
+                rgba(106, 76, 255, 0) 100%
+            );
+            transform: rotate(30deg);
+            transition: all 0.5s ease;
+            z-index: 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .profile-title {
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: transparent;
+            background: linear-gradient(90deg, var(--neon-color), var(--primary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-shadow: 0 0 10px rgba(106, 76, 255, 0.3);
+            font-weight: 700;
             position: relative;
             z-index: 1;
-            transition: transform 0.3s ease;
-            display: none;
         }
 
-        .profile-container.visible {
-            display: block;
-        }
-
-        .profile-header h1 {
-            font-size: 26px;
-            margin-bottom: 20px;
-            font-weight: bold;
-            color: var(--gold-color);
-            text-shadow: 0 2px 8px rgba(255, 221, 87, 0.5);
+        .avatar-container {
+            position: relative;
+            margin: 0 auto 20px;
+            width: 120px;
+            height: 120px;
+            z-index: 1;
         }
 
         .avatar {
-            width: 120px;
-            height: 120px;
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
-            border: 3px solid var(--gold-color);
-            box-shadow: 0 4px 20px rgba(255, 221, 87, 0.3);
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
             object-fit: cover;
-            background-color: #222;
+            border: 3px solid var(--neon-color);
+            box-shadow: 0 0 20px rgba(0, 224, 255, 0.5);
+            transition: all 0.3s ease;
         }
 
         .avatar:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 30px rgba(255, 221, 87, 0.7);
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 224, 255, 0.8);
         }
 
-        #username {
+        .username {
             font-size: 22px;
-            margin: 15px 0;
-            color: var(--text-color);
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 15px;
+            color: var(--neon-color);
+            text-shadow: 0 0 8px rgba(0, 224, 255, 0.5);
+            position: relative;
+            z-index: 1;
         }
 
-        .balance {
-            font-size: 20px;
-            color: var(--text-color);
-            margin: 20px 0 0;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        .balance-container {
+            background: rgba(20, 20, 36, 0.7);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            position: relative;
+            z-index: 1;
         }
 
-        .balance span {
-            font-weight: bold;
-            color: var(--gold-color);
+        .balance-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 5px;
         }
 
-        /* Анимации */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .balance-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--neon-color);
+            text-shadow: 0 0 10px rgba(0, 224, 255, 0.5);
         }
 
-        /* Статистика */
-        .profile-stats {
+        .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .stat-item {
-            text-align: center;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            transition: transform 0.3s ease;
+        .stat-card {
+            background: rgba(20, 20, 36, 0.7);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(106, 76, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
-        .stat-item:hover {
-            transform: translateY(-3px);
-            background: rgba(0, 0, 0, 0.3);
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(106, 76, 255, 0.3);
+            border-color: rgba(106, 76, 255, 0.5);
         }
 
         .stat-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: var(--gold-color);
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 5px;
         }
 
         .stat-label {
-            font-size: 12px;
+            font-size: 13px;
             color: rgba(255, 255, 255, 0.7);
-            margin-top: 5px;
+        }
+
+        /* Кнопки действий */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(106, 76, 255, 0.3);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn:hover {
+            background: rgba(106, 76, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 76, 255, 0.3);
+        }
+
+        .action-btn i {
+            font-size: 16px;
+        }
+
+        /* Уведомление */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 30, 46, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--neon-color);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            animation: slideIn 0.3s ease-out forwards;
+            max-width: 90%;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .notification.hide {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+
+        @keyframes slideOut {
+            from { opacity: 1; transform: translateX(-50%) translateY(0); }
+            to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
+
+        .notification-icon {
+            font-size: 20px;
         }
 
         /* Экран входа */
@@ -243,21 +397,26 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(10, 10, 30, 0.9);
+            background: rgba(15, 15, 26, 0.95);
             z-index: 1000;
+            backdrop-filter: blur(5px);
         }
 
         .login-title {
             font-size: 28px;
             margin-bottom: 30px;
-            color: var(--gold-color);
-            text-align: center;
+            color: transparent;
+            background: linear-gradient(90deg, var(--neon-color), var(--primary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-shadow: 0 0 10px rgba(106, 76, 255, 0.3);
+            font-weight: 700;
         }
 
         .login-btn {
             padding: 15px 30px;
-            background: var(--gold-color);
-            color: #000;
+            background: linear-gradient(90deg, var(--primary-color), #8a2be2);
+            color: white;
             border: none;
             border-radius: 10px;
             font-size: 18px;
@@ -267,68 +426,122 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            box-shadow: 0 4px 15px rgba(106, 76, 255, 0.4);
         }
 
         .login-btn:hover {
-            background: #ffd700;
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(255, 221, 87, 0.4);
+            box-shadow: 0 6px 20px rgba(106, 76, 255, 0.6);
         }
 
-        @media (max-width: 480px) {
-            .profile-container {
+        /* Адаптивность */
+        @media (max-width: 500px) {
+            .profile-card {
                 padding: 20px;
-                width: 85%;
+                width: 95%;
             }
             
-            .avatar {
+            .profile-title {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            
+            .avatar-container {
                 width: 100px;
                 height: 100px;
+            }
+            
+            .balance-value {
+                font-size: 24px;
+            }
+            
+            .stat-value {
+                font-size: 20px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Экран входа -->
-    <div class="login-screen" id="loginScreen">
-        <h1 class="login-title">Космический профиль</h1>
-        <button class="login-btn" id="loginBtn">🚀 Войти через Telegram</button>
-    </div>
-
     <!-- Иконка меню -->
-    <div class="menu-icon" onclick="toggleMenu()">☰</div>
+    <div class="menu-icon" onclick="toggleMenu()">
+        <i class="fas fa-bars"></i>
+    </div>
 
     <!-- Выпадающее меню -->
     <div class="menu" id="menu">
-        <button onclick="window.location.href='games.html'"><span>🎮</span> Игры</button>
-        <button onclick="window.location.href='conclusion.html'"><span>💳</span> Вывод</button>
-        <button onclick="window.location.href='replenishment.html'"><span>💰</span> Депозит</button>
-        <button onclick="window.location.href='support.html'"><span>🛟</span> Поддержка</button>
-        <button onclick="openHistory()"><span>📊</span> История</button>
+        <button class="menu-item" onclick="window.location.href='index.html'">
+            <i class="fas fa-home"></i> Главная
+        </button>
+        <button class="menu-item" onclick="window.location.href='profile.html'">
+            <i class="fas fa-user"></i> Профиль
+        </button>
+        <div class="menu-divider"></div>
+        <button class="menu-item" onclick="window.location.href='replenishment.html'">
+            <i class="fas fa-wallet"></i> Пополнить
+        </button>
+        <button class="menu-item" onclick="window.location.href='conclusion.html'">
+            <i class="fas fa-money-bill-wave"></i> Вывод
+        </button>
+        <div class="menu-divider"></div>
+        <button class="menu-item" onclick="openHistory()">
+            <i class="fas fa-history"></i> История
+        </button>
+        <button class="menu-item" onclick="window.location.href='support.html'">
+            <i class="fas fa-headset"></i> Поддержка
+        </button>
+    </div>
+
+    <!-- Уведомление -->
+    <div class="notification" id="notification" style="display: none;">
+        <i class="fas fa-check-circle notification-icon"></i>
+        <span id="notification-message">Сообщение</span>
     </div>
 
     <!-- Звездный фон -->
     <div class="stars" id="stars-container"></div>
 
-    <!-- Контейнер профиля -->
-    <div class="profile-container" id="profileContainer">
-        <div class="profile-header">
-            <h1>Космический профиль</h1>
-        </div>
-        <div class="profile-content">
-            <img id="avatar" src="" alt="Аватар" class="avatar" loading="eager">
-            <h2 id="username">Загрузка...</h2>
-            <p class="balance">Баланс: <span id="balance">0</span> ⭐</p>
+    <!-- Экран входа -->
+    <div class="login-screen" id="loginScreen">
+        <h1 class="login-title">Космический профиль</h1>
+        <button class="login-btn" id="loginBtn">
+            <i class="fab fa-telegram"></i> Войти через Telegram
+        </button>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="main-container" id="profileContainer" style="display: none;">
+        <div class="profile-card">
+            <h1 class="profile-title">КОСМИЧЕСКИЙ ПРОФИЛЬ</h1>
             
-            <div class="profile-stats">
-                <div class="stat-item">
+            <div class="avatar-container">
+                <img id="avatar" src="" alt="Аватар" class="avatar">
+            </div>
+            
+            <h2 class="username" id="username">Загрузка...</h2>
+            
+            <div class="balance-container">
+                <div class="balance-label">Ваш баланс</div>
+                <div class="balance-value" id="balance">0 ⭐</div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
                     <div class="stat-value" id="games-played">0</div>
                     <div class="stat-label">Игр сыграно</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-card">
                     <div class="stat-value" id="wins">0</div>
                     <div class="stat-label">Побед</div>
                 </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="action-btn" onclick="window.location.href='replenishment.html'">
+                    <i class="fas fa-plus-circle"></i> Пополнить
+                </button>
+                <button class="action-btn" onclick="window.location.href='conclusion.html'">
+                    <i class="fas fa-wallet"></i> Вывести
+                </button>
             </div>
         </div>
     </div>
@@ -360,7 +573,7 @@
         let userData = {
             userId: null,
             name: "Гость",
-            avatar: "https://via.placeholder.com/150/333333/ffffff?text=USER",
+            avatar: "https://via.placeholder.com/150/6a5acd/ffffff?text=USER",
             balance: 0,
             gamesPlayed: 0,
             wins: 0,
@@ -419,7 +632,7 @@
                                  `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
                                  "Космонавт",
                             avatar: dbData.avatar || tgUser.photo_url || 
-                                  `https://via.placeholder.com/150/6a5acd/ffffff?text=${userData.name.charAt(0)}`
+                                  `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`
                         };
                     } else {
                         // Создаем новый профиль
@@ -427,7 +640,7 @@
                                       `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
                                       "Космонавт";
                         userData.avatar = tgUser.photo_url || 
-                                        `https://via.placeholder.com/150/6a5acd/ffffff?text=${userData.name.charAt(0)}`;
+                                        `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`;
                         
                         // Сохраняем новый профиль
                         database.ref('users/' + userData.userId).set(userData);
@@ -456,12 +669,12 @@
         // Показать профиль
         function showProfile() {
             elements.loginScreen.style.display = 'none';
-            elements.profileContainer.style.display = 'block';
+            elements.profileContainer.style.display = 'flex';
             
             // Обновляем интерфейс
             elements.avatar.src = userData.avatar;
             elements.username.textContent = userData.name;
-            elements.balance.textContent = userData.balance;
+            elements.balance.textContent = `${userData.balance} ⭐`;
             elements.gamesPlayed.textContent = userData.gamesPlayed;
             elements.wins.textContent = userData.wins;
         }
@@ -500,7 +713,7 @@
         // Создание звездного фона
         function createStars() {
             const container = document.getElementById('stars-container');
-            const starCount = Math.floor(window.innerWidth / 3);
+            const starCount = Math.floor(window.innerWidth / 2);
             
             for (let i = 0; i < starCount; i++) {
                 const star = document.createElement('div');
@@ -549,6 +762,43 @@
             });
         }
 
+        // Показать уведомление
+        function showNotification(message, type = 'success', duration = 3000) {
+            const notification = document.getElementById('notification');
+            const notificationMsg = document.getElementById('notification-message');
+            const notificationIcon = document.querySelector('.notification-icon');
+            
+            notification.className = 'notification';
+            notification.classList.add(`notification-${type}`);
+            
+            // Устанавливаем иконку в зависимости от типа
+            switch(type) {
+                case 'success':
+                    notificationIcon.className = 'fas fa-check-circle notification-icon';
+                    break;
+                case 'error':
+                    notificationIcon.className = 'fas fa-times-circle notification-icon';
+                    break;
+                case 'warning':
+                    notificationIcon.className = 'fas fa-exclamation-circle notification-icon';
+                    break;
+                default:
+                    notificationIcon.className = 'fas fa-info-circle notification-icon';
+            }
+            
+            notificationMsg.textContent = message;
+            notification.style.display = 'flex';
+            
+            // Скрываем уведомление через указанное время
+            setTimeout(() => {
+                notification.classList.add('hide');
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                    notification.classList.remove('hide');
+                }, 300);
+            }, duration);
+        }
+
         // Функции меню
         function toggleMenu() {
             const menu = document.getElementById('menu');
@@ -556,10 +806,14 @@
         }
 
         function openHistory() {
-            alert(`История игр:
-Игр сыграно: ${userData.gamesPlayed}
-Побед: ${userData.wins}`);
+            showNotification('История игр будет доступна в следующем обновлении', 'info');
+            toggleMenu();
         }
+
+        // Глобальные функции
+        window.addBalance = addBalance;
+        window.addGame = addGame;
+        window.addWin = addWin;
     </script>
 </body>
 </html>
