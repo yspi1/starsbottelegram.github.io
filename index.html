@@ -313,39 +313,6 @@
             color: rgba(255, 255, 255, 0.7);
         }
 
-        /* Кнопки действий */
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 25px;
-        }
-
-        .action-btn {
-            flex: 1;
-            padding: 12px;
-            border-radius: 10px;
-            border: none;
-            background: rgba(106, 76, 255, 0.3);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .action-btn:hover {
-            background: rgba(106, 76, 255, 0.5);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(106, 76, 255, 0.3);
-        }
-
-        .action-btn i {
-            font-size: 16px;
-        }
-
         /* Уведомление */
         .notification {
             position: fixed;
@@ -469,8 +436,8 @@
 
     <!-- Выпадающее меню -->
     <div class="menu" id="menu">
-        <button class="menu-item" onclick="window.location.href='index.html'">
-            <i class="fas fa-home"></i> Главная
+        <button class="menu-item" onclick="window.location.href='games.html'">
+            <i class="fas fa-gamepad"></i> Игры
         </button>
         <button class="menu-item" onclick="window.location.href='profile.html'">
             <i class="fas fa-user"></i> Профиль
@@ -533,15 +500,6 @@
                     <div class="stat-value" id="wins">0</div>
                     <div class="stat-label">Побед</div>
                 </div>
-            </div>
-            
-            <div class="action-buttons">
-                <button class="action-btn" onclick="window.location.href='replenishment.html'">
-                    <i class="fas fa-plus-circle"></i> Пополнить
-                </button>
-                <button class="action-btn" onclick="window.location.href='conclusion.html'">
-                    <i class="fas fa-wallet"></i> Вывести
-                </button>
             </div>
         </div>
     </div>
@@ -813,3 +771,7 @@
         // Глобальные функции
         window.addBalance = addBalance;
         window.addGame = addGame;
+        window.addWin = addWin;
+    </script>
+</body>
+</html>
