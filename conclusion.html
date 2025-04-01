@@ -3,164 +3,137 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Система вывода средств</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Пополнение баланса</title>
     <style>
         :root {
             --primary-color: #8A2BE2;
-            --primary-light: #9c4dff;
-            --gradient: linear-gradient(135deg, var(--primary-color) 0%, #6a11cb 100%);
-            --success-color: #4CAF50;
+            --secondary-color: #BA55D3;
             --danger-color: #ff4444;
-            --warning-color: #ffbb33;
+            --success-color: #4CAF50;
+            --warning-color: #ff9800;
             --text-color: #333;
-            --light-gray: #f5f5f5;
-            --glass-bg: rgba(255, 255, 255, 0.95);
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --dark-bg: #1a0633;
+            --transition-fast: 0.2s ease;
+            --transition-medium: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --transition-slow: 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: var(--gradient);
-            overflow: hidden;
-            position: relative;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #3a0b6b 100%);
             color: var(--text-color);
-        }
-
-        .bg-effect {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 10% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                radial-gradient(circle at 90% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
-            animation: bg-pan 20s linear infinite;
-            z-index: 0;
-        }
-
-        @keyframes bg-pan {
-            0% { background-position: 0% 0%; }
-            100% { background-position: 100% 100%; }
-        }
-
-        .user-badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255,255,255,0.9);
-            padding: 8px 15px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 10;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .user-avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
+            line-height: 1.5;
+            -webkit-text-size-adjust: 100%;
+            touch-action: manipulation;
+            overflow-x: hidden;
         }
 
         .card {
-            background: var(--glass-bg);
-            padding: 2.5rem;
-            border-radius: 20px;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 16px;
+            border-radius: 12px;
+            width: calc(100% - 20px);
             max-width: 500px;
-            position: relative;
-            z-index: 1;
+            margin: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transform: translateY(0);
+            opacity: 1;
+            transition: var(--transition-slow);
+            will-change: transform, opacity;
+        }
+
+        .card.hidden {
             transform: translateY(20px);
             opacity: 0;
-            animation: cardAppear 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            margin: 20px;
         }
 
-        @keyframes cardAppear {
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .switch-buttons {
+        .payment-methods {
             display: flex;
-            gap: 12px;
-            margin-bottom: 2rem;
-            background: var(--light-gray);
-            padding: 6px;
-            border-radius: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
         }
 
-        .switch-btn {
-            flex: 1;
-            padding: 14px;
-            border: none;
+        .payment-method {
+            padding: 10px;
+            border: 2px solid #ddd;
             border-radius: 8px;
             cursor: pointer;
-            transition: var(--transition);
             text-align: center;
-            font-weight: 600;
-            color: #666;
-            background: transparent;
-            font-size: 0.95rem;
-        }
-
-        .switch-btn.active {
             background: white;
-            color: var(--primary-color);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            flex: 1 0 calc(33.333% - 8px);
+            min-width: 0;
+            transition: var(--transition-fast);
+            transform: scale(1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        .form-section {
-            overflow: hidden;
-            max-height: 0;
-            opacity: 0;
-            transition: var(--transition);
+        .payment-method:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
-        .form-section.active {
-            max-height: 800px;
-            opacity: 1;
+        .payment-method.active {
+            border-color: var(--primary-color);
+            background-color: rgba(138, 43, 226, 0.1);
+            transform: scale(1.03);
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.15);
+        }
+
+        .payment-method img {
+            width: 36px;
+            height: 36px;
+            margin-bottom: 6px;
+            object-fit: contain;
+            transition: var(--transition-medium);
+        }
+
+        .payment-method.active img {
+            transform: scale(1.1);
         }
 
         .form-group {
-            margin-bottom: 1.5rem;
-            position: relative;
+            margin-bottom: 16px;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 8px;
             font-weight: 500;
             color: #555;
-            font-size: 0.95rem;
+            font-size: 15px;
         }
 
         input, select {
             width: 100%;
-            padding: 14px 18px;
+            padding: 12px;
             border: 1px solid #ddd;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: var(--transition);
-            box-sizing: border-box;
+            border-radius: 8px;
+            font-size: 16px;
             background: white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+            -webkit-appearance: none;
+            transition: var(--transition-fast);
         }
 
         input:focus, select:focus {
@@ -171,235 +144,249 @@
 
         .warning {
             color: var(--danger-color);
-            font-size: 0.9rem;
-            margin: 1.5rem 0;
-            padding: 1rem;
+            font-size: 14px;
+            margin: 16px 0;
+            padding: 12px;
             background: rgba(255, 68, 68, 0.08);
-            border-radius: 10px;
+            border-radius: 8px;
             display: none;
-            animation: fadeIn 0.5s ease;
             border-left: 4px solid var(--danger-color);
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
         }
 
         .btn {
             width: 100%;
-            padding: 16px;
+            padding: 14px;
             background: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: var(--transition);
-            font-size: 1rem;
+            font-size: 16px;
             font-weight: 600;
-            margin-top: 0.5rem;
-            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.25);
+            margin-top: 8px;
+            transition: var(--transition-medium);
+            transform: translateY(0);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             position: relative;
             overflow: hidden;
         }
 
         .btn:hover {
-            background: var(--primary-light);
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(138, 43, 226, 0.3);
+            box-shadow: 0 6px 12px rgba(138, 43, 226, 0.3);
         }
 
         .btn:active {
-            transform: translateY(0);
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .btn::after {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: rgba(255, 255, 255, 0.1);
-            transform: rotate(45deg);
-            transition: var(--transition);
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
             opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%, -50%);
+            transform-origin: 50% 50%;
         }
 
-        .btn:hover::after {
-            opacity: 1;
-            animation: shine 1.5s ease infinite;
+        .btn:focus:not(:active)::after {
+            animation: ripple 0.6s ease-out;
         }
 
-        @keyframes shine {
-            0% { left: -100%; }
-            100% { left: 100%; }
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
         }
 
         h2 {
             text-align: center;
-            margin-bottom: 2rem;
-            color: #333;
-            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 22px;
             font-weight: 700;
             background: linear-gradient(to right, var(--primary-color), #6a11cb);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            animation: gradientShift 8s ease infinite;
+            background-size: 200% 200%;
         }
 
-        .method-group {
-            margin-top: 1rem;
-            animation: fadeIn 0.4s ease;
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .amount-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
         }
 
-        .input-icon {
-            position: relative;
-        }
-
-        .input-icon input {
-            padding-left: 3rem;
-        }
-
-        .input-icon::before {
-            content: '';
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 24px;
-            height: 24px;
-            background-size: contain;
-            background-repeat: no-repeat;
-            z-index: 2;
-        }
-
-        .phone-icon::before {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238A2BE2'%3E%3Cpath d='M20 15.5c-1.2 0-2.5-.2-3.6-.6h-.3c-.3 0-.5.1-.7.3l-2.2 2.2c-2.8-1.5-5.2-3.8-6.6-6.6l2.2-2.2c.3-.3.4-.7.2-1-.3-1.1-.5-2.4-.5-3.6 0-.5-.5-1-1-1H4c-.5 0-1 .5-1 1 0 9.4 7.6 17 17 17 .5 0 1-.5 1-1v-3.5c0-.5-.5-1-1-1z'/%3E%3C/svg%3E");
-        }
-
-        .card-icon::before {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238A2BE2'%3E%3Cpath d='M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10z'/%3E%3C/svg%3E");
-        }
-
-        .crypto-icon::before {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238A2BE2'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E");
-        }
-
-        .exchange-rate {
-            background: rgba(138, 43, 226, 0.1);
-            padding: 0.8rem;
-            border-radius: 10px;
-            margin: 1rem 0;
+        .amount-btn {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
             text-align: center;
-            font-size: 0.9rem;
-            color: #555;
+            font-weight: 600;
+            background: white;
+            font-size: 15px;
+            transition: var(--transition-fast);
+            transform: scale(1);
         }
 
-        .exchange-rate strong {
+        .amount-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .amount-btn.active {
+            border-color: var(--primary-color);
+            background-color: rgba(138, 43, 226, 0.1);
             color: var(--primary-color);
+            transform: scale(1.03);
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.15);
         }
 
-        .success-animation {
-            animation: successPulse 0.5s ease;
+        .custom-amount {
+            grid-column: span 2;
         }
 
-        @keyframes successPulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        .payment-details {
+            background: rgba(138, 43, 226, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            word-break: break-all;
+            border-left: 3px solid var(--primary-color);
+            font-size: 14px;
+            animation: slideIn 0.4s ease-out;
         }
 
-        .transaction-history {
-            margin-top: 2rem;
-            border-top: 1px solid #eee;
-            padding-top: 1.5rem;
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .copy-btn {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            margin-top: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition-fast);
+            transform: scale(1);
+        }
+
+        .copy-btn:hover {
+            background: #a142d6;
+            transform: scale(1.03);
+        }
+
+        .copy-btn:active {
+            transform: scale(0.98);
         }
 
         .transaction-item {
             background: rgba(138, 43, 226, 0.05);
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 10px;
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: var(--transition);
+            border: 1px solid rgba(138, 43, 226, 0.1);
+            font-size: 14px;
+            transition: var(--transition-fast);
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .transaction-item:hover {
-            background: rgba(138, 43, 226, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
 
         .transaction-status {
-            padding: 0.25rem 0.5rem;
-            border-radius: 5px;
-            font-size: 0.8em;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
             font-weight: 600;
+            transition: var(--transition-fast);
         }
 
         .status-pending { background: #fff3cd; color: #856404; }
-        .status-approved { background: #d4edda; color: #155724; }
-        .status-rejected { background: #f8d7da; color: #721c24; }
-        .status-processing { background: #cce5ff; color: #004085; }
-
-        .comment-section {
-            margin-top: 1rem;
-            border-top: 1px solid #eee;
-            padding-top: 1rem;
-            display: none;
-        }
-
-        .comment {
-            background: #f8f9fa;
-            padding: 0.75rem;
-            margin: 0.5rem 0;
-            border-radius: 8px;
-            font-size: 0.85rem;
-        }
-
-        .comment-admin {
-            background: #e2e3e5;
-            border-left: 3px solid #6c757d;
-        }
-
-        .comment-user {
-            background: #e2f0fd;
-            border-left: 3px solid #0d6efd;
-        }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-failed { background: #f8d7da; color: #721c24; }
 
         .admin-panel {
-            margin-top: 2rem;
-            padding: 1.5rem;
+            margin-top: 20px;
+            padding: 16px;
             background: #f8f9fa;
-            border-radius: 15px;
+            border-radius: 12px;
             display: none;
-        }
-
-        .admin-panel h3 {
-            margin-top: 0;
-            color: var(--primary-color);
-        }
-
-        .admin-transaction-item {
-            background: white;
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: 1px solid rgba(138, 43, 226, 0.1);
+            animation: fadeIn 0.6s ease;
         }
 
         .admin-controls {
-            margin-top: 1rem;
+            margin-top: 12px;
             display: flex;
-            gap: 0.5rem;
+            gap: 8px;
         }
 
         .admin-controls button {
-            padding: 0.5rem 1rem;
-            border: none;
+            padding: 8px 12px;
+            font-size: 14px;
+            transition: var(--transition-fast);
             border-radius: 5px;
+            border: none;
             cursor: pointer;
-            font-size: 0.85rem;
+        }
+
+        .admin-controls button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
 
         .btn-approve {
@@ -412,950 +399,1237 @@
             color: white;
         }
 
-        .btn-comment {
+        .btn-warning {
             background: var(--warning-color);
-            color: #333;
-        }
-
-        .statistics-chart {
-            margin-top: 1.5rem;
-            background: white;
-            padding: 1rem;
-            border-radius: 10px;
-        }
-
-        .export-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .export-buttons button {
-            flex: 1;
-            padding: 0.75rem;
-            background: var(--primary-light);
             color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
         }
 
-        .processing-info {
-            margin: 1rem 0;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .toggle-comments {
-            background: none;
-            border: none;
-            color: var(--primary-color);
-            cursor: pointer;
-            font-size: 0.8rem;
-            margin-top: 0.5rem;
-            padding: 0;
-        }
-
-        .notification {
+        .loading-overlay {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.9);
-            color: var(--text-color);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s ease;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
             z-index: 1000;
+            color: white;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
         }
 
-        .notification.show {
-            transform: translateY(0);
+        .loading-content {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            color: #333;
+            max-width: 90%;
+            transform: scale(1);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .loader {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(138, 43, 226, 0.2);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Анимация появления карточки */
+        @keyframes cardEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Оптимизация для мобильных */
+        @media (max-width: 480px) {
+            .card {
+                padding: 12px;
+                animation: cardEntrance 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            }
+            
+            .payment-method {
+                flex: 1 0 calc(50% - 8px);
+            }
+            
+            input, select, .btn {
+                padding: 12px;
+            }
+            
+            h2 {
+                font-size: 20px;
+            }
+        }
+
+        /* Анимация для модального окна */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition-medium);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.active {
             opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: var(--transition-medium);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        /* Стили для вкладок */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            padding: 10px 16px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: var(--transition-fast);
+            font-weight: 500;
+        }
+
+        .tab.active {
+            border-bottom-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        /* Стили для формы вывода */
+        .withdraw-form {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(138, 43, 226, 0.05);
+            border-radius: 8px;
+            border: 1px dashed var(--primary-color);
+        }
+
+        /* Стили для списка заявок */
+        .withdraw-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: var(--transition-fast);
+        }
+
+        .withdraw-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .withdraw-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .withdraw-item-amount {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .withdraw-item-user {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .withdraw-item-details {
+            font-size: 14px;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        /* Стили для статистики */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 4px 0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
-    <div class="bg-effect"></div>
-    <div class="user-badge" id="userBadge" style="display: none;">
-        <img class="user-avatar" id="userAvatar" src="">
-        <span id="userName"></span>
-    </div>
-
     <div class="card">
-        <h2>Вывод средств</h2>
+        <h2>Пополнение баланса</h2>
         
-        <div class="switch-buttons">
-            <div class="switch-btn active" data-type="stars">Звёзды</div>
-            <div class="switch-btn" data-type="money">Деньги</div>
+        <div style="background: rgba(138, 43, 226, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 16px; border-left: 3px solid var(--primary-color);">
+            После оплаты средства будут зачислены в течение <strong>5-15 минут</strong>.
+            Если возникли проблемы, свяжитесь с поддержкой.
         </div>
 
-        <form id="withdrawalForm">
-            <!-- Вывод в звездах -->
-            <div class="form-section active" id="starsSection">
-                <div class="exchange-rate">
-                    Курс обмена: <strong>1 звезда = 1.46 рубля</strong>
-                </div>
-                
-                <div class="processing-info">
-                    После отправки заявки с вами свяжется администратор в Telegram для начисления звёзд.<br>
-                    Обычное время обработки: <strong>15 минут - 1 час</strong>
-                </div>
-                
-                <div class="form-group">
-                    <label for="username">Ваш Telegram юзернейм</label>
-                    <input type="text" id="username" placeholder="@username" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="starsAmount">Количество звёзд</label>
-                    <input type="number" id="starsAmount" min="50" value="50" required>
-                    <small style="display: block; margin-top: 5px; color: #666;">Минимальная сумма: 50 звёзд</small>
+        <form id="depositForm">
+            <div class="form-group">
+                <label for="username">Ваш Telegram юзернейм</label>
+                <input type="text" id="username" placeholder="@username" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Сумма пополнения (рубли)</label>
+                <div class="amount-buttons">
+                    <div class="amount-btn" data-amount="100">100 ₽</div>
+                    <div class="amount-btn" data-amount="500">500 ₽</div>
+                    <div class="amount-btn" data-amount="1000">1000 ₽</div>
+                    <div class="amount-btn" data-amount="2000">2000 ₽</div>
+                    <div class="amount-btn custom-amount">
+                        <input type="number" id="customAmount" placeholder="Другая сумма" min="100" max="50000">
+                    </div>
                 </div>
             </div>
 
-            <!-- Вывод в деньгах -->
-            <div class="form-section" id="moneySection">
-                <div class="processing-info">
-                    Время обработки вывода: <strong>1-24 часа</strong> в зависимости от загруженности системы.<br>
-                    Транзакции отслеживаются в вашем профиле.
-                </div>
-
-                <div class="form-group">
-                    <label for="moneyAmount">Сумма вывода (рубли)</label>
-                    <input type="number" id="moneyAmount" min="100" value="100" required>
-                    <small style="display: block; margin-top: 5px; color: #666;">Минимальная сумма: 100 руб.</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="moneyMethod">Способ вывода</label>
-                    <select id="moneyMethod" required>
-                        <option value="phone">На телефон</option>
-                        <option value="bank">Банковская карта</option>
-                        <option value="usdt">USDT (TRC20)</option>
-                    </select>
-                </div>
-
-                <!-- Группа для телефона -->
-                <div class="form-group" id="phoneGroup">
-                    <div class="input-icon phone-icon">
-                        <label for="phoneInput">Номер телефона</label>
-                        <input type="text" id="phoneInput" 
-                            placeholder="+7 (999) 999-99-99" 
-                            pattern="^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$">
+            <div class="form-group">
+                <label>Способ оплаты</label>
+                <div class="payment-methods">
+                    <div class="payment-method" data-method="phone">
+                        <img src="https://cdn-icons-png.flaticon.com/512/15/15895.png" alt="Телефон">
+                        <span>По номеру</span>
                     </div>
-                    
-                    <div class="method-group" id="bankSelectGroup">
-                        <label for="bankSelect">Банк</label>
-                        <select id="bankSelect">
-                            <option value="sber">Сбербанк</option>
-                            <option value="tinkoff">Тинькофф</option>
-                            <option value="vtb">ВТБ</option>
-                            <option value="alfa">Альфа-Банк</option>
-                            <option value="gazprom">Газпромбанк</option>
-                            <option value="other">Другой банк</option>
-                        </select>
+                    <div class="payment-method active" data-method="card">
+                        <img src="https://cdn-icons-png.flaticon.com/512/196/196578.png" alt="Карта">
+                        <span>По карте</span>
                     </div>
-                </div>
-
-                <!-- Группа для банковской карты -->
-                <div class="form-group" id="bankGroup" style="display: none;">
-                    <div class="input-icon card-icon">
-                        <label for="bankInput">Номер карты</label>
-                        <input type="text" id="bankInput" 
-                            placeholder="0000 0000 0000 0000" 
-                            pattern="^\d{4}\s\d{4}\s\d{4}\s\d{4}$">
+                    <div class="payment-method" data-method="crypto">
+                        <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" alt="Криптовалюта">
+                        <span>USDT</span>
                     </div>
-                </div>
-
-                <!-- Группа для USDT -->
-                <div class="form-group" id="usdtGroup" style="display: none;">
-                    <div class="input-icon crypto-icon">
-                        <label for="usdtInput">USDT кошелёк (TRC20)</label>
-                        <input type="text" id="usdtInput" 
-                            placeholder="TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB" 
-                            value="TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB"
-                            readonly>
-                    </div>
-                    <small style="display: block; margin-top: 5px; color: #666;">Адрес: TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB</small>
                 </div>
             </div>
 
-            <div class="warning">
-                <strong>Внимание:</strong> Проверьте правильность введённых данных. Администрация не несёт ответственности за ошибки в указанных реквизитах.
+            <div class="form-group" id="phoneDetails">
+                <div class="payment-details">
+                    <strong>Номер для оплаты:</strong> 
+                    <div style="font-weight: bold; margin: 8px 0;" id="phoneNumberDisplay">+7 938 401-77-10</div>
+                    <div style="font-size: 13px;">После оплаты отправьте чек в поддержку</div>
+                </div>
             </div>
 
-            <button type="submit" class="btn">
-                <span class="btn-text">Отправить заявку</span>
+            <div class="form-group" id="cardDetails">
+                <div class="payment-details">
+                    <strong>Реквизиты карты:</strong>
+                    <div style="font-weight: bold; margin: 8px 0;" id="cardNumberDisplay">4444 4444 4444 4444</div>
+                    <div id="cardHolderDisplay">Получатель: ИВАН ИВАНОВИЧ И.</div>
+                    <div style="font-size: 13px; margin-top: 8px;">После оплаты отправьте чек в поддержку</div>
+                </div>
+            </div>
+
+            <div class="form-group" id="cryptoDetails" style="display: none;">
+                <div class="payment-details">
+                    <strong>USDT (TRC20):</strong> 
+                    <div style="margin: 8px 0;" id="usdtAddressDisplay">TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB</div>
+                    <button class="copy-btn" onclick="copyToClipboard('usdtAddressDisplay')">Копировать адрес</button>
+                </div>
+            </div>
+
+            <div class="warning" id="warningMessage"></div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                <span id="btnText">Перейти к оплате</span>
             </button>
         </form>
 
-        <!-- История транзакций -->
-        <div class="transaction-history" id="transactionHistory">
-            <h3>История транзакций</h3>
-            <div id="transactionsList"></div>
+        <div class="transaction-history" id="transactionHistory" style="margin-top: 20px;">
+            <h3 style="font-size: 18px; margin-bottom: 12px;">История пополнений</h3>
+            <div id="transactionsList" style="max-height: 300px; overflow-y: auto;"></div>
         </div>
 
-        <!-- Панель администратора -->
+        <!-- Админ панель -->
         <div class="admin-panel" id="adminPanel">
-            <h3>Панель администратора</h3>
-            <div id="adminTransactions"></div>
-            <div class="statistics-chart">
-                <canvas id="statsChart"></canvas>
+            <h3 style="color: var(--primary-color); margin-bottom: 16px;">Панель администратора</h3>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="withdrawals">Заявки на вывод</div>
+                <div class="tab" data-tab="transactions">Транзакции</div>
+                <div class="tab" data-tab="settings">Настройки</div>
             </div>
-            <div class="export-buttons">
-                <button onclick="exportData('csv')" class="btn">Экспорт в CSV</button>
-                <button onclick="exportData('json')" class="btn">Экспорт в JSON</button>
+            
+            <div class="tab-content active" id="withdrawalsTab">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="pendingWithdrawals">0</div>
+                        <div class="stat-label">Ожидают</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalWithdrawals">0</div>
+                        <div class="stat-label">Всего</div>
+                    </div>
+                </div>
+                
+                <div id="withdrawalsList"></div>
+            </div>
+            
+            <div class="tab-content" id="transactionsTab">
+                <div id="adminTransactions"></div>
+            </div>
+            
+            <div class="tab-content" id="settingsTab">
+                <div style="margin-bottom: 16px; padding: 12px; background: rgba(138, 43, 226, 0.05); border-radius: 8px; border: 1px dashed var(--primary-color);">
+                    <h4 style="margin-bottom: 8px;">Добавить администратора</h4>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <input type="text" id="newAdminId" placeholder="Telegram ID" style="flex: 1; padding: 8px;">
+                        <button onclick="addAdmin()" style="padding: 8px 12px; background: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer;">Добавить</button>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 16px;">
+                    <h4 style="margin-bottom: 8px;">Реквизиты для выплат</h4>
+                    <div class="withdraw-form">
+                        <div class="form-group">
+                            <label>Номер карты для выплат</label>
+                            <input type="text" id="withdrawCardNumber" placeholder="0000 0000 0000 0000">
+                        </div>
+                        <div class="form-group">
+                            <label>Владелец карты</label>
+                            <input type="text" id="withdrawCardHolder" placeholder="ИВАН ИВАНОВИЧ И.">
+                        </div>
+                        <button class="btn" onclick="saveWithdrawDetails()">Сохранить</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="notification" class="notification"></div>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <script>
-        // Конфигурация Firebase
-        const firebaseConfig = {
-            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
-            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
-        };
-
         // Инициализация Firebase
+        const firebaseConfig = {
+            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com/",
+            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8"
+        };
+        
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-
+        const database = firebase.database();
+        
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // Конфигурация
+        const config = {
+            telegramSupport: "@support",
+            minDeposit: 100,
+            maxDeposit: 50000,
+            minWithdrawal: 100,
+            adminIds: ["123456789", "987654321"] // Предустановленные админы
+        };
+        
         // Основные переменные
-        const ADMIN_IDS = [1290724329, 1062148525];
-        const TELEGRAM_BOT_TOKEN = "7832309119:AAGvQu9jqYZk0mqZu0ubAXRCe16Q54JEonw";
-        const USDT_TRC20_ADDRESS = "TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB";
-        let currentUser = { id: null, username: 'Гость', isAdmin: false };
-        let transactionsUnsubscribe = null;
-        let adminTransactionsUnsubscribe = null;
-        let statsChart = null;
-        const exchangeRate = 1.46;
-
+        let currentUser = null;
+        let selectedAmount = 0;
+        let selectedMethod = "card";
+        let isAdmin = false;
+        
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
+            showLoading("Инициализация...");
+            
             try {
-                await initUser();
+                // Получаем данные пользователя Telegram
+                const tgUser = tg.initDataUnsafe?.user;
+                if (tgUser) {
+                    document.getElementById('username').value = tgUser.username ? `@${tgUser.username}` : '';
+                    currentUser = await updateTelegramUser(tgUser);
+                    await loadPaymentDetails();
+                    loadUserTransactions(tgUser.id.toString());
+                    
+                    // Проверяем, является ли пользователь админом
+                    isAdmin = await checkAdminStatus(tgUser.id.toString());
+                    if (isAdmin) {
+                        document.getElementById('adminPanel').style.display = 'block';
+                        loadAdminTransactions();
+                        loadWithdrawals();
+                        initTabs();
+                        loadWithdrawDetails();
+                    }
+                } else {
+                    loadPaymentDetails();
+                    loadUserTransactions('anonymous');
+                }
+                
                 initForm();
-                loadTransactions();
-                toggleLoader(false);
+                
+                // Анимация появления карточки
+                setTimeout(() => {
+                    document.querySelector('.card').classList.remove('hidden');
+                }, 100);
+                
+                hideLoading();
             } catch (error) {
-                showNotification('❌ Ошибка инициализации', 'error');
+                console.error("Ошибка инициализации:", error);
+                hideLoading();
+                showError(null, null, "Произошла ошибка при загрузке. Пожалуйста, попробуйте позже.");
             }
         });
-
-        // Инициализация пользователя
-        async function initUser() {
-            // Проверяем Telegram Web App
-            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-                const tgUser = Telegram.WebApp.initDataUnsafe.user;
-                currentUser.id = tgUser.id.toString();
-                currentUser.username = tgUser.username || `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim();
-                
-                // Инициализируем Telegram Web App
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-                
-                // Показываем данные пользователя
-                document.getElementById('userBadge').style.display = 'flex';
-                document.getElementById('userName').textContent = tgUser.username ? `@${tgUser.username}` : currentUser.username;
-                
-                if (tgUser.photo_url) {
-                    document.getElementById('userAvatar').src = tgUser.photo_url;
-                }
-                
-                // Автозаполнение юзернейма
-                if (tgUser.username) {
-                    document.getElementById('username').value = `@${tgUser.username}`;
-                    document.getElementById('username').readOnly = true;
-                }
+        
+        // Инициализация вкладок
+        function initTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Убираем активный класс у всех вкладок и контента
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Добавляем активный класс текущей вкладке и соответствующему контенту
+                    this.classList.add('active');
+                    const tabId = this.dataset.tab + 'Tab';
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        // Обновление данных пользователя
+        async function updateTelegramUser(tgUser) {
+            if (!tgUser?.id) return;
+            
+            const userId = tgUser.id.toString();
+            const userRef = database.ref(`users/${userId}`);
+            const snapshot = await userRef.once('value');
+            
+            const userData = {
+                id: userId,
+                username: tgUser.username || '',
+                first_name: tgUser.first_name || '',
+                last_name: tgUser.last_name || '',
+                last_active: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            if (!snapshot.exists()) {
+                userData.created_at = firebase.database.ServerValue.TIMESTAMP;
+                userData.balance = 0;
+                await userRef.set(userData);
             } else {
-                // Анонимный пользователь
-                currentUser.id = 'guest_' + Math.random().toString(36).substr(2, 9);
+                await userRef.update(userData);
             }
             
-            // Проверяем админские права
-            currentUser.isAdmin = ADMIN_IDS.includes(parseInt(currentUser.id));
-            
-            // Показываем/скрываем админ-панель
-            document.getElementById('adminPanel').style.display = currentUser.isAdmin ? 'block' : 'none';
+            return { ref: userRef, key: userId, data: userData };
         }
-
+        
+        // Загрузка реквизитов
+        async function loadPaymentDetails() {
+            const detailsRef = database.ref('paymentDetails');
+            const snapshot = await detailsRef.once('value');
+            
+            if (snapshot.exists()) {
+                const details = snapshot.val();
+                document.getElementById('phoneNumberDisplay').textContent = details.phone || "+79384017710";
+                document.getElementById('cardNumberDisplay').textContent = details.cardNumber || "4444 4444 4444 4444";
+                document.getElementById('cardHolderDisplay').textContent = `Получатель: ${details.cardHolder || "ИВАН ИВАНОВИЧ И."}`;
+                document.getElementById('usdtAddressDisplay').textContent = details.usdtAddress || "TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB";
+            }
+        }
+        
+        // Загрузка реквизитов для выплат
+        async function loadWithdrawDetails() {
+            if (!isAdmin) return;
+            
+            const detailsRef = database.ref('withdrawDetails');
+            const snapshot = await detailsRef.once('value');
+            
+            if (snapshot.exists()) {
+                const details = snapshot.val();
+                document.getElementById('withdrawCardNumber').value = details.cardNumber || "";
+                document.getElementById('withdrawCardHolder').value = details.cardHolder || "";
+            }
+        }
+        
+        // Сохранение реквизитов для выплат
+        async function saveWithdrawDetails() {
+            if (!isAdmin) return;
+            
+            const cardNumber = document.getElementById('withdrawCardNumber').value.trim();
+            const cardHolder = document.getElementById('withdrawCardHolder').value.trim();
+            
+            if (!cardNumber || !cardHolder) {
+                showError(null, null, "Заполните все поля");
+                return;
+            }
+            
+            try {
+                showLoading("Сохранение...");
+                await database.ref('withdrawDetails').set({
+                    cardNumber: cardNumber,
+                    cardHolder: cardHolder,
+                    updatedAt: firebase.database.ServerValue.TIMESTAMP,
+                    updatedBy: currentUser.key
+                });
+                hideLoading();
+                showSuccess(null, null, "Реквизиты сохранены");
+            } catch (error) {
+                console.error("Ошибка сохранения:", error);
+                hideLoading();
+                showError(null, null, "Ошибка сохранения");
+            }
+        }
+        
+        // Проверка прав администратора
+        async function checkAdminStatus(userId) {
+            if (!userId) return false;
+            
+            // Проверяем предустановленных админов
+            if (config.adminIds.includes(userId)) {
+                return true;
+            }
+            
+            try {
+                const snapshot = await database.ref(`admins/${userId}`).once('value');
+                return snapshot.exists();
+            } catch (error) {
+                console.error('Ошибка проверки прав:', error);
+                return false;
+            }
+        }
+        
         // Инициализация формы
         function initForm() {
-            const switchBtns = document.querySelectorAll('.switch-btn');
-            const sections = {
-                stars: document.getElementById('starsSection'),
-                money: document.getElementById('moneySection')
+            // Выбор суммы
+            const amountBtns = document.querySelectorAll('.amount-btn');
+            const customAmountInput = document.getElementById('customAmount');
+            
+            amountBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (!this.querySelector('input')) {
+                        amountBtns.forEach(b => {
+                            b.classList.remove('active');
+                            animateClick(b, false);
+                        });
+                        this.classList.add('active');
+                        animateClick(this, true);
+                        selectedAmount = parseInt(this.dataset.amount);
+                        customAmountInput.value = '';
+                    }
+                });
+            });
+
+            customAmountInput.addEventListener('input', function() {
+                if (this.value) {
+                    amountBtns.forEach(b => {
+                        b.classList.remove('active');
+                        animateClick(b, false);
+                    });
+                    selectedAmount = parseInt(this.value) || 0;
+                }
+            });
+
+            // Выбор метода оплаты
+            const paymentMethods = document.querySelectorAll('.payment-method');
+            const paymentDetails = {
+                phone: document.getElementById('phoneDetails'),
+                card: document.getElementById('cardDetails'),
+                crypto: document.getElementById('cryptoDetails')
+            };
+            
+            paymentMethods.forEach(method => {
+                method.addEventListener('click', function() {
+                    paymentMethods.forEach(m => {
+                        m.classList.remove('active');
+                        animateClick(m, false);
+                    });
+                    this.classList.add('active');
+                    animateClick(this, true);
+                    selectedMethod = this.dataset.method;
+                    
+                    Object.values(paymentDetails).forEach(detail => {
+                        detail.style.display = 'none';
+                    });
+                    
+                    // Анимация появления выбранного метода
+                    setTimeout(() => {
+                        paymentDetails[selectedMethod].style.display = 'block';
+                    }, 200);
+                });
+            });
+
+            // Копирование в буфер обмена
+            window.copyToClipboard = function(elementId) {
+                const element = document.getElementById(elementId);
+                const text = element.textContent || element.innerText;
+                navigator.clipboard.writeText(text).then(() => {
+                    const btn = element.nextElementSibling;
+                    if (btn && btn.classList.contains('copy-btn')) {
+                        btn.textContent = '✓ Скопировано!';
+                        btn.style.backgroundColor = 'var(--success-color)';
+                        setTimeout(() => {
+                            btn.textContent = 'Копировать';
+                            btn.style.backgroundColor = 'var(--secondary-color)';
+                        }, 2000);
+                    }
+                });
             };
 
-            // Переключение между вкладками
-            switchBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    switchBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    
-                    const type = btn.dataset.type;
-                    Object.values(sections).forEach(section => 
-                        section.classList.remove('active'));
-                    sections[type].classList.add('active');
-                    
-                    document.querySelector('.warning').style.display = 'block';
-                });
-            });
-
-            // Элементы формы
-            const moneyMethod = document.getElementById('moneyMethod');
-            const phoneGroup = document.getElementById('phoneGroup');
-            const bankGroup = document.getElementById('bankGroup');
-            const usdtGroup = document.getElementById('usdtGroup');
-            const bankSelectGroup = document.getElementById('bankSelectGroup');
-            const phoneInput = document.getElementById('phoneInput');
-            const bankInput = document.getElementById('bankInput');
-            const usdtInput = document.getElementById('usdtInput');
-            const form = document.getElementById('withdrawalForm');
-            const btnText = document.querySelector('.btn-text');
-            const starsAmount = document.getElementById('starsAmount');
-            const moneyAmount = document.getElementById('moneyAmount');
-
-            // Изменение способа выплаты
-            moneyMethod.addEventListener('change', () => {
-                // Скрываем все группы
-                phoneGroup.style.display = 'none';
-                bankGroup.style.display = 'none';
-                usdtGroup.style.display = 'none';
-                bankSelectGroup.style.display = 'none';
-
-                // Показываем нужную группу
-                switch(moneyMethod.value) {
-                    case 'phone':
-                        phoneGroup.style.display = 'block';
-                        bankSelectGroup.style.display = 'block';
-                        break;
-                    
-                    case 'bank':
-                        bankGroup.style.display = 'block';
-                        break;
-                    
-                    case 'usdt':
-                        usdtGroup.style.display = 'block';
-                        break;
-                }
-            });
-
-            // Инициализация при загрузке
-            moneyMethod.dispatchEvent(new Event('change'));
-
             // Обработка формы
-            form.addEventListener('submit', async function(e) {
+            document.getElementById('depositForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const btn = this.querySelector('.btn');
-                if (btn.disabled) return;
+                const btn = document.getElementById('submitBtn');
+                const btnText = document.getElementById('btnText');
+                const username = document.getElementById('username').value.trim();
                 
-                const activeType = document.querySelector('.switch-btn.active').dataset.type;
-                let formData = {
-                    type: activeType,
-                    username: document.getElementById('username').value.trim(),
-                    tg_user_id: currentUser.id,
-                    tg_username: currentUser.username
-                };
-
-                // Валидация звёзд
-                if(activeType === 'stars') {
-                    formData.amount = parseFloat(starsAmount.value);
-                    formData.amount_rub = (formData.amount * exchangeRate).toFixed(2);
-                    
-                    if (formData.amount < 50) {
-                        showNotification('Минимальная сумма вывода - 50 звёзд', 'error');
-                        return;
-                    }
-                    if (!formData.username.startsWith('@') || formData.username.length < 5) {
-                        showNotification('Введите корректный Telegram юзернейм (начинается с @)', 'error');
-                        return;
-                    }
+                if (!username.startsWith('@') || username.length < 5) {
+                    showWarning('Введите корректный Telegram юзернейм (начинается с @)');
+                    animateShake(document.getElementById('username'));
+                    return;
+                }
+                
+                if (selectedAmount < config.minDeposit) {
+                    showWarning(`Минимальная сумма пополнения - ${config.minDeposit} руб.`);
+                    animateShake(document.querySelector('.amount-buttons'));
+                    return;
+                }
+                
+                if (selectedAmount > config.maxDeposit) {
+                    showWarning(`Максимальная сумма пополнения - ${config.maxDeposit} руб.`);
+                    animateShake(document.querySelector('.amount-buttons'));
+                    return;
                 }
 
-                // Валидация денег
-                if(activeType === 'money') {
-                    formData.amount_rub = parseFloat(moneyAmount.value);
-                    formData.amount = (formData.amount_rub * exchangeRate).toFixed(2);
-                    formData.method = moneyMethod.value;
-                    
-                    if (formData.amount_rub < 100) {
-                        showNotification('Минимальная сумма вывода - 100 руб.', 'error');
-                        return;
-                    }
-                    
-                    switch(moneyMethod.value) {
-                        case 'phone':
-                            formData.phone = phoneInput.value;
-                            formData.bank = document.getElementById('bankSelect').value;
-                            if(!/^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$/.test(formData.phone)) {
-                                showNotification('Пожалуйста, введите корректный номер телефона в формате: +7 (999) 999-99-99', 'error');
-                                return;
-                            }
-                            break;
-                        
-                        case 'bank':
-                            formData.card = bankInput.value.replace(/\s/g, '');
-                            if(!/^\d{16}$/.test(formData.card)) {
-                                showNotification('Пожалуйста, введите корректный номер карты (16 цифр)', 'error');
-                                return;
-                            }
-                            break;
-                        
-                        case 'usdt':
-                            formData.usdt = USDT_TRC20_ADDRESS;
-                            break;
-                    }
-                }
-
-                // Блокировка кнопки
                 btn.disabled = true;
                 btnText.textContent = 'Обработка...';
-                btn.style.backgroundColor = 'var(--warning-color)';
                 
                 try {
-                    // Сохраняем транзакцию в Firestore
-                    const transactionRef = await db.collection('transactions').add({
-                        ...formData,
-                        userId: currentUser.id,
+                    showLoading("Создание транзакции...");
+                    
+                    const userId = currentUser?.key || 'anonymous';
+                    const transactionData = {
+                        userId: userId,
+                        username: username,
+                        amount: selectedAmount,
+                        method: selectedMethod,
                         status: 'pending',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        comments: []
-                    });
-
-                    // Отправляем уведомление админам
-                    if (currentUser.isAdmin) {
-                        await sendTelegramNotification(
-                            ADMIN_IDS,
-                            `Новая заявка на вывод! ID: ${transactionRef.id}\n` +
-                            `Тип: ${formData.type === 'stars' ? 'Звёзды' : 'Деньги'}\n` +
-                            `Сумма: ${formData.type === 'stars' ? formData.amount + ' звёзд' : formData.amount_rub + ' руб.'}\n` +
-                            `Пользователь: ${formData.tg_username || formData.username}`
-                        );
-                    }
-
-                    // Анимация успеха
-                    btnText.textContent = '✓ Успешно!';
-                    btn.style.backgroundColor = 'var(--success-color)';
-                    btn.classList.add('success-animation');
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        details: getPaymentDetails(selectedMethod)
+                    };
                     
-                    setTimeout(() => {
-                        btnText.textContent = 'Отправить заявку';
-                        btn.style.backgroundColor = 'var(--primary-color)';
-                        btn.classList.remove('success-animation');
-                        btn.disabled = false;
-                        form.reset();
-                        
-                        // Сброс к первому варианту
-                        switchBtns[0].click();
-                        moneyMethod.value = 'phone';
-                        moneyMethod.dispatchEvent(new Event('change'));
-                        starsAmount.value = 50;
-                        moneyAmount.value = 100;
-                        
-                        // Обновляем список транзакций
-                        loadTransactions();
-                    }, 2000);
-
-                    showNotification('✅ Заявка успешно отправлена!');
-
+                    const transactionRef = database.ref('transactions').push();
+                    await transactionRef.set(transactionData);
+                    
+                    if (userId !== 'anonymous') {
+                        await database.ref(`users/${userId}/transactions/${transactionRef.key}`).set(true);
+                    }
+                    
+                    showSuccess(btn, btnText, () => {
+                        loadUserTransactions(userId);
+                        showPaymentInstructions(selectedMethod, selectedAmount, transactionRef.key);
+                    });
+                    
+                    hideLoading();
                 } catch (error) {
-                    console.error('Ошибка при сохранении транзакции:', error);
-                    btnText.textContent = 'Ошибка!';
-                    btn.style.backgroundColor = 'var(--danger-color)';
-                    
-                    setTimeout(() => {
-                        btnText.textContent = 'Отправить заявку';
-                        btn.style.backgroundColor = 'var(--primary-color)';
-                        btn.disabled = false;
-                    }, 2000);
-                    
-                    showNotification('❌ Ошибка при отправке заявки', 'error');
+                    console.error('Ошибка:', error);
+                    showError(btn, btnText, 'Произошла ошибка');
+                    hideLoading();
                 }
             });
-
-            // Маска для номера телефона
-            phoneInput.addEventListener('input', function(e) {
-                let value = this.value.replace(/\D/g, '');
-                if(value.length > 0) value = '+7' + value.substring(1);
-                value = value.replace(/(\+\d)(\d{3})(\d{3})(\d{2})(\d{2})/, '$1 ($2) $3-$4-$5');
-                this.value = value.substring(0, 18);
-            });
-
-            // Маска для номера карты
-            bankInput.addEventListener('input', function(e) {
-                let value = this.value.replace(/\D/g, '');
-                value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-                this.value = value.substring(0, 19);
-            });
-
-            // Валидация в реальном времени
-            usdtInput.addEventListener('input', function() {
-                const isValid = /^T[A-Za-z1-9]{0,33}$/.test(this.value);
-                this.style.borderColor = isValid ? '#ddd' : 'var(--danger-color)';
-            });
-
-            bankInput.addEventListener('input', function() {
-                const isValid = /^\d{0,4}\s?\d{0,4}\s?\d{0,4}\s?\d{0,4}$/.test(this.value);
-                this.style.borderColor = isValid ? '#ddd' : 'var(--danger-color)';
-            });
-
-            phoneInput.addEventListener('input', function() {
-                const isValid = /^\+7\s?\(?\d{0,3}\)?\s?\d{0,3}-?\d{0,2}-?\d{0,2}$/.test(this.value);
-                this.style.borderColor = isValid ? '#ddd' : 'var(--danger-color)';
-            });
         }
-
-        // Загрузка транзакций
-        async function loadTransactions() {
-            if (currentUser.isAdmin) {
-                loadAdminTransactions();
-            } else {
-                loadUserTransactions();
-            }
-        }
-
-      // Загрузка транзакций пользователя
-async function loadUserTransactions() {
-    // Отписываемся от предыдущего слушателя, если он был
-    if (transactionsUnsubscribe) {
-        transactionsUnsubscribe();
-    }
-    
-    const transactionsList = document.getElementById('transactionsList');
-    transactionsList.innerHTML = '<p>Загрузка истории...</p>';
-    
-    try {
-        transactionsUnsubscribe = db.collection('transactions')
-            .where('userId', '==', currentUser.id)
-            .orderBy('timestamp', 'desc')
-            .limit(10)
-            .onSnapshot(snapshot => {
-                if (snapshot.empty) {
-                    transactionsList.innerHTML = '<p>У вас пока нет транзакций</p>';
-                    return;
-                }
-                
-                transactionsList.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const transaction = doc.data();
-                    const date = transaction.timestamp?.toDate() || new Date();
-                    const formattedDate = date.toLocaleString('ru-RU');
+        
+        // Загрузка заявок на вывод
+        function loadWithdrawals() {
+            if (!isAdmin) return;
+            
+            const withdrawalsList = document.getElementById('withdrawalsList');
+            withdrawalsList.innerHTML = '<p style="animation: fadeIn 0.5s ease;">Загрузка заявок...</p>';
+            
+            let pendingCount = 0;
+            let totalCount = 0;
+            
+            database.ref('withdrawals')
+                .orderByChild('timestamp')
+                .on('value', snapshot => {
+                    withdrawalsList.innerHTML = '';
+                    pendingCount = 0;
+                    totalCount = 0;
                     
-                    const statusMap = {
-                        'pending': 'Ожидание',
-                        'approved': 'Одобрено',
-                        'rejected': 'Отклонено',
-                        'processing': 'В обработке'
-                    };
+                    if (!snapshot.exists()) {
+                        withdrawalsList.innerHTML = '<p style="animation: fadeIn 0.5s ease;">Нет заявок на вывод</p>';
+                        updateWithdrawalStats(pendingCount, totalCount);
+                        return;
+                    }
                     
-                    const statusClassMap = {
-                        'pending': 'status-pending',
-                        'approved': 'status-approved',
-                        'rejected': 'status-rejected',
-                        'processing': 'status-processing'
-                    };
+                    const withdrawals = [];
+                    snapshot.forEach(child => {
+                        const withdrawal = {
+                            id: child.key,
+                            ...child.val()
+                        };
+                        withdrawals.push(withdrawal);
+                        
+                        if (withdrawal.status === 'pending') pendingCount++;
+                        totalCount++;
+                    });
                     
-                    const transactionItem = document.createElement('div');
-                    transactionItem.className = 'transaction-item';
-                    transactionItem.innerHTML = `
-                        <div>
-                            <strong>${transaction.type === 'stars' ? 'Звёзды' : 'Деньги'}</strong>
-                            <div>${formattedDate}</div>
-                            <button class="toggle-comments" data-id="${doc.id}">Показать комментарии</button>
-                            <div class="comment-section" id="comments-${doc.id}"></div>
-                        </div>
-                        <div>
-                            <div>${transaction.type === 'stars' 
-                                ? `${transaction.amount} звёзд` 
-                                : `${transaction.amount_rub} руб.`}</div>
-                            <div class="transaction-status ${statusClassMap[transaction.status] || ''}">
-                                ${statusMap[transaction.status] || transaction.status}
-                            </div>
-                        </div>
-                    `;
+                    // Обновляем статистику
+                    updateWithdrawalStats(pendingCount, totalCount);
                     
-                    transactionsList.appendChild(transactionItem);
+                    // Сортируем: сначала ожидающие, затем по дате (новые сверху)
+                    withdrawals.sort((a, b) => {
+                        if (a.status === 'pending' && b.status !== 'pending') return -1;
+                        if (a.status !== 'pending' && b.status === 'pending') return 1;
+                        return (b.timestamp || 0) - (a.timestamp || 0);
+                    });
                     
-                    // Загружаем комментарии для этой транзакции
-                    loadComments(doc.id, `comments-${doc.id}`);
-                    
-                    // Обработчик для кнопки показа комментариев
-                    transactionItem.querySelector('.toggle-comments').addEventListener('click', function() {
-                        const commentsSection = document.getElementById(`comments-${doc.id}`);
-                        if (commentsSection.style.display === 'block') {
-                            commentsSection.style.display = 'none';
-                            this.textContent = 'Показать комментарии';
-                        } else {
-                            commentsSection.style.display = 'block';
-                            this.textContent = 'Скрыть комментарии';
-                        }
+                    // Отображаем заявки
+                    withdrawals.forEach((w, index) => {
+                        setTimeout(() => {
+                            withdrawalsList.appendChild(createWithdrawalElement(w));
+                        }, index * 100);
                     });
                 });
-            });
-    } catch (error) {
-        console.error('Ошибка загрузки транзакций:', error);
-        transactionsList.innerHTML = '<p>Ошибка загрузки истории</p>';
-    }
-}
-
-// Загрузка транзакций для админа
-async function loadAdminTransactions() {
-    if (adminTransactionsUnsubscribe) {
-        adminTransactionsUnsubscribe();
-    }
-    
-    const adminTransactions = document.getElementById('adminTransactions');
-    adminTransactions.innerHTML = '<p>Загрузка заявок...</p>';
-    
-    try {
-        adminTransactionsUnsubscribe = db.collection('transactions')
-            .orderBy('timestamp', 'desc')
-            .limit(50)
-            .onSnapshot(snapshot => {
-                if (snapshot.empty) {
-                    adminTransactions.innerHTML = '<p>Нет активных заявок</p>';
-                    return;
-                }
-                
-                adminTransactions.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const transaction = doc.data();
-                    const date = transaction.timestamp?.toDate() || new Date();
-                    const formattedDate = date.toLocaleString('ru-RU');
-                    
-                    const statusMap = {
-                        'pending': 'Ожидание',
-                        'approved': 'Одобрено',
-                        'rejected': 'Отклонено',
-                        'processing': 'В обработке'
-                    };
-                    
-                    const adminItem = document.createElement('div');
-                    adminItem.className = 'admin-transaction-item';
-                    adminItem.innerHTML = `
-                        <div>
-                            <strong>ID: ${doc.id}</strong>
-                            <div>${formattedDate}</div>
-                            <div>Пользователь: ${transaction.tg_username || transaction.username || 'Не указан'}</div>
-                            <div>Тип: ${transaction.type === 'stars' ? 'Звёзды' : 'Деньги'}</div>
-                            <div>Сумма: ${transaction.type === 'stars' 
-                                ? `${transaction.amount} звёзд (${transaction.amount_rub} руб.)` 
-                                : `${transaction.amount_rub} руб. (${transaction.amount} звёзд)`}</div>
-                            ${transaction.method ? `<div>Метод: ${getMethodName(transaction.method)}</div>` : ''}
-                            ${transaction.phone ? `<div>Телефон: ${transaction.phone}</div>` : ''}
-                            ${transaction.card ? `<div>Карта: **** ${transaction.card.slice(-4)}</div>` : ''}
-                            ${transaction.usdt ? `<div>USDT: ${transaction.usdt}</div>` : ''}
-                            <div class="transaction-status">
-                                Статус: ${statusMap[transaction.status] || transaction.status}
-                            </div>
-                            <div class="comment-section" id="admin-comments-${doc.id}"></div>
-                            <textarea id="admin-comment-${doc.id}" placeholder="Ваш комментарий" style="width: 100%; margin-top: 10px;"></textarea>
-                        </div>
-                    `;
-                    
-                    const controls = document.createElement('div');
-                    controls.className = 'admin-controls';
-                    controls.innerHTML = `
-                        <button class="btn-approve" data-id="${doc.id}">Одобрить</button>
-                        <button class="btn-reject" data-id="${doc.id}">Отклонить</button>
-                        <button class="btn-comment" data-id="${doc.id}">Добавить комментарий</button>
-                    `;
-                    
-                    adminItem.appendChild(controls);
-                    adminTransactions.appendChild(adminItem);
-                    
-                    // Загружаем комментарии
-                    loadComments(doc.id, `admin-comments-${doc.id}`);
-                    
-                    // Обработчики кнопок
-                    adminItem.querySelector('.btn-approve').addEventListener('click', () => updateStatus(doc.id, 'approved'));
-                    adminItem.querySelector('.btn-reject').addEventListener('click', () => updateStatus(doc.id, 'rejected'));
-                    adminItem.querySelector('.btn-comment').addEventListener('click', () => addAdminComment(doc.id));
-                });
-                
-                // Обновляем статистику
-                updateAdminStats();
-            });
-    } catch (error) {
-        console.error('Ошибка загрузки транзакций:', error);
-        adminTransactions.innerHTML = '<p>Ошибка загрузки заявок</p>';
-    }
-}
-
-// Обновление статуса транзакции
-async function updateStatus(transactionId, status) {
-    try {
-        await db.collection('transactions').doc(transactionId).update({
-            status: status,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        showNotification(`✅ Статус изменен на "${status}"`);
-    } catch (error) {
-        console.error('Ошибка обновления статуса:', error);
-        showNotification('❌ Ошибка обновления статуса', 'error');
-    }
-}
-
-// Добавление комментария админа
-async function addAdminComment(transactionId) {
-    const commentInput = document.getElementById(`admin-comment-${transactionId}`);
-    const comment = commentInput.value.trim();
-    
-    if (!comment) {
-        showNotification('Введите текст комментария', 'error');
-        return;
-    }
-    
-    try {
-        await db.collection('transactions').doc(transactionId).update({
-            comments: firebase.firestore.FieldValue.arrayUnion({
-                text: comment,
-                author: 'admin',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            })
-        });
-        
-        commentInput.value = '';
-        showNotification('✅ Комментарий добавлен');
-    } catch (error) {
-        console.error('Ошибка добавления комментария:', error);
-        showNotification('❌ Ошибка добавления комментария', 'error');
-    }
-}
-
-// Загрузка комментариев
-async function loadComments(transactionId, containerId) {
-    try {
-        const doc = await db.collection('transactions').doc(transactionId).get();
-        if (!doc.exists) return;
-        
-        const comments = doc.data().comments || [];
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        if (comments.length === 0) {
-            container.innerHTML = '<p class="comment">Нет комментариев</p>';
-            return;
         }
         
-        // Сортируем комментарии по дате (новые сверху)
-        comments.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        // Обновление статистики по заявкам
+        function updateWithdrawalStats(pending, total) {
+            document.getElementById('pendingWithdrawals').textContent = pending;
+            document.getElementById('totalWithdrawals').textContent = total;
+        }
         
-        comments.forEach(comment => {
-            const date = comment.timestamp?.toDate() || new Date();
-            const commentElement = document.createElement('div');
-            commentElement.className = `comment comment-${comment.author}`;
-            commentElement.innerHTML = `
-                <div><strong>${comment.author === 'admin' ? 'Администратор' : 'Вы'}</strong></div>
-                <div>${date.toLocaleString('ru-RU')}</div>
-                <div>${comment.text}</div>
-            `;
-            container.appendChild(commentElement);
-        });
-    } catch (error) {
-        console.error('Ошибка загрузки комментариев:', error);
-    }
-}
-
-// Обновление статистики для админа
-async function updateAdminStats() {
-    try {
-        const snapshot = await db.collection('transactions').get();
-        const transactions = snapshot.docs.map(doc => doc.data());
-        
-        // Группировка по статусам
-        const statusCounts = transactions.reduce((acc, t) => {
-            acc[t.status] = (acc[t.status] || 0) + 1;
-            return acc;
-        }, {});
-        
-        // Группировка по типам
-        const typeCounts = transactions.reduce((acc, t) => {
-            acc[t.type] = (acc[t.type] || 0) + 1;
-            return acc;
-        }, {});
-        
-        // Суммы
-        const totalStars = transactions
-            .filter(t => t.type === 'stars')
-            .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+        // Создание элемента заявки
+        function createWithdrawalElement(w) {
+            const el = document.createElement('div');
+            el.className = 'withdraw-item';
+            el.dataset.id = w.id;
             
-        const totalMoney = transactions
-            .filter(t => t.type === 'money')
-            .reduce((sum, t) => sum + parseFloat(t.amount_rub || 0), 0);
+            let statusClass = '';
+            let statusText = '';
+            
+            switch(w.status) {
+                case 'completed': 
+                    statusClass = 'status-completed';
+                    statusText = 'Выполнена';
+                    break;
+                case 'failed': 
+                    statusClass = 'status-failed';
+                    statusText = 'Отклонена';
+                    break;
+                default: 
+                    statusClass = 'status-pending';
+                    statusText = 'Ожидает';
+            }
+            
+            const date = w.timestamp ? new Date(w.timestamp).toLocaleString('ru-RU') : '';
+            
+            el.innerHTML = `
+                <div class="withdraw-item-header">
+                    <div class="withdraw-item-amount">${w.amount} ₽</div>
+                    <div class="transaction-status ${statusClass}">${statusText}</div>
+                </div>
+                <div class="withdraw-item-user">${w.username} (ID: ${w.userId})</div>
+                <div class="withdraw-item-details">
+                    <div><strong>Реквизиты:</strong> ${w.details}</div>
+                    <div><strong>Дата:</strong> ${date}</div>
+                </div>
+            `;
+            
+            // Добавляем кнопки для админа, если заявка ожидает обработки
+            if (w.status === 'pending' && isAdmin) {
+                const controls = document.createElement('div');
+                controls.className = 'admin-controls';
+                controls.innerHTML = `
+                    <button class="btn-approve" onclick="processWithdrawal('${w.id}', 'completed')">Подтвердить</button>
+                    <button class="btn-reject" onclick="processWithdrawal('${w.id}', 'failed')">Отклонить</button>
+                `;
+                el.appendChild(controls);
+            }
+            
+            return el;
+        }
         
-        // Обновляем график
-        updateChart(statusCounts, typeCounts, totalStars, totalMoney);
-    } catch (error) {
-        console.error('Ошибка загрузки статистики:', error);
-    }
-}
-
-// Обновление графика
-function updateChart(statusData, typeData, totalStars, totalMoney) {
-    const ctx = document.getElementById('statsChart').getContext('2d');
-    
-    // Уничтожаем предыдущий график, если он есть
-    if (statsChart) {
-        statsChart.destroy();
-    }
-    
-    // Создаем новый график
-    statsChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(statusData),
-            datasets: [{
-                label: 'Количество по статусам',
-                data: Object.values(statusData),
-                backgroundColor: [
-                    'rgba(255, 206, 86, 0.7)',
-                    'rgba(75, 192, 192, 0.7)',
-                    'rgba(255, 99, 132, 0.7)',
-                    'rgba(54, 162, 235, 0.7)'
-                ],
-                borderColor: [
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: {
-                    display: true,
-                    text: `Статистика: ${totalStars.toFixed(0)} звёзд / ${totalMoney.toFixed(2)} руб.`,
-                    font: {
-                        size: 16
-                    }
-                },
-                legend: {
-                    display: false
+        // Обработка заявки на вывод
+        window.processWithdrawal = async function(id, status) {
+            if (!isAdmin) return;
+            
+            try {
+                showLoading("Обработка заявки...");
+                
+                // Получаем данные заявки
+                const withdrawalRef = database.ref(`withdrawals/${id}`);
+                const snapshot = await withdrawalRef.once('value');
+                const withdrawal = snapshot.val();
+                
+                if (!withdrawal) {
+                    throw new Error("Заявка не найдена");
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
+                
+                // Обновляем статус заявки
+                const updates = {
+                    status: status,
+                    processedAt: firebase.database.ServerValue.TIMESTAMP,
+                    processedBy: currentUser.key
+                };
+                
+                await withdrawalRef.update(updates);
+                
+                // Если заявка подтверждена, списываем средства с баланса пользователя
+                if (status === 'completed') {
+                    const userRef = database.ref(`users/${withdrawal.userId}`);
+                    const userSnapshot = await userRef.once('value');
+                    const userData = userSnapshot.val();
+                    
+                    if (userData) {
+                        const newBalance = (userData.balance || 0) - withdrawal.amount;
+                        await userRef.update({ balance: Math.max(0, newBalance) });
+                        
+                        // Добавляем запись в историю транзакций пользователя
+                        await database.ref(`users/${withdrawal.userId}/withdrawals/${id}`).set(true);
                     }
                 }
+                
+                hideLoading();
+                showSuccess(null, null, `Заявка ${status === 'completed' ? 'подтверждена' : 'отклонена'}`);
+                
+                // Обновляем список заявок
+                loadWithdrawals();
+            } catch (error) {
+                console.error("Ошибка обработки заявки:", error);
+                hideLoading();
+                showError(null, null, "Ошибка обработки заявки");
+            }
+        };
+        
+        // Добавление администратора
+        window.addAdmin = async function() {
+            if (!isAdmin) return;
+            
+            const newAdminId = document.getElementById('newAdminId').value.trim();
+            
+            if (!newAdminId || isNaN(newAdminId)) {
+                showError(null, null, "Введите корректный Telegram ID");
+                animateShake(document.getElementById('newAdminId'));
+                return;
+            }
+            
+            try {
+                showLoading("Добавление...");
+                await database.ref(`admins/${newAdminId}`).set({
+                    addedAt: firebase.database.ServerValue.TIMESTAMP,
+                    addedBy: currentUser.key
+                });
+                document.getElementById('newAdminId').value = '';
+                hideLoading();
+                
+                // Анимация успешного добавления
+                const adminPanel = document.getElementById('adminPanel');
+                adminPanel.style.backgroundColor = 'rgba(138, 226, 43, 0.1)';
+                setTimeout(() => {
+                    adminPanel.style.backgroundColor = '#f8f9fa';
+                }, 1000);
+            } catch (error) {
+                console.error('Ошибка:', error);
+                hideLoading();
+                showError(null, null, 'Ошибка добавления');
             }
         }
-    });
-}
-
-// Экспорт данных
-async function exportData(format) {
-    try {
-        const snapshot = await db.collection('transactions').get();
-        const transactions = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            timestamp: doc.data().timestamp?.toDate().toISOString()
-        }));
         
-        let content, mimeType, ext;
-        
-        if (format === 'csv') {
-            const headers = Object.keys(transactions[0]);
-            const rows = transactions.map(t => 
-                headers.map(field => 
-                    `"${String(t[field] || '').replace(/"/g, '""')}"`
-                ).join(',')
-            );
-            
-            content = [headers.join(','), ...rows].join('\n');
-            mimeType = 'text/csv';
-            ext = 'csv';
-        } else {
-            content = JSON.stringify(transactions, null, 2);
-            mimeType = 'application/json';
-            ext = 'json';
+        // Анимация клика
+        function animateClick(element, isActive) {
+            if (isActive) {
+                element.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    element.style.transform = 'scale(1.03)';
+                }, 100);
+            } else {
+                element.style.transform = 'scale(1)';
+            }
         }
         
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `transactions_${new Date().toISOString().slice(0,10)}.${ext}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // Анимация тряски
+        function animateShake(element) {
+            element.classList.add('shake');
+            setTimeout(() => {
+                element.classList.remove('shake');
+            }, 500);
+        }
         
-        showNotification(`✅ Данные экспортированы в ${format.toUpperCase()}`);
-    } catch (error) {
-        console.error('Ошибка экспорта:', error);
-        showNotification('❌ Ошибка экспорта данных', 'error');
-    }
-}
-
-// Отправка уведомления в Telegram
-async function sendTelegramNotification(chatIds, message) {
-    if (!TELEGRAM_BOT_TOKEN) return;
-    
-    try {
-        const requests = chatIds.map(chatId => 
-            fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    text: message,
-                    parse_mode: 'HTML'
-                })
-            })
-        );
+        function getPaymentDetails(method) {
+            const elements = {
+                phone: document.getElementById('phoneNumberDisplay'),
+                card: document.getElementById('cardNumberDisplay'),
+                crypto: document.getElementById('usdtAddressDisplay')
+            };
+            
+            return {
+                recipient: elements[method].textContent,
+                note: method === 'card' ? document.getElementById('cardHolderDisplay').textContent : ''
+            };
+        }
         
-        await Promise.all(requests);
-    } catch (error) {
-        console.error('Ошибка отправки уведомления:', error);
-    }
-}
-
-// Показать уведомление
-function showNotification(message, type = 'success') {
-    const notification = document.getElementById('notification');
-    notification.textContent = message;
-    notification.className = `notification ${type}`;
-    notification.classList.add('show');
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-    }, 3000);
-}
-
-// Вспомогательная функция - название метода выплаты
-function getMethodName(method) {
-    const methods = {
-        'phone': 'На телефон',
-        'bank': 'Банковская карта',
-        'usdt': 'USDT (TRC20)'
-    };
-    return methods[method] || method;
-}
-
-// Инициализация лоадера
-function toggleLoader(show) {
-    // Можно добавить реализацию лоадера при необходимости
-}
-</script>
+        function loadUserTransactions(userId) {
+            if (!userId) return;
+            
+            const transactionsList = document.getElementById('transactionsList');
+            transactionsList.innerHTML = '<p style="animation: fadeIn 0.5s ease;">Загрузка истории...</p>';
+            
+            database.ref('transactions')
+                .orderByChild('userId')
+                .equalTo(userId)
+                .limitToLast(10)
+                .on('value', snapshot => {
+                    transactionsList.innerHTML = '';
+                    
+                    if (!snapshot.exists()) {
+                        transactionsList.innerHTML = '<p style="animation: fadeIn 0.5s ease;">У вас пока нет операций</p>';
+                        return;
+                    }
+                    
+                    const transactions = [];
+                    snapshot.forEach(child => {
+                        transactions.push({
+                            id: child.key,
+                            ...child.val()
+                        });
+                    });
+                    
+                    transactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    
+                    transactions.forEach((t, index) => {
+                        setTimeout(() => {
+                            transactionsList.appendChild(createTransactionElement(t));
+                        }, index * 100);
+                    });
+                });
+        }
+        
+        function createTransactionElement(t) {
+            const el = document.createElement('div');
+            el.className = 'transaction-item';
+            
+            let statusText = '';
+            let statusClass = '';
+            
+            switch(t.status) {
+                case 'completed': statusText = 'Завершена'; statusClass = 'status-completed'; break;
+                case 'failed': statusText = 'Ошибка'; statusClass = 'status-failed'; break;
+                default: statusText = 'Ожидает'; statusClass = 'status-pending'; break;
+            }
+            
+            const methods = { 'phone': 'По номеру', 'card': 'По карте', 'crypto': 'USDT' };
+            const date = t.timestamp ? new Date(t.timestamp).toLocaleString('ru-RU') : '';
+            
+            el.innerHTML = `
+                <div>
+                    <strong>${t.amount} руб.</strong>
+                    <div>Метод: ${methods[t.method] || t.method}</div>
+                    <small>${date}</small>
+                </div>
+                <div class="transaction-status ${statusClass}">${statusText}</div>
+            `;
+            
+            return el;
+        }
+        
+        function loadAdminTransactions() {
+            const container = document.getElementById('adminTransactions');
+            container.innerHTML = '<p style="animation: fadeIn 0.5s ease;">Загрузка транзакций...</p>';
+            
+            database.ref('transactions')
+                .orderByChild('timestamp')
+                .limitToLast(20)
+                .on('value', snapshot => {
+                    container.innerHTML = '';
+                    
+                    if (!snapshot.exists()) {
+                        container.innerHTML = '<p style="animation: fadeIn 0.5s ease;">Нет транзакций</p>';
+                        return;
+                    }
+                    
+                    const transactions = [];
+                    snapshot.forEach(child => {
+                        transactions.push({
+                            id: child.key,
+                            ...child.val()
+                        });
+                    });
+                    
+                    transactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    
+                    transactions.forEach((t, index) => {
+                        setTimeout(() => {
+                            container.appendChild(createAdminTransactionElement(t));
+                        }, index * 100);
+                    });
+                });
+        }
+        
+        function createAdminTransactionElement(t) {
+            const el = document.createElement('div');
+            el.className = 'transaction-item';
+            
+            const methods = { 'phone': 'По номеру', 'card': 'По карте', 'crypto': 'USDT' };
+            const date = t.timestamp ? new Date(t.timestamp).toLocaleString('ru-RU') : '';
+            
+            el.innerHTML = `
+                <div style="flex: 1;">
+                    <strong>Транзакция #${t.id.slice(0, 6)}</strong>
+                    <div>${t.amount} руб., ${methods[t.method] || t.method}</div>
+                    <div>Пользователь: ${t.username}</div>
+                    <small>${date}</small>
+                </div>
+                <div class="admin-controls">
+                    <button class="btn-approve" onclick="updateTransactionStatus('${t.id}', 'completed')">Подтвердить</button>
+                    <button class="btn-reject" onclick="updateTransactionStatus('${t.id}', 'failed')">Отклонить</button>
+                </div>
+            `;
+            
+            return el;
+        }
+        
+        window.updateTransactionStatus = async function(id, status) {
+            if (!isAdmin) return;
+            
+            try {
+                showLoading("Обновление...");
+                const updates = {
+                    status: status,
+                    processedAt: firebase.database.ServerValue.TIMESTAMP
+                };
+                
+                if (currentUser) {
+                    updates.processedBy = currentUser.key;
+                }
+                
+                await database.ref(`transactions/${id}`).update(updates);
+                hideLoading();
+                
+                // Анимация обновления статуса
+                const transactionElement = document.querySelector(`[onclick*="${id}"]`)?.closest('.transaction-item');
+                if (transactionElement) {
+                    transactionElement.classList.add('updated');
+                    setTimeout(() => {
+                        transactionElement.classList.remove('updated');
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                hideLoading();
+                showError(null, null, 'Ошибка обновления');
+            }
+        }
+        
+        function showPaymentInstructions(method, amount, id) {
+            const methods = { 'phone': 'По номеру', 'card': 'По карте', 'crypto': 'USDT' };
+            const details = getPaymentDetails(method);
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            
+            const content = document.createElement('div');
+            content.className = 'modal-content';
+            
+            content.innerHTML = `
+                <div style="margin-bottom: 16px;">
+                    <h3 style="margin-bottom: 12px; color: var(--primary-color);">Инструкция по оплате</h3>
+                    <p><strong>Метод:</strong> ${methods[method]}</p>
+                    <p><strong>Сумма:</strong> ${amount} руб.</p>
+                    <p><strong>Реквизиты:</strong> ${details.recipient}</p>
+                    ${details.note ? `<p>${details.note}</p>` : ''}
+                    <p><strong>ID транзакции:</strong> ${id}</p>
+                    <p style="margin-top: 12px;">После оплаты свяжитесь с поддержкой: ${config.telegramSupport}</p>
+                </div>
+                <button class="btn" onclick="this.closest('.modal-overlay').classList.remove('active')" style="margin-top: 12px;">Закрыть</button>
+            `;
+            
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+            
+            // Анимация появления модального окна
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 50);
+        }
+        
+        function showWarning(message) {
+            const warning = document.getElementById('warningMessage');
+            warning.textContent = message;
+            warning.style.display = 'block';
+            setTimeout(() => {
+                warning.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showSuccess(btn, btnText, callback) {
+            if (btn && btnText) {
+                btnText.textContent = '✓ Успешно!';
+                btn.style.backgroundColor = 'var(--success-color)';
+                
+                // Анимация пульсации
+                btn.style.animation = 'pulse 0.5s ease';
+                setTimeout(() => {
+                    btn.style.animation = '';
+                }, 500);
+                
+                setTimeout(() => {
+                    btnText.textContent = 'Перейти к оплате';
+                    btn.style.backgroundColor = 'var(--primary-color)';
+                    btn.disabled = false;
+                    if (callback) callback();
+                }, 2000);
+            } else {
+                // Показать модальное окно с успехом
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                
+                const content = document.createElement('div');
+                content.className = 'modal-content';
+                content.innerHTML = `
+                    <div style="margin-bottom: 16px; color: var(--success-color);">
+                        <h3 style="margin-bottom: 12px;">Успешно</h3>
+                        <p>${callback || 'Операция выполнена успешно'}</p>
+                    </div>
+                    <button class="btn" onclick="this.closest('.modal-overlay').classList.remove('active')" style="margin-top: 12px; background: var(--success-color);">Закрыть</button>
+                `;
+                
+                modal.appendChild(content);
+                document.body.appendChild(modal);
+                
+                setTimeout(() => {
+                    modal.classList.add('active');
+                }, 50);
+            }
+        }
+        
+        function showError(btn, btnText, message) {
+            if (btn && btnText) {
+                btnText.textContent = 'Ошибка!';
+                btn.style.backgroundColor = 'var(--danger-color)';
+                
+                // Анимация тряски кнопки
+                btn.style.animation = 'shake 0.5s ease';
+                setTimeout(() => {
+                    btn.style.animation = '';
+                }, 500);
+                
+                setTimeout(() => {
+                    btnText.textContent = 'Перейти к оплате';
+                    btn.style.backgroundColor = 'var(--primary-color)';
+                    btn.disabled = false;
+                }, 2000);
+            }
+            
+            // Показать модальное окно с ошибкой
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            
+            const content = document.createElement('div');
+            content.className = 'modal-content';
+            content.innerHTML = `
+                <div style="margin-bottom: 16px; color: var(--danger-color);">
+                    <h3 style="margin-bottom: 12px;">Ошибка</h3>
+                    <p>${message}</p>
+                </div>
+                <button class="btn" onclick="this.closest('.modal-overlay').classList.remove('active')" style="margin-top: 12px; background: var(--danger-color);">Закрыть</button>
+            `;
+            
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+            
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 50);
+        }
+        
+        function showLoading(message) {
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.innerHTML = `
+                <div class="loading-content">
+                    <div class="loader"></div>
+                    <p>${message}</p>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+        
+        function hideLoading() {
+            const overlay = document.querySelector('.loading-overlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.remove();
+                }, 300);
+            }
+        }
+    </script>
 </body>
 </html>
