@@ -605,7 +605,8 @@
 
         // Вспомогательные функции
         function parseFirebaseData(snapshot) {
-            return snapshot.val() ? Object.values(snapshot.val()) : [];
+            if (!snapshot.val()) return [];
+            return Object.entries(snapshot.val()).map(([id, value]) => ({ id, ...value }));
         }
 
         function getPriorityLabel(priority) {
@@ -631,7 +632,7 @@
         function renderMessages(ticket) {
             const messages = [
                 createMessage(ticket.problem, ticket.username, ticket.createdAt, false),
-                ...(ticket.messages || []).map(msg => 
+                ...(ticket.messages ? Object.values(ticket.messages) : []).map(msg => 
                     createMessage(msg.message, msg.isAdmin ? 'Администратор' : ticket.username, msg.timestamp, msg.isAdmin)
                 )
             ];
