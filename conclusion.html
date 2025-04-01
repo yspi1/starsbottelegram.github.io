@@ -460,18 +460,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Анимация появления карточки */
-        @keyframes cardEntrance {
-            from {
-                opacity: 0;
-                transform: translateY(20px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
         /* Стили для вкладок */
         .tabs {
             display: flex;
@@ -864,16 +852,13 @@
         async function loadUserBalance(userId) {
             if (!userId) return;
             
-            const userRef = database.ref(`users/${userId}`);
+            const userRef = database.ref(`users/${userId}/balance`);
             userRef.on('value', snapshot => {
-                if (snapshot.exists()) {
-                    const userData = snapshot.val();
-                    userBalance = userData.balance || 0;
-                    
-                    // Обновляем отображение баланса
-                    document.getElementById('userBalance').textContent = `${userBalance} ★`;
-                    document.getElementById('balanceEquivalent').textContent = `${(userBalance * config.starRate).toFixed(2)} ₽`;
-                }
+                userBalance = snapshot.val() || 0;
+                
+                // Обновляем отображение баланса
+                document.getElementById('userBalance').textContent = `${userBalance} ★`;
+                document.getElementById('balanceEquivalent').textContent = `${(userBalance * config.starRate).toFixed(2)} ₽`;
             });
         }
         
@@ -1289,14 +1274,12 @@
                 
                 // Если заявка подтверждена, списываем средства с баланса пользователя
                 if (status === 'completed') {
-                    const userRef = database.ref(`users/${withdrawal.userId}`);
+                    const userRef = database.ref(`users/${withdrawal.userId}/balance`);
                     const userSnapshot = await userRef.once('value');
-                    const userData = userSnapshot.val();
+                    const currentBalance = userSnapshot.val() || 0;
+                    const newBalance = currentBalance - withdrawal.amount;
                     
-                    if (userData) {
-                        const newBalance = (userData.balance || 0) - withdrawal.amount;
-                        await userRef.update({ balance: Math.max(0, newBalance) });
-                    }
+                    await userRef.set(Math.max(0, newBalance));
                 }
                 
                 hideLoading();
