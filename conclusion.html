@@ -1,18 +1,29 @@
+Вот полностью обновленный код с вашими настройками Firebase и Telegram бота:
+
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система вывода средств</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary-color: #8A2BE2; /* Фиолетовый */
+            --primary-color: #8A2BE2;
             --primary-light: #9c4dff;
+            --gradient: linear-gradient(135deg, var(--primary-color) 0%, #6a11cb 100%);
             --success-color: #4CAF50;
             --danger-color: #ff4444;
             --warning-color: #ffbb33;
             --text-color: #333;
             --light-gray: #f5f5f5;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
@@ -24,51 +35,53 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            background: var(--gradient);
             overflow: hidden;
             position: relative;
             color: var(--text-color);
         }
 
-        .bg-particles {
+        .bg-effect {
             position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            animation: bg-pan 20s linear infinite;
             z-index: 0;
-            overflow: hidden;
         }
 
-        .particle {
+        @keyframes bg-pan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+
+        .user-badge {
             position: absolute;
-            background: rgba(138, 43, 226, 0.1);
-            border-radius: 50%;
-            animation: float 15s linear infinite;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.9);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        @keyframes float {
-            0% {
-                transform: translateY(100vh) scale(0);
-                opacity: 0;
-            }
-            10% {
-                opacity: 0.3;
-            }
-            90% {
-                opacity: 0.3;
-            }
-            100% {
-                transform: translateY(-100px) scale(1);
-                opacity: 0;
-            }
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
         }
 
         .card {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--glass-bg);
             padding: 2.5rem;
             border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow);
             transition: var(--transition);
             width: 100%;
             max-width: 500px;
@@ -79,13 +92,11 @@
             animation: cardAppear 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 20px;
         }
 
         @keyframes cardAppear {
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .switch-buttons {
@@ -218,12 +229,8 @@
         }
 
         @keyframes shine {
-            0% {
-                left: -100%;
-            }
-            100% {
-                left: 100%;
-            }
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
 
         h2 {
@@ -304,7 +311,6 @@
             100% { transform: scale(1); }
         }
 
-        /* Новые стили для дополнительных функций */
         .transaction-history {
             margin-top: 2rem;
             border-top: 1px solid #eee;
@@ -452,13 +458,35 @@
             margin-top: 0.5rem;
             padding: 0;
         }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.9);
+            color: var(--text-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
-    <!-- Анимированный фон -->
-    <div class="bg-particles" id="bgParticles"></div>
-    
-    <!-- Основная карточка -->
+    <div class="bg-effect"></div>
+    <div class="user-badge" id="userBadge" style="display: none;">
+        <img class="user-avatar" id="userAvatar" src="">
+        <span id="userName"></span>
+    </div>
+
     <div class="card">
         <h2>Вывод средств</h2>
         
@@ -550,10 +578,11 @@
                     <div class="input-icon crypto-icon">
                         <label for="usdtInput">USDT кошелёк (TRC20)</label>
                         <input type="text" id="usdtInput" 
-                            placeholder="Txxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 
-                            pattern="^T[A-Za-z1-9]{33}$">
+                            placeholder="TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB" 
+                            value="TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB"
+                            readonly>
                     </div>
-                    <small style="display: block; margin-top: 5px; color: #666;">Адрес должен начинаться с T и содержать 34 символа</small>
+                    <small style="display: block; margin-top: 5px; color: #666;">Адрес: TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB</small>
                 </div>
             </div>
 
@@ -579,30 +608,20 @@
             <div class="statistics-chart">
                 <canvas id="statsChart"></canvas>
             </div>
-        </div>
-
-        <!-- Кнопки экспорта -->
-        <div class="export-buttons">
-            <button onclick="exportData('csv')" class="btn">Экспорт в CSV</button>
-            <button onclick="exportData('json')" class="btn">Экспорт в JSON</button>
+            <div class="export-buttons">
+                <button onclick="exportData('csv')" class="btn">Экспорт в CSV</button>
+                <button onclick="exportData('json')" class="btn">Экспорт в JSON</button>
+            </div>
         </div>
     </div>
 
-    <!-- Подключаем Firebase и Chart.js -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <div id="notification" class="notification"></div>
 
     <script>
-        // Конфигурация Firebase (замените на свои данные)
+        // Конфигурация Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyDummyApiKey1234567890",
-            authDomain: "your-project-id.firebaseapp.com",
-            projectId: "your-project-id",
-            storageBucket: "your-project-id.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef1234567890abcdef"
+            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
+            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
         };
 
         // Инициализация Firebase
@@ -611,58 +630,62 @@
         const auth = firebase.auth();
 
         // Основные переменные
-        let currentUser = null;
+        const ADMIN_IDS = [1290724329, 1062148525];
+        const TELEGRAM_BOT_TOKEN = "7832309119:AAGvQu9jqYZk0mqZu0ubAXRCe16Q54JEonw";
+        const USDT_TRC20_ADDRESS = "TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB";
+        let currentUser = { id: null, username: 'Гость', isAdmin: false };
         let transactionsUnsubscribe = null;
         let adminTransactionsUnsubscribe = null;
         let statsChart = null;
-        const exchangeRate = 1.46; // 1 звезда = 1.46 рубля
+        const exchangeRate = 1.46;
 
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
-            // Создаем анимированные частицы фона
-            createParticles();
-            
-            // Инициализация формы
-            initForm();
-            
-            // Аутентификация пользователя
             try {
-                currentUser = await auth.signInAnonymously();
-                console.log("Анонимный пользователь вошел:", currentUser.user.uid);
-                
-                // Загрузка истории транзакций
-                loadUserTransactions();
-                
-                // Проверка прав администратора
-                checkAdminStatus();
-                
+                await initUser();
+                initForm();
+                loadTransactions();
+                toggleLoader(false);
             } catch (error) {
-                console.error("Ошибка аутентификации:", error);
+                showNotification('❌ Ошибка инициализации', 'error');
             }
         });
 
-        // Создаем анимированные частицы фона
-        function createParticles() {
-            const bgParticles = document.getElementById('bgParticles');
-            const colors = ['rgba(138, 43, 226, 0.1)', 'rgba(154, 80, 255, 0.1)', 'rgba(178, 130, 255, 0.1)'];
-            
-            for (let i = 0; i < 20; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
+        // Инициализация пользователя
+        async function initUser() {
+            // Проверяем Telegram Web App
+            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+                const tgUser = Telegram.WebApp.initDataUnsafe.user;
+                currentUser.id = tgUser.id.toString();
+                currentUser.username = tgUser.username || `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim();
                 
-                // Случайные параметры
-                const size = Math.random() * 100 + 50;
-                const color = colors[Math.floor(Math.random() * colors.length)];
+                // Инициализируем Telegram Web App
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
                 
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.background = color;
-                particle.style.left = Math.random() * 100 + 'vw';
-                particle.style.animationDelay = Math.random() * 15 + 's';
-                particle.style.animationDuration = 10 + Math.random() * 20 + 's';
+                // Показываем данные пользователя
+                document.getElementById('userBadge').style.display = 'flex';
+                document.getElementById('userName').textContent = tgUser.username ? `@${tgUser.username}` : currentUser.username;
                 
-                bgParticles.appendChild(particle);
+                if (tgUser.photo_url) {
+                    document.getElementById('userAvatar').src = tgUser.photo_url;
+                }
+                
+                // Автозаполнение юзернейма
+                if (tgUser.username) {
+                    document.getElementById('username').value = `@${tgUser.username}`;
+                    document.getElementById('username').readOnly = true;
+                }
+            } else {
+                // Анонимный пользователь
+                currentUser.id = 'guest_' + Math.random().toString(36).substr(2, 9);
             }
+            
+            // Проверяем админские права
+            currentUser.isAdmin = ADMIN_IDS.includes(parseInt(currentUser.id));
+            
+            // Показываем/скрываем админ-панель
+            document.getElementById('adminPanel').style.display = currentUser.isAdmin ? 'block' : 'none';
         }
 
         // Инициализация формы
@@ -740,7 +763,9 @@
                 const activeType = document.querySelector('.switch-btn.active').dataset.type;
                 let formData = {
                     type: activeType,
-                    username: document.getElementById('username').value.trim()
+                    username: document.getElementById('username').value.trim(),
+                    tg_user_id: currentUser.id,
+                    tg_username: currentUser.username
                 };
 
                 // Валидация звёзд
@@ -749,11 +774,11 @@
                     formData.amount_rub = (formData.amount * exchangeRate).toFixed(2);
                     
                     if (formData.amount < 50) {
-                        alert('Минимальная сумма вывода - 50 звёзд');
+                        showNotification('Минимальная сумма вывода - 50 звёзд', 'error');
                         return;
                     }
                     if (!formData.username.startsWith('@') || formData.username.length < 5) {
-                        alert('Введите корректный Telegram юзернейм (начинается с @)');
+                        showNotification('Введите корректный Telegram юзернейм (начинается с @)', 'error');
                         return;
                     }
                 }
@@ -765,7 +790,7 @@
                     formData.method = moneyMethod.value;
                     
                     if (formData.amount_rub < 100) {
-                        alert('Минимальная сумма вывода - 100 руб.');
+                        showNotification('Минимальная сумма вывода - 100 руб.', 'error');
                         return;
                     }
                     
@@ -774,7 +799,7 @@
                             formData.phone = phoneInput.value;
                             formData.bank = document.getElementById('bankSelect').value;
                             if(!/^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$/.test(formData.phone)) {
-                                alert('Пожалуйста, введите корректный номер телефона в формате: +7 (999) 999-99-99');
+                                showNotification('Пожалуйста, введите корректный номер телефона в формате: +7 (999) 999-99-99', 'error');
                                 return;
                             }
                             break;
@@ -782,25 +807,19 @@
                         case 'bank':
                             formData.card = bankInput.value.replace(/\s/g, '');
                             if(!/^\d{16}$/.test(formData.card)) {
-                                alert('Пожалуйста, введите корректный номер карты (16 цифр)');
+                                showNotification('Пожалуйста, введите корректный номер карты (16 цифр)', 'error');
                                 return;
                             }
                             break;
                         
                         case 'usdt':
-                            formData.usdt = usdtInput.value.trim();
-                            if(!/^T[A-Za-z1-9]{33}$/.test(formData.usdt)) {
-                                alert('Пожалуйста, введите корректный USDT TRC20 адрес (начинается с T, 34 символа)');
-                                return;
-                            }
+                            formData.usdt = USDT_TRC20_ADDRESS;
                             break;
                     }
                 }
 
                 // Блокировка кнопки
                 btn.disabled = true;
-                
-                // Анимация успешной отправки
                 btnText.textContent = 'Обработка...';
                 btn.style.backgroundColor = 'var(--warning-color)';
                 
@@ -808,47 +827,50 @@
                     // Сохраняем транзакцию в Firestore
                     const transactionRef = await db.collection('transactions').add({
                         ...formData,
-                        userId: currentUser.user.uid,
+                        userId: currentUser.id,
                         status: 'pending',
                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                         comments: []
                     });
 
-                    console.log('Транзакция сохранена с ID:', transactionRef.id);
+                    // Отправляем уведомление админам
+                    if (currentUser.isAdmin) {
+                        await sendTelegramNotification(
+                            ADMIN_IDS,
+                            `Новая заявка на вывод! ID: ${transactionRef.id}\n` +
+                            `Тип: ${formData.type === 'stars' ? 'Звёзды' : 'Деньги'}\n` +
+                            `Сумма: ${formData.type === 'stars' ? formData.amount + ' звёзд' : formData.amount_rub + ' руб.'}\n` +
+                            `Пользователь: ${formData.tg_username || formData.username}`
+                        );
+                    }
 
-                    // Обновляем историю пользователя
-                    await db.collection('users').doc(currentUser.user.uid).update({
-                        transactions: firebase.firestore.FieldValue.arrayUnion(transactionRef.id)
-                    });
-
-                    // Имитация отправки на сервер
+                    // Анимация успеха
+                    btnText.textContent = '✓ Успешно!';
+                    btn.style.backgroundColor = 'var(--success-color)';
+                    btn.classList.add('success-animation');
+                    
                     setTimeout(() => {
-                        btnText.textContent = '✓ Успешно!';
-                        btn.style.backgroundColor = 'var(--success-color)';
-                        btn.classList.add('success-animation');
+                        btnText.textContent = 'Отправить заявку';
+                        btn.style.backgroundColor = 'var(--primary-color)';
+                        btn.classList.remove('success-animation');
+                        btn.disabled = false;
+                        form.reset();
                         
-                        setTimeout(() => {
-                            btnText.textContent = 'Отправить заявку';
-                            btn.style.backgroundColor = 'var(--primary-color)';
-                            btn.classList.remove('success-animation');
-                            btn.disabled = false;
-                            form.reset();
-                            
-                            // Сброс к первому варианту
-                            switchBtns[0].click();
-                            moneyMethod.value = 'phone';
-                            moneyMethod.dispatchEvent(new Event('change'));
-                            starsAmount.value = 50;
-                            moneyAmount.value = 100;
-                            
-                            // Обновляем список транзакций
-                            loadUserTransactions();
-                        }, 2000);
-                    }, 1500);
+                        // Сброс к первому варианту
+                        switchBtns[0].click();
+                        moneyMethod.value = 'phone';
+                        moneyMethod.dispatchEvent(new Event('change'));
+                        starsAmount.value = 50;
+                        moneyAmount.value = 100;
+                        
+                        // Обновляем список транзакций
+                        loadTransactions();
+                    }, 2000);
+
+                    showNotification('✅ Заявка успешно отправлена!');
 
                 } catch (error) {
                     console.error('Ошибка при сохранении транзакции:', error);
-                    alert('Произошла ошибка при отправке заявки');
                     btnText.textContent = 'Ошибка!';
                     btn.style.backgroundColor = 'var(--danger-color)';
                     
@@ -857,6 +879,8 @@
                         btn.style.backgroundColor = 'var(--primary-color)';
                         btn.disabled = false;
                     }, 2000);
+                    
+                    showNotification('❌ Ошибка при отправке заявки', 'error');
                 }
             });
 
@@ -892,447 +916,448 @@
             });
         }
 
-        // Загрузка транзакций пользователя
-        async function loadUserTransactions() {
-            if (!currentUser) return;
-            
-            try {
-                // Подписываемся на обновления транзакций пользователя
-                transactionsUnsubscribe = db.collection('transactions')
-                    .where('userId', '==', currentUser.user.uid)
-                    .orderBy('timestamp', 'desc')
-                    .limit(10)
-                    .onSnapshot(snapshot => {
-                        const transactionsList = document.getElementById('transactionsList');
-                        transactionsList.innerHTML = '';
-                        
-                        if (snapshot.empty) {
-                            transactionsList.innerHTML = '<p>У вас пока нет транзакций</p>';
-                            return;
-                        }
-                        
-                        snapshot.forEach(doc => {
-                            const transaction = doc.data();
-                            const transactionElement = createTransactionElement(doc.id, transaction);
-                            transactionsList.appendChild(transactionElement);
-                        });
-                    });
-                    
-            } catch (error) {
-                console.error('Ошибка загрузки транзакций:', error);
-            }
-        }
-
-        // Создание элемента транзакции
-        function createTransactionElement(id, transaction) {
-            const element = document.createElement('div');
-            element.className = 'transaction-item';
-            element.dataset.id = id;
-            
-            // Форматирование даты
-            const date = transaction.timestamp?.toDate() || new Date();
-            const formattedDate = date.toLocaleString('ru-RU');
-            
-            // Определение типа транзакции
-            const typeText = transaction.type === 'stars' ? 'Звёзды' : 'Деньги';
-            const amountText = transaction.type === 'stars' 
-                ? `${transaction.amount} звёзд` 
-                : `${transaction.amount_rub} руб.`;
-            
-            // Статус транзакции
-            let statusText = '';
-            switch(transaction.status) {
-                case 'approved': statusText = 'Одобрена'; break;
-                case 'rejected': statusText = 'Отклонена'; break;
-                case 'processing': statusText = 'В обработке'; break;
-                default: statusText = 'Ожидает'; break;
-            }
-            
-            element.innerHTML = `
-                <div>
-                    <strong>${typeText}</strong>
-                    <div>Сумма: ${amountText}</div>
-                    <small>${formattedDate}</small>
-                    <button class="toggle-comments">Показать комментарии</button>
-                </div>
-                <div class="transaction-status status-${transaction.status}">${statusText}</div>
-                <div class="comment-section">
-                    ${transaction.comments?.map(comment => `
-                        <div class="comment ${comment.isAdmin ? 'comment-admin' : 'comment-user'}">
-                            <strong>${comment.isAdmin ? 'Администратор' : 'Вы'}:</strong>
-                            <p>${comment.text}</p>
-                            <small>${comment.timestamp?.toDate().toLocaleString() || ''}</small>
-                        </div>
-                    `).join('') || '<p>Нет комментариев</p>'}
-                </div>
-            `;
-            
-            // Обработчик для показа/скрытия комментариев
-            const toggleBtn = element.querySelector('.toggle-comments');
-            const commentSection = element.querySelector('.comment-section');
-            
-            toggleBtn.addEventListener('click', () => {
-                if (commentSection.style.display === 'block') {
-                    commentSection.style.display = 'none';
-                    toggleBtn.textContent = 'Показать комментарии';
-                } else {
-                    commentSection.style.display = 'block';
-                    toggleBtn.textContent = 'Скрыть комментарии';
-                }
-            });
-            
-            return element;
-        }
-
-        // Проверка прав администратора
-        async function checkAdminStatus() {
-            if (!currentUser) return;
-            
-            try {
-                const adminDoc = await db.collection('admins').doc(currentUser.user.uid).get();
-                if (adminDoc.exists) {
-                    document.getElementById('adminPanel').style.display = 'block';
-                    loadAdminTransactions();
-                    initStatisticsChart();
-                }
-            } catch (error) {
-                console.error('Ошибка проверки прав администратора:', error);
-            }
-        }
-
-        // Загрузка транзакций для администратора
-        function loadAdminTransactions() {
-            adminTransactionsUnsubscribe = db.collection('transactions')
-                .orderBy('timestamp', 'desc')
-                .limit(20)
-                .onSnapshot(snapshot => {
-                    const adminTransactions = document.getElementById('adminTransactions');
-                    adminTransactions.innerHTML = '';
-                    
-                    if (snapshot.empty) {
-                        adminTransactions.innerHTML = '<p>Нет транзакций для обработки</p>';
-                        return;
-                    }
-                    
-                    snapshot.forEach(doc => {
-                        const transaction = doc.data();
-                        const transactionElement = createAdminTransactionElement(doc.id, transaction);
-                        adminTransactions.appendChild(transactionElement);
-                    });
-                });
-        }
-
-        // Создание элемента транзакции для администратора
-        function createAdminTransactionElement(id, transaction) {
-            const element = document.createElement('div');
-            element.className = 'admin-transaction-item';
-            element.dataset.id = id;
-            
-            // Форматирование даты
-            const date = transaction.timestamp?.toDate() || new Date();
-            const formattedDate = date.toLocaleString('ru-RU');
-            
-            // Определение типа транзакции
-            const typeText = transaction.type === 'stars' ? 'Звёзды' : 'Деньги';
-            const amountText = transaction.type === 'stars' 
-                ? `${transaction.amount} звёзд` 
-                : `${transaction.amount_rub} руб.`;
-            
-            // Детали в зависимости от типа
-            let details = '';
-            if (transaction.type === 'money') {
-                if (transaction.method === 'phone') {
-                    details = `Телефон: ${transaction.phone}, Банк: ${getBankName(transaction.bank)}`;
-                } else if (transaction.method === 'bank') {
-                    details = `Карта: **** **** **** ${transaction.card.slice(-4)}`;
-                } else if (transaction.method === 'usdt') {
-                    details = `USDT: ${transaction.usdt.slice(0, 6)}...${transaction.usdt.slice(-4)}`;
-                }
+        // Загрузка транзакций
+        async function loadTransactions() {
+            if (currentUser.isAdmin) {
+                loadAdminTransactions();
             } else {
-                details = `Telegram: ${transaction.username}`;
-            }
-            
-            element.innerHTML = `
-                <div>
-                    <strong>Транзакция #${id.slice(0, 6)}</strong>
-                    <div>Тип: ${typeText}, Сумма: ${amountText}</div>
-                    <div>${details}</div>
-                    <small>${formattedDate}</small>
-                    <div class="admin-controls">
-                        <button class="btn-approve" onclick="updateTransactionStatus('${id}', 'approved')">Одобрить</button>
-                        <button class="btn-reject" onclick="updateTransactionStatus('${id}', 'rejected')">Отклонить</button>
-                        <button class="btn-comment" onclick="addComment('${id}')">Комментарий</button>
-                    </div>
-                    <div class="comment-section">
-                        ${transaction.comments?.map(comment => `
-                            <div class="comment ${comment.isAdmin ? 'comment-admin' : 'comment-user'}">
-                                <strong>${comment.isAdmin ? 'Администратор' : 'Пользователь'}:</strong>
-                                <p>${comment.text}</p>
-                                <small>${comment.timestamp?.toDate().toLocaleString() || ''}</small>
-                            </div>
-                        `).join('') || '<p>Нет комментариев</p>'}
-                    </div>
-                </div>
-            `;
-            
-            return element;
-        }
-
-        // Получение названия банка
-        function getBankName(bankCode) {
-            const banks = {
-                'sber': 'Сбербанк',
-                'tinkoff': 'Тинькофф',
-                'vtb': 'ВТБ',
-                'alfa': 'Альфа-Банк',
-                'gazprom': 'Газпромбанк',
-                'other': 'Другой банк'
-            };
-            return banks[bankCode] || bankCode;
-        }
-
-        // Обновление статуса транзакции
-        async function updateTransactionStatus(id, status) {
-            if (!confirm(`Вы уверены, что хотите ${status === 'approved' ? 'одобрить' : 'отклонить'} эту транзакцию?`)) {
-                return;
-            }
-            
-            try {
-                await db.collection('transactions').doc(id).update({
-                    status: status,
-                    processedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                // Обновление статистики
-                updateStatistics(id, status);
-                
-                alert(`Транзакция успешно ${status === 'approved' ? 'одобрена' : 'отклонена'}`);
-            } catch (error) {
-                console.error('Ошибка обновления статуса:', error);
-                alert('Произошла ошибка при обновлении статуса');
+                loadUserTransactions();
             }
         }
 
-        // Добавление комментария
-        async function addComment(transactionId) {
-            const commentText = prompt('Введите комментарий:');
-            if (!commentText) return;
-            
-            try {
-                const transactionRef = db.collection('transactions').doc(transactionId);
-                await transactionRef.update({
-                    comments: firebase.firestore.FieldValue.arrayUnion({
-                        text: commentText,
-                        isAdmin: true,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    })
-                });
-                
-                alert('Комментарий успешно добавлен');
-            } catch (error) {
-                console.error('Ошибка добавления комментария:', error);
-                alert('Произошла ошибка при добавлении комментария');
-            }
-        }
-
-        // Инициализация графика статистики
-        async function initStatisticsChart() {
-            try {
-                const statsDoc = await db.collection('stats').doc('main').get();
-                const statsData = statsDoc.exists ? statsDoc.data() : {
-                    totalStars: 0,
-                    totalMoney: 0,
-                    approvedStars: 0,
-                    approvedMoney: 0
-                };
-                
-                const ctx = document.getElementById('statsChart').getContext('2d');
-                statsChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Всего звёзд', 'Всего денег', 'Одобрено звёзд', 'Одобрено денег'],
-                        datasets: [{
-                            label: 'Статистика',
-                            data: [
-                                statsData.totalStars,
-                                statsData.totalMoney,
-                                statsData.approvedStars,
-                                statsData.approvedMoney
-                            ],
-                            backgroundColor: [
-                                'rgba(138, 43, 226, 0.7)',
-                                'rgba(75, 192, 192, 0.7)',
-                                'rgba(138, 43, 226, 0.4)',
-                                'rgba(75, 192, 192, 0.4)'
-                            ],
-                            borderColor: [
-                                'rgba(138, 43, 226, 1)',
-                                'rgba(75, 192, 192, 1)',
-                                'rgba(138, 43, 226, 1)',
-                                'rgba(75, 192, 192, 1)'
-                            ],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error('Ошибка загрузки статистики:', error);
-            }
-        }
-
-        // Обновление статистики
-        async function updateStatistics(transactionId, status) {
-            try {
-                const transactionDoc = await db.collection('transactions').doc(transactionId).get();
-                const transaction = transactionDoc.data();
-                
-                const statsRef = db.collection('stats').doc('main');
-                const updateData = {};
-                
-                if (transaction.type === 'stars') {
-                    updateData.totalStars = firebase.firestore.FieldValue.increment(parseFloat(transaction.amount));
-                    if (status === 'approved') {
-                        updateData.approvedStars = firebase.firestore.FieldValue.increment(parseFloat(transaction.amount));
-                    }
-                } else {
-                    updateData.totalMoney = firebase.firestore.FieldValue.increment(parseFloat(transaction.amount_rub));
-                    if (status === 'approved') {
-                        updateData.approvedMoney = firebase.firestore.FieldValue.increment(parseFloat(transaction.amount_rub));
-                    }
+      // Загрузка транзакций пользователя
+async function loadUserTransactions() {
+    // Отписываемся от предыдущего слушателя, если он был
+    if (transactionsUnsubscribe) {
+        transactionsUnsubscribe();
+    }
+    
+    const transactionsList = document.getElementById('transactionsList');
+    transactionsList.innerHTML = '<p>Загрузка истории...</p>';
+    
+    try {
+        transactionsUnsubscribe = db.collection('transactions')
+            .where('userId', '==', currentUser.id)
+            .orderBy('timestamp', 'desc')
+            .limit(10)
+            .onSnapshot(snapshot => {
+                if (snapshot.empty) {
+                    transactionsList.innerHTML = '<p>У вас пока нет транзакций</p>';
+                    return;
                 }
                 
-                await statsRef.set(updateData, { merge: true });
-                
-                // Обновляем график
-                if (statsChart) {
-                    const statsDoc = await statsRef.get();
-                    const statsData = statsDoc.data();
-                    
-                    statsChart.data.datasets[0].data = [
-                        statsData.totalStars,
-                        statsData.totalMoney,
-                        statsData.approvedStars,
-                        statsData.approvedMoney
-                    ];
-                    statsChart.update();
-                }
-            } catch (error) {
-                console.error('Ошибка обновления статистики:', error);
-            }
-        }
-
-        // Экспорт данных
-        async function exportData(format) {
-            try {
-                const snapshot = await db.collection('transactions')
-                    .where('userId', '==', currentUser.user.uid)
-                    .get();
-                
-                const data = snapshot.docs.map(doc => {
+                transactionsList.innerHTML = '';
+                snapshot.forEach(doc => {
                     const transaction = doc.data();
-                    return {
-                        id: doc.id,
-                        type: transaction.type === 'stars' ? 'Звёзды' : 'Деньги',
-                        amount: transaction.type === 'stars' ? transaction.amount : transaction.amount_rub,
-                        currency: transaction.type === 'stars' ? 'звёзд' : 'руб.',
-                        status: getStatusText(transaction.status),
-                        date: transaction.timestamp?.toDate().toLocaleString() || 'Неизвестно',
-                        details: transaction.type === 'stars' 
-                            ? `Telegram: ${transaction.username}`
-                            : getTransactionDetails(transaction)
+                    const date = transaction.timestamp?.toDate() || new Date();
+                    const formattedDate = date.toLocaleString('ru-RU');
+                    
+                    const statusMap = {
+                        'pending': 'Ожидание',
+                        'approved': 'Одобрено',
+                        'rejected': 'Отклонено',
+                        'processing': 'В обработке'
                     };
+                    
+                    const statusClassMap = {
+                        'pending': 'status-pending',
+                        'approved': 'status-approved',
+                        'rejected': 'status-rejected',
+                        'processing': 'status-processing'
+                    };
+                    
+                    const transactionItem = document.createElement('div');
+                    transactionItem.className = 'transaction-item';
+                    transactionItem.innerHTML = `
+                        <div>
+                            <strong>${transaction.type === 'stars' ? 'Звёзды' : 'Деньги'}</strong>
+                            <div>${formattedDate}</div>
+                            <button class="toggle-comments" data-id="${doc.id}">Показать комментарии</button>
+                            <div class="comment-section" id="comments-${doc.id}"></div>
+                        </div>
+                        <div>
+                            <div>${transaction.type === 'stars' 
+                                ? `${transaction.amount} звёзд` 
+                                : `${transaction.amount_rub} руб.`}</div>
+                            <div class="transaction-status ${statusClassMap[transaction.status] || ''}">
+                                ${statusMap[transaction.status] || transaction.status}
+                            </div>
+                        </div>
+                    `;
+                    
+                    transactionsList.appendChild(transactionItem);
+                    
+                    // Загружаем комментарии для этой транзакции
+                    loadComments(doc.id, `comments-${doc.id}`);
+                    
+                    // Обработчик для кнопки показа комментариев
+                    transactionItem.querySelector('.toggle-comments').addEventListener('click', function() {
+                        const commentsSection = document.getElementById(`comments-${doc.id}`);
+                        if (commentsSection.style.display === 'block') {
+                            commentsSection.style.display = 'none';
+                            this.textContent = 'Показать комментарии';
+                        } else {
+                            commentsSection.style.display = 'block';
+                            this.textContent = 'Скрыть комментарии';
+                        }
+                    });
                 });
-                
-                if (format === 'csv') {
-                    const csvContent = convertToCSV(data);
-                    downloadFile(csvContent, 'transactions.csv', 'text/csv');
-                } else {
-                    const jsonContent = JSON.stringify(data, null, 2);
-                    downloadFile(jsonContent, 'transactions.json', 'application/json');
+            });
+    } catch (error) {
+        console.error('Ошибка загрузки транзакций:', error);
+        transactionsList.innerHTML = '<p>Ошибка загрузки истории</p>';
+    }
+}
+
+// Загрузка транзакций для админа
+async function loadAdminTransactions() {
+    if (adminTransactionsUnsubscribe) {
+        adminTransactionsUnsubscribe();
+    }
+    
+    const adminTransactions = document.getElementById('adminTransactions');
+    adminTransactions.innerHTML = '<p>Загрузка заявок...</p>';
+    
+    try {
+        adminTransactionsUnsubscribe = db.collection('transactions')
+            .orderBy('timestamp', 'desc')
+            .limit(50)
+            .onSnapshot(snapshot => {
+                if (snapshot.empty) {
+                    adminTransactions.innerHTML = '<p>Нет активных заявок</p>';
+                    return;
                 }
                 
-            } catch (error) {
-                console.error('Ошибка экспорта данных:', error);
-                alert('Произошла ошибка при экспорте данных');
-            }
-        }
-
-        // Получение текста статуса
-        function getStatusText(status) {
-            switch(status) {
-                case 'approved': return 'Одобрена';
-                case 'rejected': return 'Отклонена';
-                case 'processing': return 'В обработке';
-                default: return 'Ожидает';
-            }
-        }
-
-        // Получение деталей транзакции
-        function getTransactionDetails(transaction) {
-            if (transaction.type !== 'money') return '';
-            
-            switch(transaction.method) {
-                case 'phone': 
-                    return `Телефон: ${transaction.phone}, Банк: ${getBankName(transaction.bank)}`;
-                case 'bank':
-                    return `Карта: **** **** **** ${transaction.card?.slice(-4) || '****'}`;
-                case 'usdt':
-                    return `USDT: ${transaction.usdt?.slice(0, 6)}...${transaction.usdt?.slice(-4) || '****'}`;
-                default:
-                    return '';
-            }
-        }
-
-        // Конвертация в CSV
-        function convertToCSV(data) {
-            const headers = ['ID', 'Тип', 'Сумма', 'Валюта', 'Статус', 'Дата', 'Детали'];
-            const rows = data.map(item => [
-                item.id,
-                item.type,
-                item.amount,
-                item.currency,
-                item.status,
-                item.date,
-                item.details
-            ]);
-            
-            let csv = headers.join(';') + '\r\n';
-            rows.forEach(row => {
-                csv += row.map(field => `"${field}"`).join(';') + '\r\n';
+                adminTransactions.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const transaction = doc.data();
+                    const date = transaction.timestamp?.toDate() || new Date();
+                    const formattedDate = date.toLocaleString('ru-RU');
+                    
+                    const statusMap = {
+                        'pending': 'Ожидание',
+                        'approved': 'Одобрено',
+                        'rejected': 'Отклонено',
+                        'processing': 'В обработке'
+                    };
+                    
+                    const adminItem = document.createElement('div');
+                    adminItem.className = 'admin-transaction-item';
+                    adminItem.innerHTML = `
+                        <div>
+                            <strong>ID: ${doc.id}</strong>
+                            <div>${formattedDate}</div>
+                            <div>Пользователь: ${transaction.tg_username || transaction.username || 'Не указан'}</div>
+                            <div>Тип: ${transaction.type === 'stars' ? 'Звёзды' : 'Деньги'}</div>
+                            <div>Сумма: ${transaction.type === 'stars' 
+                                ? `${transaction.amount} звёзд (${transaction.amount_rub} руб.)` 
+                                : `${transaction.amount_rub} руб. (${transaction.amount} звёзд)`}</div>
+                            ${transaction.method ? `<div>Метод: ${getMethodName(transaction.method)}</div>` : ''}
+                            ${transaction.phone ? `<div>Телефон: ${transaction.phone}</div>` : ''}
+                            ${transaction.card ? `<div>Карта: **** ${transaction.card.slice(-4)}</div>` : ''}
+                            ${transaction.usdt ? `<div>USDT: ${transaction.usdt}</div>` : ''}
+                            <div class="transaction-status">
+                                Статус: ${statusMap[transaction.status] || transaction.status}
+                            </div>
+                            <div class="comment-section" id="admin-comments-${doc.id}"></div>
+                            <textarea id="admin-comment-${doc.id}" placeholder="Ваш комментарий" style="width: 100%; margin-top: 10px;"></textarea>
+                        </div>
+                    `;
+                    
+                    const controls = document.createElement('div');
+                    controls.className = 'admin-controls';
+                    controls.innerHTML = `
+                        <button class="btn-approve" data-id="${doc.id}">Одобрить</button>
+                        <button class="btn-reject" data-id="${doc.id}">Отклонить</button>
+                        <button class="btn-comment" data-id="${doc.id}">Добавить комментарий</button>
+                    `;
+                    
+                    adminItem.appendChild(controls);
+                    adminTransactions.appendChild(adminItem);
+                    
+                    // Загружаем комментарии
+                    loadComments(doc.id, `admin-comments-${doc.id}`);
+                    
+                    // Обработчики кнопок
+                    adminItem.querySelector('.btn-approve').addEventListener('click', () => updateStatus(doc.id, 'approved'));
+                    adminItem.querySelector('.btn-reject').addEventListener('click', () => updateStatus(doc.id, 'rejected'));
+                    adminItem.querySelector('.btn-comment').addEventListener('click', () => addAdminComment(doc.id));
+                });
+                
+                // Обновляем статистику
+                updateAdminStats();
             });
-            
-            return csv;
-        }
+    } catch (error) {
+        console.error('Ошибка загрузки транзакций:', error);
+        adminTransactions.innerHTML = '<p>Ошибка загрузки заявок</p>';
+    }
+}
 
-        // Скачивание файла
-        function downloadFile(content, fileName, mimeType) {
-            const blob = new Blob([content], { type: mimeType });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            
-            setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }, 100);
-        }
+// Обновление статуса транзакции
+async function updateStatus(transactionId, status) {
+    try {
+        await db.collection('transactions').doc(transactionId).update({
+            status: status,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showNotification(`✅ Статус изменен на "${status}"`);
+    } catch (error) {
+        console.error('Ошибка обновления статуса:', error);
+        showNotification('❌ Ошибка обновления статуса', 'error');
+    }
+}
 
-        // Глобальные функции для обработчиков событий
-        window.updateTransactionStatus = updateTransactionStatus;
-        window.addComment = addComment;
-        window.exportData = exportData;
-    </script>
+// Добавление комментария админа
+async function addAdminComment(transactionId) {
+    const commentInput = document.getElementById(`admin-comment-${transactionId}`);
+    const comment = commentInput.value.trim();
+    
+    if (!comment) {
+        showNotification('Введите текст комментария', 'error');
+        return;
+    }
+    
+    try {
+        await db.collection('transactions').doc(transactionId).update({
+            comments: firebase.firestore.FieldValue.arrayUnion({
+                text: comment,
+                author: 'admin',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            })
+        });
+        
+        commentInput.value = '';
+        showNotification('✅ Комментарий добавлен');
+    } catch (error) {
+        console.error('Ошибка добавления комментария:', error);
+        showNotification('❌ Ошибка добавления комментария', 'error');
+    }
+}
+
+// Загрузка комментариев
+async function loadComments(transactionId, containerId) {
+    try {
+        const doc = await db.collection('transactions').doc(transactionId).get();
+        if (!doc.exists) return;
+        
+        const comments = doc.data().comments || [];
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (comments.length === 0) {
+            container.innerHTML = '<p class="comment">Нет комментариев</p>';
+            return;
+        }
+        
+        // Сортируем комментарии по дате (новые сверху)
+        comments.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        
+        comments.forEach(comment => {
+            const date = comment.timestamp?.toDate() || new Date();
+            const commentElement = document.createElement('div');
+            commentElement.className = `comment comment-${comment.author}`;
+            commentElement.innerHTML = `
+                <div><strong>${comment.author === 'admin' ? 'Администратор' : 'Вы'}</strong></div>
+                <div>${date.toLocaleString('ru-RU')}</div>
+                <div>${comment.text}</div>
+            `;
+            container.appendChild(commentElement);
+        });
+    } catch (error) {
+        console.error('Ошибка загрузки комментариев:', error);
+    }
+}
+
+// Обновление статистики для админа
+async function updateAdminStats() {
+    try {
+        const snapshot = await db.collection('transactions').get();
+        const transactions = snapshot.docs.map(doc => doc.data());
+        
+        // Группировка по статусам
+        const statusCounts = transactions.reduce((acc, t) => {
+            acc[t.status] = (acc[t.status] || 0) + 1;
+            return acc;
+        }, {});
+        
+        // Группировка по типам
+        const typeCounts = transactions.reduce((acc, t) => {
+            acc[t.type] = (acc[t.type] || 0) + 1;
+            return acc;
+        }, {});
+        
+        // Суммы
+        const totalStars = transactions
+            .filter(t => t.type === 'stars')
+            .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+            
+        const totalMoney = transactions
+            .filter(t => t.type === 'money')
+            .reduce((sum, t) => sum + parseFloat(t.amount_rub || 0), 0);
+        
+        // Обновляем график
+        updateChart(statusCounts, typeCounts, totalStars, totalMoney);
+    } catch (error) {
+        console.error('Ошибка загрузки статистики:', error);
+    }
+}
+
+// Обновление графика
+function updateChart(statusData, typeData, totalStars, totalMoney) {
+    const ctx = document.getElementById('statsChart').getContext('2d');
+    
+    // Уничтожаем предыдущий график, если он есть
+    if (statsChart) {
+        statsChart.destroy();
+    }
+    
+    // Создаем новый график
+    statsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(statusData),
+            datasets: [{
+                label: 'Количество по статусам',
+                data: Object.values(statusData),
+                backgroundColor: [
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Статистика: ${totalStars.toFixed(0)} звёзд / ${totalMoney.toFixed(2)} руб.`,
+                    font: {
+                        size: 16
+                    }
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Экспорт данных
+async function exportData(format) {
+    try {
+        const snapshot = await db.collection('transactions').get();
+        const transactions = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            timestamp: doc.data().timestamp?.toDate().toISOString()
+        }));
+        
+        let content, mimeType, ext;
+        
+        if (format === 'csv') {
+            const headers = Object.keys(transactions[0]);
+            const rows = transactions.map(t => 
+                headers.map(field => 
+                    `"${String(t[field] || '').replace(/"/g, '""')}"`
+                ).join(',')
+            );
+            
+            content = [headers.join(','), ...rows].join('\n');
+            mimeType = 'text/csv';
+            ext = 'csv';
+        } else {
+            content = JSON.stringify(transactions, null, 2);
+            mimeType = 'application/json';
+            ext = 'json';
+        }
+        
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `transactions_${new Date().toISOString().slice(0,10)}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showNotification(`✅ Данные экспортированы в ${format.toUpperCase()}`);
+    } catch (error) {
+        console.error('Ошибка экспорта:', error);
+        showNotification('❌ Ошибка экспорта данных', 'error');
+    }
+}
+
+// Отправка уведомления в Telegram
+async function sendTelegramNotification(chatIds, message) {
+    if (!TELEGRAM_BOT_TOKEN) return;
+    
+    try {
+        const requests = chatIds.map(chatId => 
+            fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: message,
+                    parse_mode: 'HTML'
+                })
+            })
+        );
+        
+        await Promise.all(requests);
+    } catch (error) {
+        console.error('Ошибка отправки уведомления:', error);
+    }
+}
+
+// Показать уведомление
+function showNotification(message, type = 'success') {
+    const notification = document.getElementById('notification');
+    notification.textContent = message;
+    notification.className = `notification ${type}`;
+    notification.classList.add('show');
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
+
+// Вспомогательная функция - название метода выплаты
+function getMethodName(method) {
+    const methods = {
+        'phone': 'На телефон',
+        'bank': 'Банковская карта',
+        'usdt': 'USDT (TRC20)'
+    };
+    return methods[method] || method;
+}
+
+// Инициализация лоадера
+function toggleLoader(show) {
+    // Можно добавить реализацию лоадера при необходимости
+}
+</script>
 </body>
 </html>
