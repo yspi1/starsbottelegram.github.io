@@ -23,15 +23,10 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
-            transition: background-color 0.3s;
         }
         
         body.user-bg {
             background: linear-gradient(135deg, #6e8efb, #a777e3);
-        }
-        
-        body.admin-bg {
-            background: linear-gradient(135deg, #4b6cb7, #182848);
         }
         
         .card {
@@ -42,17 +37,6 @@
             max-width: 450px;
             padding: 25px;
             transition: all 0.3s ease;
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        
-        .card.hidden {
-            display: none;
-        }
-        
-        .card.visible {
-            opacity: 1;
-            transform: translateY(0);
         }
         
         h2 {
@@ -101,7 +85,7 @@
             color: #555;
         }
         
-        input, select {
+        input {
             width: 100%;
             padding: 12px 15px;
             border: 1px solid #ddd;
@@ -110,7 +94,7 @@
             transition: border-color 0.3s;
         }
         
-        input:focus, select:focus {
+        input:focus {
             border-color: #667eea;
             outline: none;
         }
@@ -142,49 +126,6 @@
             background-color: #667eea;
             color: white;
             border-color: #667eea;
-        }
-        
-        .method-buttons {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .method-btn {
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: white;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .method-btn:hover {
-            border-color: #667eea;
-        }
-        
-        .method-btn.selected {
-            border-color: #667eea;
-            background-color: rgba(102, 126, 234, 0.1);
-        }
-        
-        .method-icon {
-            width: 30px;
-            height: 30px;
-            margin-right: 10px;
-            background-color: #eee;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .method-name {
-            font-weight: 500;
-            flex-grow: 1;
         }
         
         .submit-btn {
@@ -247,165 +188,44 @@
             100% { transform: rotate(360deg); }
         }
         
-        .error-message, .success-message {
+        .error-message {
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
             display: flex;
             align-items: center;
         }
         
-        .error-message {
-            background-color: #ffebee;
-            color: #c62828;
-            border: 1px solid #ef9a9a;
-        }
-        
         .success-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
             background-color: #e8f5e9;
             color: #2e7d32;
             border: 1px solid #a5d6a7;
+            display: flex;
+            align-items: center;
         }
         
         .message-icon {
             margin-right: 10px;
             font-size: 20px;
         }
-        
-        /* Стили для админ-панели */
-        #adminPanel {
-            display: none;
-        }
-        
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-        }
-        
-        .tab.active {
-            border-bottom-color: #667eea;
-            font-weight: 600;
-            color: #667eea;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .withdrawal-item {
-            background-color: white;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .withdrawal-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-weight: 500;
-        }
-        
-        .withdrawal-status {
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .status-pending {
-            background-color: #fff3e0;
-            color: #e65100;
-        }
-        
-        .status-completed {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-        
-        .status-rejected {
-            background-color: #ffebee;
-            color: #c62828;
-        }
-        
-        .withdrawal-details {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 10px;
-        }
-        
-        .withdrawal-actions {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .action-btn {
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
-            border: none;
-        }
-        
-        .approve-btn {
-            background-color: #4caf50;
-            color: white;
-        }
-        
-        .reject-btn {
-            background-color: #f44336;
-            color: white;
-        }
-        
-        .history-item {
-            background-color: white;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .history-status {
-            display: inline-block;
-            margin-left: 10px;
-        }
-        
-        /* Адаптивные стили */
-        @media (max-width: 480px) {
-            .card {
-                padding: 20px 15px;
-            }
-            
-            .amount-buttons {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
     </style>
 </head>
 <body class="user-bg">
-    <div class="card hidden">
+    <div class="card">
         <h2>Вывод средств</h2>
         
-        <!-- Блок с балансом -->
         <div class="balance-card">
             <div class="balance-label">Ваш баланс</div>
-            <div class="balance-value" id="userBalance">0 звезд</div>
+            <div class="balance-value" id="userBalance">0 ★</div>
             <div class="balance-equivalent" id="balanceEquivalent">0.00 ₽</div>
         </div>
 
-        <!-- Форма вывода средств -->
         <div id="withdrawalForm">
             <div class="form-group">
                 <label for="amount">Сумма вывода (в звездах)</label>
@@ -423,15 +243,9 @@
             
             <div class="form-group">
                 <label>Способ вывода</label>
-                <div class="method-buttons">
-                    <button class="method-btn" onclick="selectMethod('usdt')">
-                        <div class="method-icon">$</div>
-                        <div class="method-name">USDT (TRC20)</div>
-                    </button>
-                    <button class="method-btn" onclick="selectMethod('bank')">
-                        <div class="method-icon">₽</div>
-                        <div class="method-name">Банковская карта</div>
-                    </button>
+                <div style="display: flex; gap: 10px;">
+                    <button id="usdtBtn" class="amount-btn" onclick="selectMethod('usdt')">USDT (TRC20)</button>
+                    <button id="bankBtn" class="amount-btn" onclick="selectMethod('bank')">Банковская карта</button>
                 </div>
             </div>
             
@@ -456,31 +270,6 @@
             </div>
         </div>
         
-        <!-- Блок истории выводов -->
-        <div id="withdrawalHistory" style="margin-top: 30px; display: none;">
-            <h3 style="margin-bottom: 15px;">История выводов</h3>
-            <div id="historyList"></div>
-        </div>
-        
-        <!-- Админ-панель -->
-        <div id="adminPanel">
-            <div class="tabs">
-                <div class="tab active" onclick="switchTab('pending')">Ожидание</div>
-                <div class="tab" onclick="switchTab('processed')">Обработанные</div>
-            </div>
-            
-            <div id="pendingTab" class="tab-content active">
-                <h3 style="margin-bottom: 15px;">Заявки на вывод</h3>
-                <div id="pendingList"></div>
-            </div>
-            
-            <div id="processedTab" class="tab-content">
-                <h3 style="margin-bottom: 15px;">История обработки</h3>
-                <div id="processedList"></div>
-            </div>
-        </div>
-        
-        <!-- Сообщения об ошибках/успехе -->
         <div id="errorMessage" class="error-message" style="display: none;">
             <span class="message-icon">⚠️</span>
             <span id="errorText"></span>
@@ -492,7 +281,6 @@
         </div>
     </div>
     
-    <!-- Оверлей загрузки -->
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
         <div class="loading-spinner"></div>
         <div id="loadingText">Загрузка...</div>
@@ -514,11 +302,8 @@
         
         // Конфигурация
         const config = {
-            telegramSupport: "@support",
             minWithdrawal: 50,
-            starRate: 1.45,
-            adminIds: ["1062148525", "1290724329"],
-            usdtAddress: "TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB"
+            starRate: 1.45
         };
         
         // Основные переменные
@@ -526,7 +311,6 @@
         let selectedAmount = 0;
         let selectedMethod = null;
         let userBalance = 0;
-        let isAdmin = false;
         
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
@@ -536,123 +320,51 @@
                 // Получаем данные пользователя Telegram
                 const tgUser = tg.initDataUnsafe?.user;
                 if (tgUser) {
-                    // Создаем или обновляем пользователя
-                    currentUser = await createOrUpdateUser(tgUser);
+                    currentUser = {
+                        id: tgUser.id.toString(),
+                        username: tgUser.username || '',
+                        firstName: tgUser.first_name || '',
+                        lastName: tgUser.last_name || ''
+                    };
                     
-                    // Проверяем, является ли пользователь админом
-                    isAdmin = config.adminIds.includes(tgUser.id.toString());
+                    // Загружаем баланс пользователя (заглушка)
+                    userBalance = 100; // Пример значения
+                    updateBalanceDisplay();
                     
-                    if (isAdmin) {
-                        document.body.classList.remove('user-bg');
-                        document.body.classList.add('admin-bg');
-                        document.getElementById('adminPanel').style.display = 'block';
-                        loadWithdrawals();
-                        initTabs();
-                    } else {
-                        // Загружаем баланс пользователя
-                        await loadUserBalance(tgUser.id.toString());
-                        loadUserWithdrawals(tgUser.id.toString());
-                    }
+                    // Имитируем загрузку данных
+                    setTimeout(() => {
+                        hideLoading();
+                    }, 1000);
                 } else {
-                    showError(null, null, "Не удалось получить данные пользователя");
+                    showError("Не удалось получить данные пользователя");
+                    hideLoading();
                 }
                 
                 initForm();
-                
-                // Анимация появления карточки
-                setTimeout(() => {
-                    document.querySelector('.card').classList.remove('hidden');
-                }, 100);
-                
-                hideLoading();
             } catch (error) {
                 console.error("Ошибка инициализации:", error);
                 hideLoading();
-                showError(null, null, "Произошла ошибка при загрузке. Пожалуйста, попробуйте позже.");
+                showError("Произошла ошибка при загрузке");
             }
         });
 
-        // Создание или обновление пользователя
-        async function createOrUpdateUser(tgUser) {
-            const userId = tgUser.id.toString();
-            const userRef = database.ref(`users/${userId}`);
-            
-            // Получаем текущие данные пользователя
-            const snapshot = await userRef.once('value');
-            const userData = {
-                id: userId,
-                username: tgUser.username || '',
-                first_name: tgUser.first_name || '',
-                last_name: tgUser.last_name || '',
-                last_active: firebase.database.ServerValue.TIMESTAMP
-            };
-            
-            if (!snapshot.exists()) {
-                // Если пользователь новый, устанавливаем начальный баланс
-                userData.created_at = firebase.database.ServerValue.TIMESTAMP;
-                userData.balance = 0;
-                await userRef.set(userData);
-            } else {
-                // Если пользователь существует, только обновляем данные
-                await userRef.update(userData);
-            }
-            
-            return { ref: userRef, key: userId, data: userData };
-        }
-
-        // Загрузка баланса пользователя с обработкой ошибок
-        async function loadUserBalance(userId) {
-            if (!userId) return;
-            
-            try {
-                const userRef = database.ref(`users/${userId}`);
-                
-                // Слушаем изменения баланса в реальном времени
-                userRef.on('value', (snapshot) => {
-                    const userData = snapshot.val();
-                    if (userData) {
-                        userBalance = userData.balance || 0;
-                        
-                        // Обновляем отображение баланса
-                        document.getElementById('userBalance').textContent = `${userBalance} ★`;
-                        document.getElementById('balanceEquivalent').textContent = `${(userBalance * config.starRate).toFixed(2)} ₽`;
-                    } else {
-                        console.error("Данные пользователя не найдены");
-                    }
-                }, (error) => {
-                    console.error("Ошибка при загрузке баланса:", error);
-                });
-                
-            } catch (error) {
-                console.error("Ошибка при загрузке баланса:", error);
-                showError(null, null, "Ошибка при загрузке баланса");
-            }
+        // Обновление отображения баланса
+        function updateBalanceDisplay() {
+            document.getElementById('userBalance').textContent = `${userBalance} ★`;
+            document.getElementById('balanceEquivalent').textContent = `${(userBalance * config.starRate).toFixed(2)} ₽`;
         }
 
         // Инициализация формы вывода
         function initForm() {
-            // Сбрасываем выбранные значения
             selectedAmount = 0;
             selectedMethod = null;
-            
-            // Очищаем поля ввода
             document.getElementById('amount').value = '';
             document.getElementById('usdtAddress').value = '';
             document.getElementById('cardNumber').value = '';
             document.getElementById('cardName').value = '';
-            
-            // Сбрасываем выделение кнопок
-            const amountBtns = document.querySelectorAll('.amount-btn');
-            amountBtns.forEach(btn => btn.classList.remove('selected'));
-            
-            const methodBtns = document.querySelectorAll('.method-btn');
-            methodBtns.forEach(btn => btn.classList.remove('selected'));
-            
-            // Скрываем все блоки с деталями
+            document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('selected'));
             document.getElementById('usdtDetails').style.display = 'none';
             document.getElementById('bankDetails').style.display = 'none';
-            
-            // Обновляем состояние кнопки отправки
             updateSubmitButton();
         }
         
@@ -661,9 +373,7 @@
             selectedAmount = amount;
             document.getElementById('amount').value = amount;
             
-            // Обновляем выделение кнопок
-            const amountBtns = document.querySelectorAll('.amount-btn');
-            amountBtns.forEach(btn => {
+            document.querySelectorAll('.amount-btn').forEach(btn => {
                 if (parseInt(btn.textContent) === amount) {
                     btn.classList.add('selected');
                 } else {
@@ -677,21 +387,6 @@
         // Обновление выбранной суммы из поля ввода
         function updateSelectedAmount(value) {
             selectedAmount = parseInt(value) || 0;
-            
-            // Сбрасываем выделение кнопок, если значение не соответствует ни одной из них
-            const amountBtns = document.querySelectorAll('.amount-btn');
-            let hasMatch = false;
-            
-            amountBtns.forEach(btn => {
-                const btnAmount = parseInt(btn.textContent);
-                if (btnAmount === selectedAmount) {
-                    btn.classList.add('selected');
-                    hasMatch = true;
-                } else {
-                    btn.classList.remove('selected');
-                }
-            });
-            
             updateSubmitButton();
         }
         
@@ -699,17 +394,9 @@
         function selectMethod(method) {
             selectedMethod = method;
             
-            // Обновляем выделение кнопок
-            const methodBtns = document.querySelectorAll('.method-btn');
-            methodBtns.forEach(btn => {
-                if (btn.getAttribute('onclick').includes(method)) {
-                    btn.classList.add('selected');
-                } else {
-                    btn.classList.remove('selected');
-                }
-            });
+            document.getElementById('usdtBtn').classList.toggle('selected', method === 'usdt');
+            document.getElementById('bankBtn').classList.toggle('selected', method === 'bank');
             
-            // Показываем соответствующий блок с деталями
             document.getElementById('usdtDetails').style.display = method === 'usdt' ? 'block' : 'none';
             document.getElementById('bankDetails').style.display = method === 'bank' ? 'block' : 'none';
             
@@ -720,380 +407,45 @@
         function updateSubmitButton() {
             const submitBtn = document.getElementById('submitBtn');
             const isValid = selectedAmount >= config.minWithdrawal && selectedMethod !== null;
-            
             submitBtn.disabled = !isValid;
         }
         
         // Отправка заявки на вывод
         async function submitWithdrawal() {
-            if (!currentUser) {
-                showError(null, null, "Не удалось идентифицировать пользователя");
-                return;
-            }
-            
             if (selectedAmount < config.minWithdrawal) {
-                showError(null, null, `Минимальная сумма вывода: ${config.minWithdrawal} ★`);
+                showError(`Минимальная сумма вывода: ${config.minWithdrawal} ★`);
                 return;
             }
             
             if (selectedAmount > userBalance) {
-                showError(null, null, "Недостаточно средств на балансе");
+                showError("Недостаточно средств на балансе");
                 return;
             }
             
             if (!selectedMethod) {
-                showError(null, null, "Выберите способ вывода");
+                showError("Выберите способ вывода");
                 return;
             }
             
-            let details = {};
-            
             try {
-                showLoading("Отправка заявки...");
+                showLoading("Обработка запроса...");
                 
-                // Собираем данные в зависимости от метода вывода
-                if (selectedMethod === 'usdt') {
-                    const address = document.getElementById('usdtAddress').value.trim();
-                    if (!address) {
-                        throw new Error("Введите адрес USDT кошелька");
-                    }
-                    details = { address };
-                } else if (selectedMethod === 'bank') {
-                    const cardNumber = document.getElementById('cardNumber').value.trim();
-                    const cardName = document.getElementById('cardName').value.trim();
-                    
-                    if (!cardNumber || !cardName) {
-                        throw new Error("Заполните все поля для банковской карты");
-                    }
-                    
-                    // Простая валидация номера карты
-                    if (cardNumber.length < 16 || !/^\d+$/.test(cardNumber)) {
-                        throw new Error("Некорректный номер карты");
-                    }
-                    
-                    details = { cardNumber, cardName };
-                }
-                
-                // Создаем заявку на вывод
-                const withdrawalRef = database.ref('withdrawals').push();
-                const withdrawalData = {
-                    id: withdrawalRef.key,
-                    userId: currentUser.key,
-                    amount: selectedAmount,
-                    method: selectedMethod,
-                    details: details,
-                    status: "pending",
-                    createdAt: firebase.database.ServerValue.TIMESTAMP,
-                    rate: config.starRate,
-                    equivalent: selectedAmount * config.starRate
-                };
-                
-                await withdrawalRef.set(withdrawalData);
-                
-                // Обновляем историю выводов
-                loadUserWithdrawals(currentUser.key);
-                
-                hideLoading();
-                showSuccess(null, null, "Заявка на вывод отправлена!");
-                
-                // Сбрасываем форму
-                initForm();
+                // Имитация отправки данных
+                setTimeout(() => {
+                    hideLoading();
+                    showSuccess(`Заявка на вывод ${selectedAmount} ★ успешно отправлена!`);
+                    initForm();
+                }, 2000);
                 
             } catch (error) {
                 console.error("Ошибка при отправке заявки:", error);
                 hideLoading();
-                showError(null, null, error.message || "Произошла ошибка при отправке заявки");
+                showError("Ошибка при отправке заявки");
             }
-        }
-        
-        // Загрузка истории выводов пользователя
-        function loadUserWithdrawals(userId) {
-            if (!userId) return;
-            
-            const withdrawalsRef = database.ref('withdrawals').orderByChild('userId').equalTo(userId);
-            
-            withdrawalsRef.on('value', (snapshot) => {
-                const withdrawals = snapshot.val() || {};
-                const historyList = document.getElementById('historyList');
-                
-                if (Object.keys(withdrawals).length === 0) {
-                    historyList.innerHTML = '<p style="text-align: center; color: #666;">У вас еще нет заявок на вывод</p>';
-                    document.getElementById('withdrawalHistory').style.display = 'block';
-                    return;
-                }
-                
-                // Сортируем по дате (новые сверху)
-                const sortedWithdrawals = Object.values(withdrawals).sort((a, b) => b.createdAt - a.createdAt);
-                
-                historyList.innerHTML = '';
-                
-                sortedWithdrawals.forEach(withdrawal => {
-                    const item = document.createElement('div');
-                    item.className = 'history-item';
-                    
-                    let methodText = '';
-                    if (withdrawal.method === 'usdt') {
-                        methodText = `USDT: ${withdrawal.details.address.substring(0, 6)}...${withdrawal.details.address.substring(withdrawal.details.address.length - 4)}`;
-                    } else if (withdrawal.method === 'bank') {
-                        methodText = `Карта: **** ${withdrawal.details.cardNumber.substring(withdrawal.details.cardNumber.length - 4)}`;
-                    }
-                    
-                    let statusText = '';
-                    let statusClass = '';
-                    
-                    if (withdrawal.status === 'completed') {
-                        statusText = '✓ Выполнено';
-                        statusClass = 'status-completed';
-                    } else if (withdrawal.status === 'rejected') {
-                        statusText = '✗ Отклонено';
-                        statusClass = 'status-rejected';
-                    } else {
-                        statusText = '⏳ В обработке';
-                        statusClass = 'status-pending';
-                    }
-                    
-                    const date = new Date(withdrawal.createdAt);
-                    const formattedDate = date.toLocaleString('ru-RU');
-                    
-                    item.innerHTML = `
-                        <div style="margin-bottom: 5px;">
-                            <strong>${withdrawal.amount} ★ (${withdrawal.equivalent.toFixed(2)} ₽)</strong>
-                            <span class="history-status ${statusClass}">${statusText}</span>
-                        </div>
-                        <div style="color: #666; margin-bottom: 5px;">${methodText}</div>
-                        <div style="font-size: 12px; color: #999;">${formattedDate}</div>
-                    `;
-                    
-                    historyList.appendChild(item);
-                });
-                
-                document.getElementById('withdrawalHistory').style.display = 'block';
-            }, (error) => {
-                console.error("Ошибка при загрузке истории:", error);
-                document.getElementById('historyList').innerHTML = '<p style="text-align: center; color: #c62828;">Ошибка загрузки истории</p>';
-                document.getElementById('withdrawalHistory').style.display = 'block';
-            });
-        }
-        
-        // Загрузка заявок на вывод для админа
-        function loadWithdrawals() {
-            if (!isAdmin) return;
-            
-            const pendingRef = database.ref('withdrawals').orderByChild('status').equalTo('pending');
-            const processedRef = database.ref('withdrawals').orderByChild('status').startAt('completed').endAt('rejected');
-            
-            // Загрузка ожидающих заявок
-            pendingRef.on('value', (snapshot) => {
-                const withdrawals = snapshot.val() || {};
-                const pendingList = document.getElementById('pendingList');
-                
-                if (Object.keys(withdrawals).length === 0) {
-                    pendingList.innerHTML = '<p style="text-align: center; color: #666;">Нет заявок на вывод</p>';
-                    return;
-                }
-                
-                // Сортируем по дате (старые сверху)
-                const sortedWithdrawals = Object.values(withdrawals).sort((a, b) => a.createdAt - b.createdAt);
-                
-                pendingList.innerHTML = '';
-                
-                sortedWithdrawals.forEach(withdrawal => {
-                    const item = document.createElement('div');
-                    item.className = 'withdrawal-item';
-                    
-                    let methodText = '';
-                    if (withdrawal.method === 'usdt') {
-                        methodText = `USDT: ${withdrawal.details.address}`;
-                    } else if (withdrawal.method === 'bank') {
-                        methodText = `Карта: ${withdrawal.details.cardName}, **** ${withdrawal.details.cardNumber.substring(withdrawal.details.cardNumber.length - 4)}`;
-                    }
-                    
-                    const date = new Date(withdrawal.createdAt);
-                    const formattedDate = date.toLocaleString('ru-RU');
-                    
-                    item.innerHTML = `
-                        <div class="withdrawal-header">
-                            <div>${withdrawal.amount} ★ (${withdrawal.equivalent.toFixed(2)} ₽)</div>
-                            <div class="withdrawal-status status-pending">В ожидании</div>
-                        </div>
-                        <div class="withdrawal-details">
-                            <div>${methodText}</div>
-                            <div>Пользователь: ${withdrawal.userId}</div>
-                            <div>${formattedDate}</div>
-                        </div>
-                        <div class="withdrawal-actions">
-                            <button class="action-btn approve-btn" onclick="processWithdrawal('${withdrawal.id}', 'completed')">Подтвердить</button>
-                            <button class="action-btn reject-btn" onclick="processWithdrawal('${withdrawal.id}', 'rejected')">Отклонить</button>
-                        </div>
-                    `;
-                    
-                    pendingList.appendChild(item);
-                });
-            });
-            
-            // Загрузка обработанных заявок
-            processedRef.on('value', (snapshot) => {
-                const withdrawals = snapshot.val() || {};
-                const processedList = document.getElementById('processedList');
-                
-                if (Object.keys(withdrawals).length === 0) {
-                    processedList.innerHTML = '<p style="text-align: center; color: #666;">Нет обработанных заявок</p>';
-                    return;
-                }
-                
-                // Сортируем по дате обработки (новые сверху)
-                const sortedWithdrawals = Object.values(withdrawals).sort((a, b) => (b.processedAt || 0) - (a.processedAt || 0));
-                
-                processedList.innerHTML = '';
-                
-                sortedWithdrawals.forEach(withdrawal => {
-                    const item = document.createElement('div');
-                    item.className = 'withdrawal-item';
-                    
-                    let methodText = '';
-                    if (withdrawal.method === 'usdt') {
-                        methodText = `USDT: ${withdrawal.details.address}`;
-                    } else if (withdrawal.method === 'bank') {
-                        methodText = `Карта: ${withdrawal.details.cardName}, **** ${withdrawal.details.cardNumber.substring(withdrawal.details.cardNumber.length - 4)}`;
-                    }
-                    
-                    const createdDate = new Date(withdrawal.createdAt);
-                    const processedDate = new Date(withdrawal.processedAt || withdrawal.createdAt);
-                    
-                    const formattedCreatedDate = createdDate.toLocaleString('ru-RU');
-                    const formattedProcessedDate = processedDate.toLocaleString('ru-RU');
-                    
-                    let statusText = '';
-                    let statusClass = '';
-                    
-                    if (withdrawal.status === 'completed') {
-                        statusText = 'Подтверждено';
-                        statusClass = 'status-completed';
-                    } else {
-                        statusText = 'Отклонено';
-                        statusClass = 'status-rejected';
-                    }
-                    
-                    item.innerHTML = `
-                        <div class="withdrawal-header">
-                            <div>${withdrawal.amount} ★ (${withdrawal.equivalent.toFixed(2)} ₽)</div>
-                            <div class="withdrawal-status ${statusClass}">${statusText}</div>
-                        </div>
-                        <div class="withdrawal-details">
-                            <div>${methodText}</div>
-                            <div>Пользователь: ${withdrawal.userId}</div>
-                            <div>Создано: ${formattedCreatedDate}</div>
-                            <div>Обработано: ${formattedProcessedDate}</div>
-                            ${withdrawal.processedBy ? `<div>Обработал: ${withdrawal.processedBy}</div>` : ''}
-                        </div>
-                    `;
-                    
-                    processedList.appendChild(item);
-                });
-            });
-        }
-        
-        // Обработка заявки на вывод (обновленная версия)
-        window.processWithdrawal = async function(id, status) {
-            if (!isAdmin) return;
-            
-            try {
-                showLoading("Обработка заявки...");
-                
-                const withdrawalRef = database.ref(`withdrawals/${id}`);
-                const snapshot = await withdrawalRef.once('value');
-                const withdrawal = snapshot.val();
-                
-                if (!withdrawal) {
-                    throw new Error("Заявка не найдена");
-                }
-                
-                // Обновляем статус заявки
-                const updates = {
-                    status: status,
-                    processedAt: firebase.database.ServerValue.TIMESTAMP,
-                    processedBy: currentUser.key
-                };
-                
-                await withdrawalRef.update(updates);
-                
-                // Если заявка подтверждена, списываем средства с баланса пользователя
-                if (status === 'completed') {
-                    const userRef = database.ref(`users/${withdrawal.userId}`);
-                    const userSnapshot = await userRef.once('value');
-                    const userData = userSnapshot.val();
-                    
-                    if (userData) {
-                        const currentBalance = userData.balance || 0;
-                        const newBalance = currentBalance - withdrawal.amount;
-                        
-                        if (newBalance < 0) {
-                            throw new Error("Недостаточно средств на балансе");
-                        }
-                        
-                        // Атомарное обновление баланса
-                        await userRef.update({ 
-                            balance: newBalance,
-                            last_update: firebase.database.ServerValue.TIMESTAMP
-                        });
-                    }
-                }
-                
-                hideLoading();
-                showSuccess(null, null, `Заявка ${status === 'completed' ? 'подтверждена' : 'отклонена'}`);
-                
-                // Обновляем список заявок
-                loadWithdrawals();
-            } catch (error) {
-                console.error("Ошибка обработки заявки:", error);
-                hideLoading();
-                showError(null, null, "Ошибка обработки заявки: " + error.message);
-                
-                // Откатываем статус заявки в случае ошибки
-                try {
-                    await database.ref(`withdrawals/${id}/status`).set('pending');
-                } catch (rollbackError) {
-                    console.error("Ошибка при откате статуса:", rollbackError);
-                }
-            }
-        };
-        
-        // Инициализация вкладок админ-панели
-        function initTabs() {
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    const tabId = this.getAttribute('onclick').match(/'([^']+)'/)[1];
-                    document.querySelectorAll('.tab-content').forEach(content => {
-                        content.classList.remove('active');
-                    });
-                    document.getElementById(tabId + 'Tab').classList.add('active');
-                });
-            });
-        }
-        
-        // Переключение вкладок
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-                if (tab.getAttribute('onclick').includes(tabName)) {
-                    tab.classList.add('active');
-                }
-            });
-            
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-                if (content.id === tabName + 'Tab') {
-                    content.classList.add('active');
-                }
-            });
         }
         
         // Показать сообщение об ошибке
-        function showError(title, subtitle, message) {
+        function showError(message) {
             const errorElement = document.getElementById('errorMessage');
             document.getElementById('errorText').textContent = message;
             errorElement.style.display = 'flex';
@@ -1104,7 +456,7 @@
         }
         
         // Показать сообщение об успехе
-        function showSuccess(title, subtitle, message) {
+        function showSuccess(message) {
             const successElement = document.getElementById('successMessage');
             document.getElementById('successText').textContent = message;
             successElement.style.display = 'flex';
