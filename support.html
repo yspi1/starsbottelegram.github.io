@@ -3,114 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Поддержка</title>
+    <title>Космическая поддержка</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     <style>
         :root {
-            --primary-color: #4361ee;
-            --success-color: #06d6a0;
-            --danger-color: #ef476f;
-            --warning-color: #ffd166;
-            --text-color: #2b2d42;
-            --gradient-1: #3f37c9;
-            --gradient-2: #4361ee;
+            --space-dark: #0B0D21;
+            --neon-blue: #00F3FF;
+            --star-yellow: #FFE81F;
+            --planet-purple: #6C63FF;
+            --danger-red: #FF4D4D;
+            --success-green: #00CC88;
         }
 
         body {
-            font-family: 'Roboto', Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
-            animation: gradientBG 15s ease infinite;
-            background-size: 400% 400%;
+            background: var(--space-dark);
+            color: white;
             min-height: 100vh;
-            color: var(--text-color);
-            line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        /* Космический фон */
+        .space-background {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            background: 
+                radial-gradient(circle at 20% 80%, var(--planet-purple), transparent 30%),
+                radial-gradient(circle at 80% 20%, var(--neon-blue), transparent 30%),
+                linear-gradient(to bottom, #000000, var(--space-dark));
+            z-index: -1;
+        }
+
+        .stars {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(2px 2px at 20% 30%, white, rgba(255,255,255,0.3)),
+                radial-gradient(2px 2px at 80% 70%, white, rgba(255,255,255,0.3));
+            animation: stars 50s linear infinite;
+        }
+
+        @keyframes stars {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-        }
-
-        .loading-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-            color: white;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-bottom: 20px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+            position: relative;
         }
 
         .card {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            padding: 25px;
             margin-bottom: 20px;
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 12px 25px;
             border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
             border: none;
+            font-weight: bold;
             cursor: pointer;
+            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            background: var(--neon-blue);
+            color: var(--space-dark);
         }
 
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 243, 255, 0.3);
         }
 
         .btn-danger {
-            background: var(--danger-color);
+            background: var(--danger-red);
             color: white;
         }
 
         .btn-success {
-            background: var(--success-color);
+            background: var(--success-green);
             color: white;
         }
 
         .ticket-card {
             margin-bottom: 15px;
+            background: rgba(255,255,255,0.05);
             border-radius: 12px;
             overflow: hidden;
-            background: white;
+            transition: all 0.3s ease;
         }
 
         .ticket-header {
@@ -119,7 +114,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #f8f9fa;
+            background: rgba(0, 243, 255, 0.05);
         }
 
         .ticket-body {
@@ -130,46 +125,45 @@
         }
 
         .ticket-expanded .ticket-body {
-            max-height: 2000px;
+            max-height: 1000px;
             padding: 15px;
         }
 
         .message {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 8px;
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 10px;
             position: relative;
-        }
-
-        .user-message {
-            background: #e3f2fd;
-            margin-right: 20%;
+            background: rgba(255,255,255,0.1);
         }
 
         .admin-message {
-            background: #f5f5f5;
-            margin-left: 20%;
+            background: rgba(108, 99, 255, 0.15);
+            border-left: 3px solid var(--planet-purple);
         }
 
-        .status-dot {
+        .user-message {
+            background: rgba(0, 243, 255, 0.15);
+            border-left: 3px solid var(--neon-blue);
+        }
+
+        .status-indicator {
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            margin-right: 8px;
+            margin-right: 10px;
         }
 
-        .status-open .status-dot { background: #4caf50; }
-        .status-closed .status-dot { background: #f44336; }
+        .open { background: var(--success-green); }
+        .closed { background: var(--danger-red); }
 
         .priority-tag {
-            padding: 4px 10px;
-            border-radius: 12px;
+            padding: 5px 12px;
+            border-radius: 20px;
             font-size: 0.8em;
+            background: rgba(255, 232, 31, 0.15);
+            color: var(--star-yellow);
         }
-
-        .priority-low { background: #c8e6c9; color: #2e7d32; }
-        .priority-medium { background: #fff3e0; color: #ef6c00; }
-        .priority-high { background: #ffcdd2; color: #c62828; }
 
         .notification {
             position: fixed;
@@ -177,81 +171,89 @@
             right: 20px;
             padding: 15px 25px;
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255,255,255,0.9);
+            color: var(--space-dark);
             backdrop-filter: blur(5px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            opacity: 0;
             transform: translateY(100%);
+            opacity: 0;
             transition: all 0.3s ease;
         }
 
         .notification.show {
-            opacity: 1;
             transform: translateY(0);
+            opacity: 1;
         }
 
-        .form-group {
-            margin-bottom: 15px;
+        form {
+            display: grid;
+            gap: 15px;
         }
 
         input, textarea, select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            margin-top: 5px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
         }
     </style>
 </head>
 <body>
-    <div id="loadingScreen" class="loading-screen">
-        <div class="spinner"></div>
-        <h2>Загрузка системы поддержки...</h2>
+    <div class="space-background">
+        <div class="stars"></div>
     </div>
 
-    <div id="appContent" class="container" style="display: none;">
-        <!-- Для пользователей -->
-        <div class="user-interface">
-            <div class="card">
-                <h1>Служба поддержки</h1>
-                <form id="ticketForm">
-                    <div class="form-group">
-                        <label>Тема проблемы</label>
-                        <input type="text" id="subject" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Приоритет</label>
+    <div id="loadingScreen" class="container" style="color: white; text-align: center; padding-top: 100px;">
+        <h2>🛰 Загрузка космической станции...</h2>
+        <div class="spinner" style="border-top-color: var(--neon-blue); margin: 20px auto;"></div>
+    </div>
+
+    <div id="appContent" style="display: none;">
+        <div class="container">
+            <!-- Интерфейс пользователя -->
+            <div class="user-interface">
+                <div class="card">
+                    <h1 style="color: var(--neon-blue);">🚀 Космическая поддержка</h1>
+                    <form id="ticketForm">
+                        <input type="text" id="subject" placeholder="Тема вопроса" required>
                         <select id="priority" required>
-                            <option value="low">Низкий</option>
-                            <option value="medium" selected>Средний</option>
-                            <option value="high">Высокий</option>
+                            <option value="low">🌌 Низкий приоритет</option>
+                            <option value="medium" selected>🛸 Средний приоритет</option>
+                            <option value="high">🚨 Высокий приоритет</option>
+                        </select>
+                        <textarea id="problem" rows="4" placeholder="Опишите вашу проблему..." required></textarea>
+                        <button type="submit" class="btn">📡 Отправить запрос</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>📬 Мои запросы</h2>
+                    <div id="ticketsContainer"></div>
+                </div>
+            </div>
+
+            <!-- Панель администратора -->
+            <div class="admin-panel hidden">
+                <div class="card">
+                    <h2 style="color: var(--planet-purple);">👾 Панель управления</h2>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <input type="text" id="adminSearch" placeholder="Поиск по запросам..." style="flex: 1;">
+                        <select id="filterStatus" style="width: 200px;">
+                            <option value="all">Все статусы</option>
+                            <option value="open">Открытые</option>
+                            <option value="closed">Закрытые</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>Описание проблемы</label>
-                        <textarea id="problem" rows="4" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Отправить тикет</button>
-                </form>
-            </div>
-
-            <div class="card">
-                <h2>Мои тикеты</h2>
-                <div id="ticketsContainer"></div>
-            </div>
-        </div>
-
-        <!-- Для администраторов -->
-        <div class="admin-panel hidden">
-            <div class="card">
-                <h2>Панель администратора</h2>
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="all">Все тикеты</button>
-                    <button class="tab-btn" data-tab="open">Открытые</button>
-                    <button class="tab-btn" data-tab="closed">Закрытые</button>
+                    <div id="adminTicketsContainer"></div>
                 </div>
-                <input type="text" id="adminSearch" placeholder="Поиск...">
-                <div id="adminTicketsContainer"></div>
             </div>
         </div>
     </div>
@@ -264,65 +266,66 @@
             databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
         };
 
+        const adminIds = ['1290724329', '1062148525'];
+        let currentUser = { id: null, username: 'Космический путешественник', isAdmin: false };
+
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        let currentUser = {
-            id: null,
-            username: 'Гость',
-            isAdmin: false
-        };
-
+        // Инициализация приложения
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-                    const tgUser = Telegram.WebApp.initDataUnsafe.user;
-                    currentUser.id = tgUser.id.toString();
-                    currentUser.username = tgUser.username || [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
-                    Telegram.WebApp.ready();
-                    Telegram.WebApp.expand();
-                } else {
-                    currentUser.id = 'guest_' + Math.random().toString(36).substr(2, 9);
-                }
-
+                initTelegram();
                 await checkAdminStatus();
                 setupEventListeners();
                 renderContent();
-
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('appContent').style.display = 'block';
+                toggleLoader(false);
             } catch (error) {
-                console.error('Ошибка инициализации:', error);
+                showNotification('🌌 Ошибка инициализации', 'error');
             }
         });
 
-        async function checkAdminStatus() {
-            const adminIds = ['1290724329', '1062148525'];
-            currentUser.isAdmin = adminIds.includes(currentUser.id);
-            
-            if (currentUser.isAdmin) {
-                document.querySelector('.user-interface').style.display = 'none';
-                document.querySelector('.admin-panel').classList.remove('hidden');
+        function initTelegram() {
+            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+                const tgUser = Telegram.WebApp.initDataUnsafe.user;
+                currentUser.id = tgUser.id.toString();
+                currentUser.username = tgUser.username || [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+            } else {
+                currentUser.id = 'guest_' + Math.random().toString(36).substr(2, 9);
             }
+        }
+
+        async function checkAdminStatus() {
+            currentUser.isAdmin = adminIds.includes(currentUser.id);
+            document.querySelector('.admin-panel').classList.toggle('hidden', !currentUser.isAdmin);
+            document.querySelector('.user-interface').classList.toggle('hidden', currentUser.isAdmin);
         }
 
         function setupEventListeners() {
             document.getElementById('ticketForm').addEventListener('submit', handleSubmit);
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    renderAdminTickets(btn.dataset.tab);
-                });
-            });
             document.getElementById('adminSearch').addEventListener('input', () => renderAdminTickets());
-            document.addEventListener('click', handleDynamicEvents);
+            document.getElementById('filterStatus').addEventListener('change', () => renderAdminTickets());
+            document.addEventListener('click', handleActions);
         }
 
         async function handleSubmit(e) {
             e.preventDefault();
+            const newTicket = createTicketObject();
             
-            const newTicket = {
+            try {
+                await database.ref(`tickets/${newTicket.id}`).set(newTicket);
+                document.getElementById('ticketForm').reset();
+                showNotification('🚀 Запрос успешно отправлен!');
+                renderContent();
+            } catch (error) {
+                showNotification('❌ Ошибка отправки', 'error');
+            }
+        }
+
+        function createTicketObject() {
+            return {
                 id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
                 userId: currentUser.id,
                 username: currentUser.username,
@@ -334,133 +337,89 @@
                 updatedAt: new Date().toISOString(),
                 messages: []
             };
-
-            try {
-                await database.ref('tickets/' + newTicket.id).set(newTicket);
-                document.getElementById('ticketForm').reset();
-                showNotification('Тикет успешно создан!');
-                renderContent();
-            } catch (error) {
-                showNotification('Ошибка при создании тикета', 'error');
-            }
         }
 
         async function renderContent() {
             if (currentUser.isAdmin) {
                 renderAdminTickets();
             } else {
-                const tickets = await loadTickets(currentUser.id);
+                const tickets = await loadUserTickets();
                 renderUserTickets(tickets);
             }
         }
 
-        async function loadTickets(userId) {
+        async function loadUserTickets() {
             const snapshot = await database.ref('tickets')
                 .orderByChild('userId')
-                .equalTo(userId)
+                .equalTo(currentUser.id)
                 .once('value');
-            return snapshot.val() ? Object.values(snapshot.val()) : [];
+            return parseFirebaseData(snapshot);
         }
 
-        function renderUserTickets(tickets) {
-            const container = document.getElementById('ticketsContainer');
-            container.innerHTML = tickets.length ? '' : '<p>Нет активных тикетов</p>';
-            
-            tickets.sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-                   .forEach(ticket => {
-                const ticketEl = createTicketElement(ticket, false);
-                container.appendChild(ticketEl);
-            });
-        }
-
-        async function renderAdminTickets(filter = 'all') {
+        async function renderAdminTickets() {
             const allTickets = await database.ref('tickets').once('value')
-                .then(snap => snap.val() ? Object.values(snap.val()) : []);
+                .then(snap => parseFirebaseData(snap).filter(t => !adminIds.includes(t.userId)));
             
-            let filtered = allTickets.filter(t => 
-                filter === 'all' ? true : t.status === filter
-            ).filter(t => 
-                t.userId.includes(document.getElementById('adminSearch').value) ||
-                t.subject.toLowerCase().includes(search) ||
-                t.problem.toLowerCase().includes(search)
+            const filtered = filterTickets(allTickets);
+            document.getElementById('adminTicketsContainer').innerHTML = 
+                filtered.map(t => createAdminTicketElement(t)).join('');
+        }
+
+        function filterTickets(tickets) {
+            const searchTerm = document.getElementById('adminSearch').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatus').value;
+            
+            return tickets.filter(t => 
+                (statusFilter === 'all' || t.status === statusFilter) &&
+                (t.userId.includes(searchTerm) || 
+                t.subject.toLowerCase().includes(searchTerm) || 
+                t.problem.toLowerCase().includes(searchTerm))
             );
-
-            const container = document.getElementById('adminTicketsContainer');
-            container.innerHTML = '';
-            filtered.forEach(ticket => {
-                const ticketEl = createTicketElement(ticket, true);
-                container.appendChild(ticketEl);
-            });
         }
 
-        function createTicketElement(ticket, isAdmin) {
-            const element = document.createElement('div');
-            element.className = `ticket-card ${ticket.status}`;
-            element.innerHTML = `
-                <div class="ticket-header" onclick="toggleTicket(this)">
-                    <div class="flex items-center">
-                        <div class="status-dot"></div>
-                        <div>
-                            <h3 style="margin:0">${ticket.subject}</h3>
-                            <small>${formatDate(ticket.createdAt)} • ${ticket.username}</small>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-10">
-                        <span class="priority-tag priority-${ticket.priority}">${ticket.priority}</span>
-                        <span class="ticket-status">${ticket.status === 'open' ? 'Открыт' : 'Закрыт'}</span>
-                    </div>
-                </div>
-                <div class="ticket-body">
-                    <div class="messages">${renderMessages(ticket)}</div>
-                    ${isAdmin ? adminControls(ticket) : userReplyForm(ticket)}
-                </div>
-            `;
-            return element;
-        }
-
-        function renderMessages(ticket) {
-            return [
-                `<div class="message user-message">
-                    <div class="message-text">${ticket.problem}</div>
-                    <div class="message-info">${ticket.username} • ${formatDate(ticket.createdAt)}</div>
-                </div>`,
-                ...(ticket.messages?.map(msg => `
-                    <div class="message ${msg.isAdmin ? 'admin-message' : 'user-message'}">
-                        <div class="message-text">${msg.message}</div>
-                        <div class="message-info">
-                            ${msg.isAdmin ? 'Администратор' : ticket.username} • ${formatDate(msg.timestamp)}
-                        </div>
-                    </div>
-                `) || [])
-            ].join('');
-        }
-
-        function adminControls(ticket) {
+        function createUserTicketElement(ticket) {
             return `
-                <div class="admin-actions">
-                    ${ticket.status === 'open' ? `
-                        <button class="btn btn-danger close-btn" data-id="${ticket.id}">Закрыть</button>
-                    ` : `
-                        <button class="btn btn-success reopen-btn" data-id="${ticket.id}">Открыть</button>
-                    `}
-                    <div class="reply-form">
-                        <textarea id="adminReply-${ticket.id}" placeholder="Ваш ответ..."></textarea>
-                        <button class="btn btn-primary send-reply" data-id="${ticket.id}">Отправить</button>
+                <div class="ticket-card ${ticket.status}" onclick="toggleTicket(this)">
+                    <div class="ticket-header">
+                        <div style="display: flex; align-items: center;">
+                            <div class="status-indicator ${ticket.status}"></div>
+                            <h3 style="margin: 0">${ticket.subject}</h3>
+                        </div>
+                        <div class="priority-tag">${getPriorityLabel(ticket.priority)}</div>
+                    </div>
+                    <div class="ticket-body">
+                        <div class="messages">${renderMessages(ticket)}</div>
+                        ${ticket.status === 'open' ? createUserReplyForm(ticket.id) : ''}
                     </div>
                 </div>
             `;
         }
 
-        function userReplyForm(ticket) {
-            return ticket.status === 'open' ? `
-                <div class="user-reply">
-                    <textarea id="userReply-${ticket.id}" placeholder="Ваш ответ..."></textarea>
-                    <button class="btn btn-primary send-user-reply" data-id="${ticket.id}">Отправить</button>
+        function createAdminTicketElement(ticket) {
+            return `
+                <div class="ticket-card ${ticket.status}" onclick="toggleTicket(this)">
+                    <div class="ticket-header">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div class="status-indicator ${ticket.status}"></div>
+                            <div>
+                                <h3 style="margin: 0">${ticket.subject}</h3>
+                                <small>${ticket.username} • ${formatDate(ticket.createdAt)}</small>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <div class="priority-tag">${getPriorityLabel(ticket.priority)}</div>
+                            ${createAdminControls(ticket)}
+                        </div>
+                    </div>
+                    <div class="ticket-body">
+                        <div class="messages">${renderMessages(ticket)}</div>
+                        ${createAdminReplyForm(ticket)}
+                    </div>
                 </div>
-            ` : '<p>Тикет закрыт</p>';
+            `;
         }
 
-        function handleDynamicEvents(e) {
+        function handleActions(e) {
             const actions = {
                 'close-btn': closeTicket,
                 'reopen-btn': reopenTicket,
@@ -468,66 +427,45 @@
                 'send-user-reply': sendUserReply
             };
 
-            for (const [cls, handler] of Object.entries(actions)) {
+            Object.entries(actions).forEach(([cls, action]) => {
                 if (e.target.classList.contains(cls)) {
-                    handler(e.target.dataset.id);
+                    action(e.target.dataset.id);
                 }
-            }
+            });
         }
 
-        async function sendAdminReply(ticketId) {
-            const text = document.getElementById(`adminReply-${ticketId}`).value.trim();
+        async function sendReply(ticketId, isAdmin = false) {
+            const text = document.getElementById(`${isAdmin ? 'admin' : 'user'}Reply-${ticketId}`).value.trim();
             if (!text) return;
 
-            await database.ref(`tickets/${ticketId}/messages`).push({
+            const reply = {
                 message: text,
                 timestamp: new Date().toISOString(),
-                isAdmin: true
-            });
-            updateTicket(ticketId);
-        }
+                isAdmin
+            };
 
-        async function sendUserReply(ticketId) {
-            const text = document.getElementById(`userReply-${ticketId}`).value.trim();
-            if (!text) return;
-
-            await database.ref(`tickets/${ticketId}/messages`).push({
-                message: text,
-                timestamp: new Date().toISOString(),
-                isAdmin: false
-            });
-            updateTicket(ticketId);
-        }
-
-        async function closeTicket(ticketId) {
-            await database.ref(`tickets/${ticketId}/status`).set('closed');
-            updateTicket(ticketId);
-        }
-
-        async function reopenTicket(ticketId) {
-            await database.ref(`tickets/${ticketId}/status`).set('open');
-            updateTicket(ticketId);
-        }
-
-        async function updateTicket(ticketId) {
+            await database.ref(`tickets/${ticketId}/messages`).push(reply);
             await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
             renderContent();
-            showNotification('Изменения сохранены');
+            showNotification(isAdmin ? '👾 Ответ отправлен' : '🚀 Сообщение доставлено');
         }
 
-        function toggleTicket(header) {
-            header.parentElement.classList.toggle('ticket-expanded');
+        // Вспомогательные функции
+        function parseFirebaseData(snapshot) {
+            return snapshot.val() ? Object.values(snapshot.val()) : [];
+        }
+
+        function getPriorityLabel(priority) {
+            return {
+                low: '🌌 Низкий',
+                medium: '🛸 Средний',
+                high: '🚨 Высокий'
+            }[priority] || '🛸 Средний';
         }
 
         function formatDate(dateString) {
             const date = new Date(dateString);
-            return date.toLocaleString('ru-RU', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            return date.toLocaleString('ru-RU');
         }
 
         function showNotification(message, type = 'success') {
@@ -535,6 +473,69 @@
             notification.className = `notification ${type} show`;
             notification.textContent = message;
             setTimeout(() => notification.classList.remove('show'), 3000);
+        }
+
+        window.toggleTicket = (element) => {
+            element.closest('.ticket-card').classList.toggle('ticket-expanded');
+        };
+
+        // Firebase операции
+        async function closeTicket(ticketId) {
+            await database.ref(`tickets/${ticketId}/status`).set('closed');
+            await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
+            renderContent();
+            showNotification('🔒 Запрос закрыт');
+        }
+
+        async function reopenTicket(ticketId) {
+            await database.ref(`tickets/${ticketId}/status`).set('open');
+            await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
+            renderContent();
+            showNotification('🔓 Запрос открыт');
+        }
+
+        function toggleLoader(show = true) {
+            document.getElementById('loadingScreen').style.display = show ? 'block' : 'none';
+            document.getElementById('appContent').style.display = show ? 'none' : 'block';
+        }
+
+        function renderMessages(ticket) {
+            return [
+                createMessageElement(ticket.problem, ticket.username, ticket.createdAt, false),
+                ...ticket.messages.map(msg => createMessageElement(msg.message, msg.isAdmin ? 'Администратор' : ticket.username, msg.timestamp, msg.isAdmin))
+            ].join('');
+        }
+
+        function createMessageElement(text, author, date, isAdmin) {
+            return `
+                <div class="message ${isAdmin ? 'admin-message' : 'user-message'}">
+                    <div class="message-text">${text}</div>
+                    <div class="message-info">${author} • ${formatDate(date)}</div>
+                </div>
+            `;
+        }
+
+        function createUserReplyForm(ticketId) {
+            return `
+                <div class="user-reply">
+                    <textarea id="userReply-${ticketId}" placeholder="Ваш ответ..."></textarea>
+                    <button class="btn send-user-reply" data-id="${ticketId}">📤 Отправить</button>
+                </div>
+            `;
+        }
+
+        function createAdminReplyForm(ticket) {
+            return ticket.status === 'open' ? `
+                <div class="admin-reply">
+                    <textarea id="adminReply-${ticket.id}" placeholder="Ваш ответ..."></textarea>
+                    <button class="btn btn-success send-reply" data-id="${ticket.id}">📡 Ответить</button>
+                    <button class="btn btn-danger close-btn" data-id="${ticket.id}">🔒 Закрыть</button>
+                </div>
+            ` : `
+                <div class="admin-reply">
+                    <button class="btn btn-success reopen-btn" data-id="${ticket.id}">🔓 Открыть</button>
+                </div>
+            `;
         }
     </script>
 </body>
