@@ -45,6 +45,30 @@
             position: relative;
         }
 
+        /* Кнопка "Назад" */
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--neon-blue);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 243, 255, 0.2);
+            transform: translateX(-3px);
+        }
+
         .card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
@@ -219,6 +243,11 @@
 </head>
 <body>
     <div class="space-background"></div>
+
+    <!-- Кнопка "Назад" -->
+    <button class="back-button" onclick="window.location.href='index.html'">
+        <i class="fas fa-arrow-left"></i>
+    </button>
 
     <div id="loadingScreen" class="container" style="color: white; text-align: center; padding-top: 100px;">
         <h2>🛰 Инициализация системы...</h2>
