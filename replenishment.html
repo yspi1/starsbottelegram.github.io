@@ -2,8 +2,10 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Система пополнения баланса</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Пополнение баланса</title>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
     <style>
         :root {
             --primary-color: #8A2BE2;
@@ -18,6 +20,11 @@
             --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -27,14 +34,14 @@
             justify-content: center;
             align-items: center;
             background: linear-gradient(135deg, #1a0633 0%, #3a0b6b 100%);
-            overflow: hidden;
-            position: relative;
             color: var(--text-color);
+            touch-action: manipulation;
+            overflow-x: hidden;
         }
 
-        /* Улучшенная анимация денег */
+        /* Анимированные деньги на фоне */
         .money-particle {
-            position: absolute;
+            position: fixed;
             font-size: 24px;
             z-index: 0;
             opacity: 0;
@@ -42,116 +49,44 @@
             user-select: none;
             animation: floatMoney linear infinite;
             will-change: transform, opacity;
+            pointer-events: none;
         }
 
         @keyframes floatMoney {
-            0% {
-                transform: translateY(120vh) rotate(0deg) translateX(0) scale(0.8);
-                opacity: 0;
-            }
-            10% {
-                opacity: 0.8;
-                transform: translateY(100vh) rotate(0deg) translateX(0) scale(1);
-            }
-            30% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 0.8;
-            }
-            100% {
-                transform: translateY(-100px) rotate(360deg) translateX(calc(var(--random-x) * 100px)) scale(0.5);
-                opacity: 0;
-            }
-        }
-
-        /* Анимация пульсации для успешных операций */
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(76, 175, 80, 0.7); }
-            100% { transform: scale(1); }
-        }
-
-        /* Анимация появления элементов */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            0% { transform: translateY(120vh) rotate(0deg) translateX(0) scale(0.8); opacity: 0; }
+            10% { opacity: 0.8; transform: translateY(100vh) rotate(0deg) translateX(0) scale(1); }
+            30% { opacity: 1; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(-100px) rotate(360deg) translateX(calc(var(--random-x) * 100px)) scale(0.5); opacity: 0; }
         }
 
         .card {
             background: rgba(255, 255, 255, 0.95);
-            padding: 2.5rem;
+            padding: 1.5rem;
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-            transition: var(--transition);
-            width: 100%;
+            width: 95%;
             max-width: 500px;
+            margin: 20px auto;
             position: relative;
             z-index: 1;
-            animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            transform-origin: center;
+            overflow: hidden;
         }
 
-        .payment-methods {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 1.5rem;
-        }
-
-        .payment-method {
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: var(--transition);
+        h2 {
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: white;
-        }
-
-        .payment-method:hover {
-            border-color: var(--primary-color);
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.3);
-        }
-
-        .payment-method.active {
-            border-color: var(--primary-color);
-            background-color: rgba(138, 43, 226, 0.1);
-            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.2);
-        }
-
-        /* Стиль для телефонного метода */
-        .payment-method[data-method="phone"] {
-            background-color: rgba(0, 136, 204, 0.1);
-            border-color: var(--telegram-color);
-        }
-        
-        .payment-method[data-method="phone"].active {
-            background-color: rgba(0, 136, 204, 0.2);
-            border-color: var(--telegram-color);
-        }
-
-        .payment-method img {
-            width: 40px;
-            height: 40px;
-            margin-bottom: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary-color), #6a11cb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .form-group {
-            margin-bottom: 1.5rem;
-            position: relative;
+            margin-bottom: 1.2rem;
         }
 
         label {
@@ -164,122 +99,23 @@
 
         input, select {
             width: 100%;
-            padding: 14px 18px;
+            padding: 12px 15px;
             border: 1px solid #ddd;
             border-radius: 10px;
             font-size: 1rem;
             transition: var(--transition);
-            box-sizing: border-box;
             background: white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
-        }
-
-        /* Стили для телефонного ввода */
-        input[type="tel"] {
-            letter-spacing: 0.1em;
-            font-family: monospace;
-        }
-
-        input:focus, select:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.2);
-        }
-
-        .warning {
-            color: var(--danger-color);
-            font-size: 0.9rem;
-            margin: 1.5rem 0;
-            padding: 1rem;
-            background: rgba(255, 68, 68, 0.08);
-            border-radius: 10px;
-            display: none;
-            animation: fadeIn 0.5s ease;
-            border-left: 4px solid var(--danger-color);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 16px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 1rem;
-            font-weight: 600;
-            margin-top: 0.5rem;
-            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.3);
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        .btn:hover {
-            background: var(--primary-light);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(154, 77, 255, 0.4);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: rgba(255, 255, 255, 0.1);
-            transform: rotate(45deg);
-            transition: var(--transition);
-            opacity: 0;
-            z-index: -1;
-        }
-
-        .btn:hover::after {
-            opacity: 1;
-            animation: shine 1.5s ease infinite;
-        }
-
-        @keyframes shine {
-            0% {
-                left: -100%;
-            }
-            100% {
-                left: 100%;
-            }
-        }
-
-        /* Анимация для кнопок */
-        .btn-success {
-            animation: pulse 2s infinite;
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 2rem;
-            color: #333;
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(to right, var(--primary-color), #6a11cb);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .amount-buttons {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 1.5rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 1rem;
         }
 
         .amount-btn {
-            padding: 12px;
+            padding: 10px;
             border: 2px solid #ddd;
             border-radius: 10px;
             cursor: pointer;
@@ -289,225 +125,71 @@
             background: white;
         }
 
-        .amount-btn:hover {
-            border-color: var(--primary-color);
-            box-shadow: 0 3px 10px rgba(138, 43, 226, 0.2);
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 1rem;
         }
 
-        .amount-btn.active {
-            border-color: var(--primary-color);
-            background-color: rgba(138, 43, 226, 0.1);
-            color: var(--primary-color);
-            box-shadow: 0 3px 10px rgba(138, 43, 226, 0.2);
-        }
-
-        .custom-amount {
-            grid-column: span 3;
-        }
-
-        .success-animation {
-            animation: successPulse 0.5s ease;
-        }
-
-        @keyframes successPulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .transaction-history {
-            margin-top: 2rem;
-            border-top: 1px solid #eee;
-            padding-top: 1.5rem;
-        }
-
-        .transaction-item {
-            background: rgba(138, 43, 226, 0.05);
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: var(--transition);
-            border: 1px solid rgba(138, 43, 226, 0.1);
-        }
-
-        .transaction-item:hover {
-            background: rgba(138, 43, 226, 0.1);
-            box-shadow: 0 3px 10px rgba(138, 43, 226, 0.1);
-        }
-
-        .transaction-status {
-            padding: 0.25rem 0.5rem;
-            border-radius: 5px;
-            font-size: 0.8em;
-            font-weight: 600;
-        }
-
-        /* Новые статусы транзакций */
-        .status-pending { background: #fff3cd; color: #856404; }
-        .status-completed { background: #d4edda; color: #155724; }
-        .status-failed { background: #f8d7da; color: #721c24; }
-        .status-confirming { background: #fff3cd; color: #856404; }
-        .status-waiting { background: #cce5ff; color: #004085; }
-
-        .processing-info {
-            margin: 1rem 0;
-            font-size: 0.9rem;
-            color: #666;
-            padding: 0.8rem;
-            background: rgba(138, 43, 226, 0.1);
-            border-radius: 10px;
-            border-left: 3px solid var(--primary-color);
-        }
-
-        .qr-code-container {
-            text-align: center;
-            margin: 1.5rem 0;
-            padding: 1rem;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .qr-code {
-            width: 200px;
-            height: 200px;
-            margin: 0 auto;
-            background: white;
+        .payment-method {
             padding: 10px;
-            border: 1px solid #eee;
-        }
-
-        .payment-details {
-            background: rgba(138, 43, 226, 0.1);
-            padding: 1rem;
+            border: 2px solid #ddd;
             border-radius: 10px;
-            margin: 1rem 0;
-            font-family: monospace;
-            word-break: break-all;
-            border-left: 3px solid var(--primary-color);
-        }
-
-        /* Стили для Telegram ссылок */
-        .telegram-link {
-            color: var(--telegram-color);
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .telegram-link:hover {
-            text-decoration: underline;
-        }
-
-        .copy-btn {
-            background: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 0.5rem 1rem;
-            margin-top: 0.5rem;
             cursor: pointer;
             transition: var(--transition);
-        }
-
-        .copy-btn:hover {
-            background: #A74AC7;
-            transform: translateY(-2px);
-            box-shadow: 0 3px 8px rgba(186, 85, 211, 0.3);
-        }
-
-        .admin-panel {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background: #f8f9fa;
-            border-radius: 15px;
-            display: none;
-            border: 1px solid rgba(138, 43, 226, 0.1);
-        }
-
-        .admin-panel h3 {
-            margin-top: 0;
-            color: var(--primary-color);
-            background: linear-gradient(to right, var(--primary-color), #6a11cb);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .admin-controls {
-            margin-top: 1rem;
+            text-align: center;
             display: flex;
-            gap: 0.5rem;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            font-size: 0.9rem;
         }
 
-        .admin-controls button {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: var(--transition);
+        .payment-method img {
+            width: 30px;
+            height: 30px;
+            margin-bottom: 5px;
         }
 
-        .btn-approve {
+        .btn {
+            width: 100%;
+            padding: 14px;
             background: var(--primary-color);
             color: white;
-        }
-
-        .btn-approve:hover {
-            background: var(--primary-light);
-            box-shadow: 0 3px 8px rgba(138, 43, 226, 0.3);
-        }
-
-        .btn-reject {
-            background: var(--danger-color);
-            color: white;
-        }
-
-        .btn-reject:hover {
-            background: #ff6b6b;
-            box-shadow: 0 3px 8px rgba(255, 107, 107, 0.3);
-        }
-
-        .statistics-chart {
-            margin-top: 1.5rem;
-            background: white;
-            padding: 1rem;
+            border: none;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            transition: var(--transition);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
+        @media (min-width: 768px) {
+            .card {
+                padding: 2rem;
+            }
+            
+            .amount-buttons {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Анимированные деньги на фоне -->
     <div id="moneyBackground"></div>
     
-    <!-- Основная карточка -->
     <div class="card">
         <h2>Пополнение баланса</h2>
         
         <div class="processing-info">
-            После оплаты средства будут зачислены на ваш баланс в течение <strong>5-15 минут</strong>.
-            Если возникли проблемы, свяжитесь с поддержкой.
+            После оплаты средства будут зачислены в течение 5-15 минут
         </div>
 
         <form id="depositForm">
             <div class="form-group">
-                <label for="username">Ваш Telegram юзернейм</label>
+                <label for="username">Ваш Telegram ID</label>
                 <input type="text" id="username" placeholder="@username" required>
             </div>
             
@@ -518,8 +200,6 @@
                     <div class="amount-btn" data-amount="500">500 ₽</div>
                     <div class="amount-btn" data-amount="1000">1000 ₽</div>
                     <div class="amount-btn" data-amount="2000">2000 ₽</div>
-                    <div class="amount-btn" data-amount="5000">5000 ₽</div>
-                    <div class="amount-btn" data-amount="10000">10 000 ₽</div>
                     <div class="amount-btn custom-amount">
                         <input type="number" id="customAmount" placeholder="Другая сумма" min="100" max="50000">
                     </div>
@@ -530,7 +210,7 @@
                 <label>Способ оплаты</label>
                 <div class="payment-methods">
                     <div class="payment-method active" data-method="crypto">
-                        <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" alt="Криптовалюта">
+                        <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" alt="USDT">
                         <span>USDT</span>
                     </div>
                     <div class="payment-method" data-method="sbp">
@@ -544,155 +224,68 @@
                 </div>
             </div>
 
-            <!-- Блоки для разных методов оплаты -->
-            <div class="form-group" id="cryptoDetails">
+            <div id="paymentDetails">
                 <div class="payment-details">
-                    <strong>USDT (TRC20):</strong> <span id="usdtAddress">Txxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span><br>
-                    <button class="copy-btn" onclick="copyToClipboard('usdtAddress')">Копировать</button>
+                    <strong>USDT (TRC20):</strong> <span id="usdtAddress">TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB</span><br>
+                    <button class="btn copy-btn" onclick="copyToClipboard('usdtAddress')">Копировать</button>
                 </div>
-                <div class="processing-info">
-                    Отправляйте только USDT по сети TRC20. Другие токены и сети не поддерживаются.
-                </div>
-            </div>
-
-            <div class="form-group" id="sbpDetails" style="display: none;">
-                <div class="qr-code-container">
-                    <p>Отсканируйте QR-код для оплаты через СБП:</p>
-                    <div class="qr-code">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://sbp.nspk.ru/1234567890" alt="QR код СБП">
-                    </div>
-                </div>
-                <div class="processing-info">
-                    Выберите ваш банк в приложении и отсканируйте QR-код для быстрой оплаты.
-                </div>
-            </div>
-
-            <div class="form-group" id="phoneDetails" style="display: none;">
-                <div class="form-group">
-                    <label for="phoneNumber">Номер телефона</label>
-                    <input type="tel" id="phoneNumber" placeholder="+7 (999) 999-99-99" required>
-                </div>
-                <div class="processing-info">
-                    После отправки заявки вам нужно подтвердить транзакцию в нашей Telegram-группе
-                </div>
-            </div>
-
-            <div class="warning">
-                <strong>Внимание:</strong> Проверьте правильность введённых данных. После оплаты сохраните чек.
             </div>
 
             <button type="submit" class="btn">
-                <span class="btn-text">Перейти к оплате</span>
+                Перейти к оплате
             </button>
         </form>
-
-        <!-- История транзакций -->
-        <div class="transaction-history" id="transactionHistory">
-            <h3>История пополнений</h3>
-            <div id="transactionsList"></div>
-        </div>
-
-        <!-- Панель администратора -->
-        <div class="admin-panel" id="adminPanel">
-            <h3>Панель администратора</h3>
-            <div id="adminTransactions"></div>
-            <div class="statistics-chart">
-                <canvas id="statsChart"></canvas>
-            </div>
-        </div>
     </div>
 
-    <!-- Подключаем Firebase и Chart.js -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script>
-        // Конфигурация Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyDummyApiKey1234567890",
-            authDomain: "your-project-id.firebaseapp.com",
-            projectId: "your-project-id",
-            storageBucket: "your-project-id.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef1234567890abcdef"
-        };
-
         // Инициализация Firebase
+        const firebaseConfig = {
+            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
+            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
+        };
+        
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
+        const database = firebase.database();
 
-        // Основные переменные
-        let currentUser = null;
-        let transactionsUnsubscribe = null;
-        let adminTransactionsUnsubscribe = null;
-        let statsChart = null;
-        const TELEGRAM_GROUP_LINK = "https://t.me/your_group";
-
-        // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Создаем анимированные деньги на фоне
-            createMoneyBackground();
-            
-            // Инициализация формы
-            initForm();
-            
-            // Аутентификация пользователя
-            try {
-                currentUser = await auth.signInAnonymously();
-                console.log("Анонимный пользователь вошел:", currentUser.user.uid);
-                
-                // Загрузка истории транзакций
-                loadUserTransactions();
-                
-                // Проверка прав администратора
-                checkAdminStatus();
-                
-            } catch (error) {
-                console.error("Ошибка аутентификации:", error);
-            }
-        });
-
-        // Улучшенная функция создания анимированных денег
+        // Создание анимированного фона
         function createMoneyBackground() {
-            const moneyBackground = document.getElementById('moneyBackground');
             const moneyTypes = ['💰', '💵', '💴', '💶', '💷', '💎', '🪙', '💳'];
+            const container = document.getElementById('moneyBackground');
             
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 15; i++) {
                 const money = document.createElement('div');
                 money.className = 'money-particle';
                 
-                // Случайные параметры с улучшенной анимацией
                 const size = Math.random() * 20 + 16;
                 const left = Math.random() * 100;
                 const duration = 10 + Math.random() * 20;
                 const delay = Math.random() * 15;
                 const moneyType = moneyTypes[Math.floor(Math.random() * moneyTypes.length)];
-                const randomX = (Math.random() * 2 - 1); // Для горизонтального движения
+                const randomX = (Math.random() * 2 - 1);
                 
                 money.style.setProperty('--random-x', randomX);
                 money.style.fontSize = `${size}px`;
-                money.style.left = `${left}vw`;
+                money.style.left = `${left}%`;
                 money.style.animationDuration = `${duration}s`;
                 money.style.animationDelay = `${delay}s`;
                 money.textContent = moneyType;
                 
-                moneyBackground.appendChild(money);
+                container.appendChild(money);
             }
         }
 
-        // Инициализация формы с новыми функциями
-        function initForm() {
-            // Выбор суммы
-            const amountBtns = document.querySelectorAll('.amount-btn');
-            let selectedAmount = 100;
+        // Основная логика формы
+        document.addEventListener('DOMContentLoaded', () => {
+            createMoneyBackground();
             
-            amountBtns.forEach(btn => {
+            let selectedAmount = 100;
+            let selectedMethod = 'crypto';
+            
+            // Выбор суммы
+            document.querySelectorAll('.amount-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     if (!this.querySelector('input')) {
-                        amountBtns.forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
                         this.classList.add('active');
                         selectedAmount = parseInt(this.dataset.amount);
                         document.getElementById('customAmount').value = '';
@@ -700,638 +293,131 @@
                 });
             });
 
-            // Поле для ввода своей суммы
-            const customAmountInput = document.getElementById('customAmount');
-            customAmountInput.addEventListener('input', function() {
+            // Кастомная сумма
+            document.getElementById('customAmount').addEventListener('input', function() {
                 if (this.value) {
-                    amountBtns.forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
                     selectedAmount = parseInt(this.value) || 0;
                 }
             });
 
-            // Маска для телефона
-            const phoneInput = document.getElementById('phoneNumber');
-            phoneInput.addEventListener('input', function(e) {
-                const x = e.target.value.replace(/\D/g, '').match(/(\d{0,1})(\d{0,3})(\d{0,3})(\d{0,2})(\d{0,2})/);
-                e.target.value = '+7 (' + (x[2] ? x[1] + x[2] : '') + (x[3] ? ') ' + x[3] : '') + 
-                    (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
-            });
-
             // Выбор метода оплаты
-            const paymentMethods = document.querySelectorAll('.payment-method');
-            const paymentDetails = {
-                crypto: document.getElementById('cryptoDetails'),
-                sbp: document.getElementById('sbpDetails'),
-                phone: document.getElementById('phoneDetails')
-            };
-            
-            let selectedMethod = 'crypto';
-            
-            paymentMethods.forEach(method => {
+            document.querySelectorAll('.payment-method').forEach(method => {
                 method.addEventListener('click', function() {
-                    paymentMethods.forEach(m => m.classList.remove('active'));
+                    document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
                     this.classList.add('active');
                     selectedMethod = this.dataset.method;
-                    
-                    // Скрываем все блоки с деталями
-                    Object.values(paymentDetails).forEach(detail => detail.style.display = 'none');
-                    
-                    // Показываем нужный блок
-                    paymentDetails[selectedMethod].style.display = 'block';
+                    updatePaymentDetails(selectedMethod);
                 });
             });
 
-            // Копирование в буфер обмена
-            window.copyToClipboard = function(elementId) {
-                const element = document.getElementById(elementId);
-                const text = element.textContent || element.innerText;
-                navigator.clipboard.writeText(text).then(() => {
-                    // Анимация успешного копирования
-                    const btn = element.nextElementSibling;
-                    btn.textContent = '✓ Скопировано!';
-                    btn.style.backgroundColor = 'var(--success-color)';
-                    setTimeout(() => {
-                        btn.textContent = 'Копировать';
-                        btn.style.backgroundColor = 'var(--secondary-color)';
-                    }, 2000);
-                }).catch(err => {
-                    console.error('Ошибка копирования: ', err);
-                });
-            };
-
-            // Обработка формы
-            const form = document.getElementById('depositForm');
-            form.addEventListener('submit', async function(e) {
+            // Отправка формы
+            document.getElementById('depositForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const btn = this.querySelector('.btn');
-                if (btn.disabled) return;
-                
                 const username = document.getElementById('username').value.trim();
-                if (!username.startsWith('@') || username.length < 5) {
-                    showWarning('Введите корректный Telegram юзернейм (начинается с @)');
+                if (!username) {
+                    alert('Введите Telegram ID');
                     return;
                 }
                 
-                if (selectedAmount < 100) {
-                    showWarning('Минимальная сумма пополнения - 100 руб.');
+                if (selectedAmount < 100 || selectedAmount > 50000) {
+                    alert('Сумма должна быть от 100 до 50 000 руб.');
                     return;
                 }
-                
-                if (selectedAmount > 50000) {
-                    showWarning('Максимальная сумма пополнения - 50 000 руб.');
-                    return;
-                }
-
-                // Дополнительная проверка для телефонного метода
-                if (selectedMethod === 'phone') {
-                    const phone = document.getElementById('phoneNumber').value;
-                    if (!/^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/.test(phone)) {
-                        showWarning('Введите корректный номер телефона');
-                        return;
-                    }
-                }
-
-                // Блокировка кнопки с анимацией
-                btn.disabled = true;
-                btn.querySelector('.btn-text').textContent = 'Обработка...';
-                btn.style.backgroundColor = 'var(--warning-color)';
                 
                 try {
-                    // Создаем данные транзакции
                     const transactionData = {
-                        userId: currentUser.user.uid,
-                        username: username,
+                        userId: username,
                         amount: selectedAmount,
                         method: selectedMethod,
-                        status: selectedMethod === 'phone' ? 'waiting' : 'pending',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        status: 'pending',
+                        timestamp: Date.now(),
                         details: getPaymentDetails(selectedMethod)
                     };
                     
-                    // Сохраняем номер телефона в профиль
-                    if (selectedMethod === 'phone') {
-                        await savePhoneNumber(currentUser.user.uid, phoneInput.value);
-                    }
+                    // Сохранение в базу данных
+                    const newTransactionRef = database.ref('transactions').push();
+                    await newTransactionRef.set(transactionData);
                     
-                    // Сохраняем транзакцию в Firestore
-                    const transactionRef = await db.collection('deposits').add(transactionData);
-                    
-                    console.log('Транзакция сохранена с ID:', transactionRef.id);
-
-                    // Обновляем историю пользователя
-                    await db.collection('users').doc(currentUser.user.uid).update({
-                        deposits: firebase.firestore.FieldValue.arrayUnion(transactionRef.id)
-                    });
-
-                    // Улучшенная анимация успешной отправки
-                    animateSuccess(btn, () => {
-                        // Обновляем список транзакций
-                        loadUserTransactions();
-                        
-                        // Показываем детали оплаты
-                        showPaymentInstructions(selectedMethod, selectedAmount, transactionRef.id);
-                    });
+                    alert('Заявка создана! Дождитесь зачисления средств.');
                 } catch (error) {
-                    console.error('Ошибка при сохранении транзакции:', error);
-                    showError(btn, 'Произошла ошибка при создании заявки');
+                    console.error('Ошибка:', error);
+                    alert('Произошла ошибка при создании заявки');
                 }
             });
+        });
 
-            // Функция для показа предупреждения
-            function showWarning(message) {
-                const warning = document.querySelector('.warning');
-                warning.textContent = message;
-                warning.style.display = 'block';
-                warning.style.animation = 'fadeIn 0.5s ease';
-                setTimeout(() => warning.style.animation = '', 500);
-            }
-
-            // Анимация успешного завершения
-            function animateSuccess(btn, callback) {
-                btn.querySelector('.btn-text').textContent = '✓ Успешно!';
-                btn.style.backgroundColor = 'var(--success-color)';
-                btn.classList.add('btn-success');
-                
-                setTimeout(() => {
-                    btn.querySelector('.btn-text').textContent = 'Перейти к оплате';
-                    btn.style.backgroundColor = 'var(--primary-color)';
-                    btn.classList.remove('btn-success');
-                    btn.disabled = false;
-                    
-                    if (callback) callback();
-                }, 2000);
-            }
-
-            // Показать ошибку
-            function showError(btn, message) {
-                btn.querySelector('.btn-text').textContent = 'Ошибка!';
-                btn.style.backgroundColor = 'var(--danger-color)';
-                
-                setTimeout(() => {
-                    btn.querySelector('.btn-text').textContent = 'Перейти к оплате';
-                    btn.style.backgroundColor = 'var(--primary-color)';
-                    btn.disabled = false;
-                }, 2000);
-                
-                alert(message);
-            }
-
-            // Получение деталей платежа
-            function getPaymentDetails(method) {
-                switch(method) {
-                    case 'crypto':
-                        return {
-                            address: document.getElementById('usdtAddress').textContent,
-                            network: 'TRC20'
-                        };
-                    case 'sbp':
-                        return {
-                            qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://sbp.nspk.ru/1234567890'
-                        };
-                    case 'phone':
-                        return {
-                            phone: document.getElementById('phoneNumber').value,
-                            confirmationLink: TELEGRAM_GROUP_LINK
-                        };
-                    default:
-                        return {
-                            note: 'Свяжитесь с поддержкой для получения реквизитов'
-                        };
-                }
-            }
-
-            // Показать инструкции по оплате
-            function showPaymentInstructions(method, amount, transactionId) {
-                let instructions = '';
-                
-                switch(method) {
-                    case 'crypto':
-                        instructions = `
-                            <div class="payment-details">
-                                <h3>Инструкция по оплате USDT</h3>
-                                <p>1. Отправьте <strong>${(amount / 90).toFixed(6)} USDT</strong> (курс ~90 руб.)</p>
-                                <p>2. На адрес: <strong>${document.getElementById('usdtAddress').textContent}</strong></p>
-                                <p>3. Сеть: <strong>TRC20</strong> (Tron)</p>
-                                <p>4. Сохраните хэш транзакции</p>
-                                <p>ID транзакции: ${transactionId}</p>
+        function updatePaymentDetails(method) {
+            const detailsContainer = document.getElementById('paymentDetails');
+            let detailsHTML = '';
+            
+            switch(method) {
+                case 'crypto':
+                    detailsHTML = `
+                        <div class="payment-details">
+                            <strong>USDT (TRC20):</strong> <span id="usdtAddress">TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB</span><br>
+                            <button class="btn copy-btn" onclick="copyToClipboard('usdtAddress')">Копировать</button>
+                        </div>
+                    `;
+                    break;
+                case 'sbp':
+                    detailsHTML = `
+                        <div class="qr-code-container">
+                            <p>Отсканируйте QR-код для оплаты через СБП:</p>
+                            <div class="qr-code">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://sbp.nspk.ru/1234567890" alt="QR код СБП">
                             </div>
-                        `;
-                        break;
-                    case 'sbp':
-                        instructions = `
-                            <div class="payment-details">
-                                <h3>Инструкция по оплате через СБП</h3>
-                                <p>1. Откройте приложение вашего банка</p>
-                                <p>2. Выберите оплату по QR-коду</p>
-                                <p>3. Отсканируйте QR-код выше</p>
-                                <p>4. Подтвердите платеж на сумму <strong>${amount} руб.</strong></p>
-                                <p>5. Сохраните чек об оплате</p>
-                                <p>ID транзакции: ${transactionId}</p>
-                            </div>
-                        `;
-                        break;
-                    case 'phone':
-                        instructions = `
-                            <div class="payment-details">
-                                <h3>Подтверждение через Telegram</h3>
-                                <p>1. Перейдите в нашу группу: 
-                                    <a href="${TELEGRAM_GROUP_LINK}" class="telegram-link" target="_blank">
-                                        <img src="https://telegram.org/img/t_logo.png" width="16" height="16" alt="Telegram">
-                                        Telegram-группа
-                                    </a>
-                                </p>
-                                <p>2. Отправьте сообщение с текстом:</p>
-                                <div class="payment-details"><strong>Подтвердить ${transactionId}</strong></div>
-                                <p>3. Ожидайте проверки администратором</p>
-                                <p>Ваш номер: <strong>${document.getElementById('phoneNumber').value}</strong></p>
-                                <p>Сумма: <strong>${amount} руб.</strong></p>
-                            </div>
-                        `;
-                        break;
-                    default:
-                        instructions = `
-                            <div class="payment-details">
-                                <h3>Инструкция по оплате</h3>
-                                <p>1. Свяжитесь с поддержкой в Telegram: @support</p>
-                                <p>2. Укажите ID транзакции: <strong>${transactionId}</strong></p>
-                                <p>3. Получите реквизиты для оплаты <strong>${amount} руб.</strong></p>
-                                <p>4. Сохраните чек об оплате</p>
-                            </div>
-                        `;
-                }
-                
-                // Создаем модальное окно с инструкциями
-                const modal = document.createElement('div');
-                modal.style.position = 'fixed';
-                modal.style.top = '0';
-                modal.style.left = '0';
-                modal.style.width = '100%';
-                modal.style.height = '100%';
-                modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
-                modal.style.display = 'flex';
-                modal.style.justifyContent = 'center';
-                modal.style.alignItems = 'center';
-                modal.style.zIndex = '1000';
-                modal.style.animation = 'fadeIn 0.3s ease';
-                
-                const modalContent = document.createElement('div');
-                modalContent.style.backgroundColor = 'white';
-                modalContent.style.padding = '2rem';
-                modalContent.style.borderRadius = '15px';
-                modalContent.style.maxWidth = '500px';
-                modalContent.style.width = '90%';
-                modalContent.style.maxHeight = '90vh';
-                modalContent.style.overflowY = 'auto';
-                modalContent.style.animation = 'fadeInUp 0.5s ease';
-                modalContent.innerHTML = instructions;
-                
-                const closeBtn = document.createElement('button');
-                closeBtn.textContent = 'Закрыть';
-                closeBtn.className = 'btn';
-                closeBtn.style.marginTop = '1rem';
-                closeBtn.onclick = () => {
-                    modal.style.animation = 'fadeOut 0.3s ease';
-                    setTimeout(() => document.body.removeChild(modal), 300);
-                };
-                
-                modalContent.appendChild(closeBtn);
-                modal.appendChild(modalContent);
-                document.body.appendChild(modal);
+                        </div>
+                    `;
+                    break;
+                case 'phone':
+                    detailsHTML = `
+                        <div class="form-group">
+                            <label for="phoneNumber">Номер телефона</label>
+                            <input type="tel" id="phoneNumber" placeholder="+7 (999) 999-99-99" required>
+                        </div>
+                        <div class="processing-info">
+                            После оплаты отправьте чек в поддержку
+                        </div>
+                    `;
+                    break;
             }
-        }
-
-        // Сохранение номера в профиль
-        async function savePhoneNumber(uid, phone) {
-            try {
-                await db.collection('users').doc(uid).update({
-                    phone: phone,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            
+            detailsContainer.innerHTML = detailsHTML;
+            
+            // Инициализация маски телефона
+            if (method === 'phone') {
+                document.getElementById('phoneNumber').addEventListener('input', function(e) {
+                    const x = e.target.value.replace(/\D/g, '').match(/(\d{0,1})(\d{0,3})(\d{0,3})(\d{0,2})(\d{0,2})/);
+                    e.target.value = '+7 (' + (x[2] ? x[1] + x[2] : '') + (x[3] ? ') ' + x[3] : '') + 
+                        (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
                 });
-            } catch (error) {
-                console.error('Ошибка сохранения номера:', error);
             }
         }
 
-        // Загрузка истории транзакций пользователя
-        async function loadUserTransactions() {
-            if (!currentUser) return;
-            
-            try {
-                // Подписываемся на обновления транзакций пользователя
-                transactionsUnsubscribe = db.collection('deposits')
-                    .where('userId', '==', currentUser.user.uid)
-                    .orderBy('timestamp', 'desc')
-                    .limit(10)
-                    .onSnapshot(snapshot => {
-                        const transactionsList = document.getElementById('transactionsList');
-                        transactionsList.innerHTML = '';
-                        
-                        if (snapshot.empty) {
-                            transactionsList.innerHTML = '<p>У вас пока нет операций</p>';
-                            return;
-                        }
-                        
-                        snapshot.forEach(doc => {
-                            const transaction = doc.data();
-                            const transactionElement = createTransactionElement(doc.id, transaction);
-                            transactionsList.appendChild(transactionElement);
-                        });
-                    });
-                    
-            } catch (error) {
-                console.error('Ошибка загрузки транзакций:', error);
+        function getPaymentDetails(method) {
+            switch(method) {
+                case 'crypto':
+                    return { address: "TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB", network: "TRC20" };
+                case 'sbp':
+                    return { qrCode: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://sbp.nspk.ru/1234567890" };
+                case 'phone':
+                    return { phone: document.getElementById('phoneNumber')?.value || "" };
+                default:
+                    return {};
             }
         }
 
-        // Создание элемента транзакции
-        function createTransactionElement(id, transaction) {
-            const element = document.createElement('div');
-            element.className = 'transaction-item';
-            element.dataset.id = id;
-            
-            // Форматирование даты
-            const date = transaction.timestamp?.toDate() || new Date();
-            const formattedDate = date.toLocaleString('ru-RU');
-            
-            // Статус транзакции
-            let statusText = '';
-            let statusClass = '';
-            
-            switch(transaction.status) {
-                case 'completed': 
-                    statusText = 'Завершена';
-                    statusClass = 'status-completed';
-                    break;
-                case 'failed': 
-                    statusText = 'Ошибка';
-                    statusClass = 'status-failed';
-                    break;
-                case 'waiting':
-                    statusText = 'Ожидает подтверждения';
-                    statusClass = 'status-waiting';
-                    break;
-                case 'confirming':
-                    statusText = 'Подтверждается';
-                    statusClass = 'status-confirming';
-                    break;
-                default: 
-                    statusText = 'Ожидает оплаты';
-                    statusClass = 'status-pending';
-                    break;
-            }
-            
-            let detailsHtml = `
-                <div>
-                    <strong>${transaction.amount} руб.</strong>
-                    <div>Метод: ${getMethodName(transaction.method)}</div>
-            `;
-            
-            // Добавляем номер телефона для телефонного метода
-            if (transaction.method === 'phone' && transaction.details?.phone) {
-                detailsHtml += `<div>Телефон: ${transaction.details.phone}</div>`;
-            }
-            
-            detailsHtml += `
-                    <small>${formattedDate}</small>
-                </div>
-                <div class="transaction-status ${statusClass}">${statusText}</div>
-            `;
-            
-            element.innerHTML = detailsHtml;
-            
-            return element;
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Скопировано в буфер обмена');
+            }).catch(err => {
+                console.error('Ошибка копирования:', err);
+            });
         }
-
-        // Получение названия метода оплаты
-        function getMethodName(method) {
-            const methods = {
-                'crypto': 'USDT',
-                'sbp': 'СБП',
-                'phone': 'По номеру'
-            };
-            return methods[method] || method;
-        }
-
-        // Проверка прав администратора
-        async function checkAdminStatus() {
-            if (!currentUser) return;
-            
-            try {
-                const adminDoc = await db.collection('admins').doc(currentUser.user.uid).get();
-                if (adminDoc.exists) {
-                    document.getElementById('adminPanel').style.display = 'block';
-                    loadAdminTransactions();
-                    initStatisticsChart();
-                }
-            } catch (error) {
-                console.error('Ошибка проверки прав администратора:', error);
-            }
-        }
-
-        // Загрузка транзакций для администратора
-        function loadAdminTransactions() {
-            adminTransactionsUnsubscribe = db.collection('deposits')
-                .orderBy('timestamp', 'desc')
-                .limit(20)
-                .onSnapshot(snapshot => {
-                    const adminTransactions = document.getElementById('adminTransactions');
-                    adminTransactions.innerHTML = '';
-                    
-                    if (snapshot.empty) {
-                        adminTransactions.innerHTML = '<p>Нет транзакций для обработки</p>';
-                        return;
-                    }
-                    
-                    snapshot.forEach(doc => {
-                        const transaction = doc.data();
-                        const transactionElement = createAdminTransactionElement(doc.id, transaction);
-                        adminTransactions.appendChild(transactionElement);
-                    });
-                });
-        }
-
-        // Создание элемента транзакции для администратора
-        function createAdminTransactionElement(id, transaction) {
-            const element = document.createElement('div');
-            element.className = 'admin-transaction-item';
-            element.dataset.id = id;
-            element.style.animation = 'fadeInUp 0.5s ease';
-            
-            // Форматирование даты
-            const date = transaction.timestamp?.toDate() || new Date();
-            const formattedDate = date.toLocaleString('ru-RU');
-            
-            // Детали платежа
-            let details = '';
-            if (transaction.method === 'crypto') {
-                details = `USDT (${transaction.details.network}): ${transaction.details.address}`;
-            } else if (transaction.method === 'sbp') {
-                details = `СБП QR-код`;
-            } else if (transaction.method === 'phone') {
-                details = `Телефон: ${transaction.details.phone} | 
-                    <a href="${TELEGRAM_GROUP_LINK}?start=confirm_${id}" class="telegram-link" target="_blank">
-                        Подтвердить в TG
-                    </a>`;
-            }
-            
-            element.innerHTML = `
-                <div>
-                    <strong>Транзакция #${id.slice(0, 6)}</strong>
-                    <div>Сумма: ${transaction.amount} руб., Метод: ${getMethodName(transaction.method)}</div>
-                    <div>Пользователь: ${transaction.username}</div>
-                    <div>${details}</div>
-                    <small>${formattedDate}</small>
-                    <div class="admin-controls">
-                        <button class="btn-approve" onclick="updateDepositStatus('${id}', 'completed')">Подтвердить</button>
-                        <button class="btn-reject" onclick="updateDepositStatus('${id}', 'failed')">Отклонить</button>
-                        ${transaction.method === 'phone' ? 
-                            `<button class="btn-approve" onclick="updateDepositStatus('${id}', 'confirming')">В процессе</button>` : 
-                            ''}
-                    </div>
-                </div>
-            `;
-            
-            return element;
-        }
-
-        // Обновление статуса депозита
-        async function updateDepositStatus(id, status) {
-            if (!confirm(`Вы уверены, что хотите ${status === 'completed' ? 'подтвердить' : 'отклонить'} эту транзакцию?`)) {
-                return;
-            }
-            
-            try {
-                await db.collection('deposits').doc(id).update({
-                    status: status,
-                    processedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    processedBy: currentUser.user.uid
-                });
-                
-                // Обновление статистики
-                updateStatistics(status, id);
-                
-                alert(`Транзакция успешно ${status === 'completed' ? 'подтверждена' : 'отклонена'}`);
-            } catch (error) {
-                console.error('Ошибка обновления статуса:', error);
-                alert('Произошла ошибка при обновлении статуса');
-            }
-        }
-
-        // Инициализация графика статистики
-        async function initStatisticsChart() {
-            try {
-                const statsDoc = await db.collection('stats').doc('deposits').get();
-                const statsData = statsDoc.exists ? statsDoc.data() : {
-                    totalAmount: 0,
-                    completedAmount: 0,
-                    pendingCount: 0,
-                    completedCount: 0,
-                    waitingCount: 0
-                };
-                
-                const ctx = document.getElementById('statsChart').getContext('2d');
-                statsChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Общая сумма', 'Завершено', 'Ожидает', 'Кол-во заверш.', 'На подтверждении'],
-                        datasets: [{
-                            label: 'Статистика пополнений',
-                            data: [
-                                statsData.totalAmount,
-                                statsData.completedAmount,
-                                statsData.pendingCount,
-                                statsData.completedCount,
-                                statsData.waitingCount || 0
-                            ],
-                            backgroundColor: [
-                                'rgba(138, 43, 226, 0.7)',
-                                'rgba(138, 43, 226, 0.5)',
-                                'rgba(255, 193, 7, 0.5)',
-                                'rgba(138, 43, 226, 0.3)',
-                                'rgba(0, 136, 204, 0.5)'
-                            ],
-                            borderColor: [
-                                'rgba(138, 43, 226, 1)',
-                                'rgba(138, 43, 226, 1)',
-                                'rgba(255, 193, 7, 1)',
-                                'rgba(138, 43, 226, 1)',
-                                'rgba(0, 136, 204, 1)'
-                            ],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        },
-                        animation: {
-                            duration: 1000,
-                            easing: 'easeOutQuart'
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error('Ошибка загрузки статистики:', error);
-            }
-        }
-
-        // Обновление статистики
-        async function updateStatistics(status, transactionId) {
-            try {
-                const transactionDoc = await db.collection('deposits').doc(transactionId).get();
-                const transaction = transactionDoc.data();
-                
-                const statsRef = db.collection('stats').doc('deposits');
-                const updateData = {};
-                
-                if (status === 'completed') {
-                    updateData.totalAmount = firebase.firestore.FieldValue.increment(transaction.amount);
-                    updateData.completedAmount = firebase.firestore.FieldValue.increment(transaction.amount);
-                    updateData.completedCount = firebase.firestore.FieldValue.increment(1);
-                    
-                    if (transaction.status === 'waiting') {
-                        updateData.waitingCount = firebase.firestore.FieldValue.increment(-1);
-                    } else {
-                        updateData.pendingCount = firebase.firestore.FieldValue.increment(-1);
-                    }
-                } else if (status === 'confirming') {
-                    updateData.waitingCount = firebase.firestore.FieldValue.increment(1);
-                    updateData.pendingCount = firebase.firestore.FieldValue.increment(-1);
-                } else {
-                    if (transaction.status === 'waiting') {
-                        updateData.waitingCount = firebase.firestore.FieldValue.increment(-1);
-                    } else {
-                        updateData.pendingCount = firebase.firestore.FieldValue.increment(-1);
-                    }
-                }
-                
-                await statsRef.set(updateData, { merge: true });
-                
-                // Обновляем график
-                if (statsChart) {
-                    const statsDoc = await statsRef.get();
-                    const statsData = statsDoc.data();
-                    
-                    statsChart.data.datasets[0].data = [
-                        statsData.totalAmount,
-                        statsData.completedAmount,
-                        statsData.pendingCount,
-                        statsData.completedCount,
-                        statsData.waitingCount || 0
-                    ];
-                    statsChart.update();
-                }
-            } catch (error) {
-                console.error('Ошибка обновления статистики:', error);
-            }
-        }
-
-        // Глобальные функции для обработчиков событий
-        window.updateDepositStatus = updateDepositStatus;
     </script>
 </body>
 </html>
