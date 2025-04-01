@@ -188,6 +188,24 @@
             border-color: var(--neon-blue);
             box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
         }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.1);
+            border-top-color: var(--neon-blue);
+            border-radius: 50%;
+            margin: 20px auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -195,47 +213,45 @@
 
     <div id="loadingScreen" class="container" style="color: white; text-align: center; padding-top: 100px;">
         <h2>🛰 Инициализация системы...</h2>
-        <div class="spinner" style="width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--neon-blue); border-radius: 50%; margin: 20px auto; animation: spin 1s linear infinite;"></div>
+        <div class="spinner"></div>
     </div>
 
-    <div id="appContent" style="display: none;">
-        <div class="container">
-            <!-- Интерфейс пользователя -->
-            <div class="user-interface">
-                <div class="card">
-                    <h1 style="color: var(--neon-blue);">🚀 Космическая поддержка</h1>
-                    <form id="ticketForm">
-                        <input type="text" id="subject" placeholder="Тема вопроса" required>
-                        <select id="priority" required>
-                            <option value="low">🌌 Низкий приоритет</option>
-                            <option value="medium" selected>🛸 Средний приоритет</option>
-                            <option value="high">🚨 Высокий приоритет</option>
-                        </select>
-                        <textarea id="problem" rows="4" placeholder="Опишите вашу проблему..." required></textarea>
-                        <button type="submit" class="btn">📡 Отправить запрос</button>
-                    </form>
-                </div>
-
-                <div class="card">
-                    <h2>📬 Мои запросы</h2>
-                    <div id="ticketsContainer"></div>
-                </div>
+    <div id="appContent" class="hidden">
+        <!-- Интерфейс пользователя -->
+        <div id="userInterface" class="container">
+            <div class="card">
+                <h1 style="color: var(--neon-blue);">🚀 Космическая поддержка</h1>
+                <form id="ticketForm">
+                    <input type="text" id="subject" placeholder="Тема вопроса" required>
+                    <select id="priority" required>
+                        <option value="low">🌌 Низкий приоритет</option>
+                        <option value="medium" selected>🛸 Средний приоритет</option>
+                        <option value="high">🚨 Высокий приоритет</option>
+                    </select>
+                    <textarea id="problem" rows="4" placeholder="Опишите вашу проблему..." required></textarea>
+                    <button type="submit" class="btn">📡 Отправить запрос</button>
+                </form>
             </div>
 
-            <!-- Панель администратора -->
-            <div class="admin-panel hidden">
-                <div class="card">
-                    <h2 style="color: var(--planet-purple);">👾 Панель управления</h2>
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                        <input type="text" id="adminSearch" placeholder="Поиск по запросам..." style="flex: 1;">
-                        <select id="filterStatus">
-                            <option value="all">Все статусы</option>
-                            <option value="open">Открытые</option>
-                            <option value="closed">Закрытые</option>
-                        </select>
-                    </div>
-                    <div id="adminTicketsContainer"></div>
+            <div class="card">
+                <h2>📬 Мои запросы</h2>
+                <div id="ticketsContainer"></div>
+            </div>
+        </div>
+
+        <!-- Панель администратора -->
+        <div id="adminPanel" class="container hidden">
+            <div class="card">
+                <h2 style="color: var(--planet-purple);">👾 Панель управления</h2>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="text" id="adminSearch" placeholder="Поиск по запросам..." style="flex: 1;">
+                    <select id="filterStatus">
+                        <option value="all">Все статусы</option>
+                        <option value="open">Открытые</option>
+                        <option value="closed">Закрытые</option>
+                    </select>
                 </div>
+                <div id="adminTicketsContainer"></div>
             </div>
         </div>
     </div>
@@ -264,7 +280,7 @@
         const database = firebase.database();
 
         // Основная функция инициализации
-        async function initializeApp() {
+        document.addEventListener('DOMContentLoaded', async () => {
             try {
                 // Инициализация пользователя
                 await initUser();
@@ -283,7 +299,7 @@
                 showNotification('❌ Ошибка загрузки системы', 'error');
                 toggleLoader(false);
             }
-        }
+        });
 
         // Инициализация пользователя
         async function initUser() {
@@ -307,13 +323,21 @@
             currentUser.isAdmin = ADMIN_IDS.includes(currentUser.id);
             
             // Переключение интерфейсов
-            toggleAdminPanel();
+            toggleUserInterface();
         }
 
-        // Переключение между панелями
-        function toggleAdminPanel() {
-            document.querySelector('.admin-panel').classList.toggle('hidden', !currentUser.isAdmin);
-            document.querySelector('.user-interface').classList.toggle('hidden', currentUser.isAdmin);
+        // Переключение между интерфейсами
+        function toggleUserInterface() {
+            const userInterface = document.getElementById('userInterface');
+            const adminPanel = document.getElementById('adminPanel');
+            
+            if (currentUser.isAdmin) {
+                userInterface.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+            } else {
+                userInterface.classList.remove('hidden');
+                adminPanel.classList.add('hidden');
+            }
         }
 
         // Настройка обработчиков событий
@@ -376,11 +400,16 @@
 
         // Основная функция рендеринга
         async function renderContent() {
-            if (currentUser.isAdmin) {
-                await renderAdminTickets();
-            } else {
-                const tickets = await loadUserTickets();
-                renderUserTickets(tickets);
+            try {
+                if (currentUser.isAdmin) {
+                    await renderAdminTickets();
+                } else {
+                    const tickets = await loadUserTickets();
+                    renderUserTickets(tickets);
+                }
+            } catch (error) {
+                console.error('Ошибка рендеринга:', error);
+                showNotification('❌ Ошибка загрузки данных', 'error');
             }
         }
 
@@ -396,8 +425,7 @@
                 
             } catch (error) {
                 console.error('Ошибка загрузки тикетов:', error);
-                showNotification('❌ Ошибка загрузки запросов', 'error');
-                return [];
+                throw error;
             }
         }
 
@@ -413,7 +441,7 @@
                     
             } catch (error) {
                 console.error('Ошибка загрузки тикетов:', error);
-                showNotification('❌ Ошибка загрузки запросов', 'error');
+                throw error;
             }
         }
 
@@ -645,26 +673,14 @@
         }
 
         function toggleLoader(show = true) {
-            document.getElementById('loadingScreen').style.display = show ? 'block' : 'none';
-            document.getElementById('appContent').style.display = show ? 'none' : 'block';
+            document.getElementById('loadingScreen').classList.toggle('hidden', !show);
+            document.getElementById('appContent').classList.toggle('hidden', show);
         }
 
         // Глобальные функции
         window.toggleTicket = (element) => {
             element.closest('.ticket-card').classList.toggle('ticket-expanded');
         };
-
-        // Запуск приложения
-        document.addEventListener('DOMContentLoaded', initializeApp);
-
-        // Анимация спиннера
-        document.head.insertAdjacentHTML('beforeend', `
-            <style>
-                @keyframes spin {
-                    to { transform: rotate(360deg); }
-                }
-            </style>
-        `);
     </script>
 </body>
 </html>
