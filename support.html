@@ -538,20 +538,17 @@
 
         // Обработка действий
         function handleActions(e) {
-            // Проверяем, был ли клик внутри формы ответа или по кнопкам действий
-            if (e.target.closest('.reply-form') || 
-                e.target.classList.contains('close-btn') || 
-                e.target.classList.contains('reopen-btn')) {
+            // Обработка кнопок закрыть/открыть
+            if (e.target.classList.contains('close-btn')) {
+                closeTicket(e.target.dataset.id);
                 return;
             }
-
-            // Проверяем клик по заголовку тикета
-            if (e.target.closest('.ticket-header')) {
-                const ticketCard = e.target.closest('.ticket-card');
-                ticketCard.classList.toggle('ticket-expanded');
+            
+            if (e.target.classList.contains('reopen-btn')) {
+                reopenTicket(e.target.dataset.id);
                 return;
             }
-
+            
             // Обработка кнопок отправки ответа
             if (e.target.classList.contains('send-reply') || e.target.classList.contains('send-user-reply')) {
                 const isAdmin = e.target.classList.contains('send-reply');
@@ -559,12 +556,19 @@
                 sendReply(ticketId, isAdmin);
                 return;
             }
+            
+            // Обработка клика по заголовку тикета (только если клик не по кнопке или другому интерактивному элементу)
+            if (e.target.closest('.ticket-header') && !e.target.closest('button') && !e.target.closest('a')) {
+                const ticketCard = e.target.closest('.ticket-card');
+                ticketCard.classList.toggle('ticket-expanded');
+            }
         }
 
         // Отправка ответа
         async function sendReply(ticketId, isAdmin) {
             const textareaId = isAdmin ? `adminReply-${ticketId}` : `userReply-${ticketId}`;
-            const text = document.getElementById(textareaId)?.value.trim();
+            const textarea = document.getElementById(textareaId);
+            const text = textarea?.value.trim();
             
             if (!text) {
                 showNotification('✏️ Введите текст сообщения', 'error');
@@ -584,7 +588,7 @@
                 await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
                 
                 // Очистка поля и уведомление
-                document.getElementById(textareaId).value = '';
+                textarea.value = '';
                 showNotification(isAdmin ? '👾 Ответ отправлен' : '🚀 Сообщение доставлено');
                 
                 // Обновление интерфейса
@@ -598,26 +602,27 @@
 
         // Закрытие тикета
         async function closeTicket(ticketId) {
-            await updateTicketStatus(ticketId, 'closed', '🔒 Запрос закрыт');
+            try {
+                await database.ref(`tickets/${ticketId}/status`).set('closed');
+                await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
+                showNotification('🔒 Запрос закрыт');
+                renderContent();
+            } catch (error) {
+                console.error('Ошибка закрытия тикета:', error);
+                showNotification('❌ Ошибка закрытия тикета', 'error');
+            }
         }
 
         // Повторное открытие тикета
         async function reopenTicket(ticketId) {
-            await updateTicketStatus(ticketId, 'open', '🔓 Запрос открыт');
-        }
-
-        // Обновление статуса тикета
-        async function updateTicketStatus(ticketId, status, message) {
             try {
-                await database.ref(`tickets/${ticketId}/status`).set(status);
+                await database.ref(`tickets/${ticketId}/status`).set('open');
                 await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
-                
-                showNotification(message);
+                showNotification('🔓 Запрос открыт');
                 renderContent();
-                
             } catch (error) {
-                console.error('Ошибка обновления статуса:', error);
-                showNotification('❌ Ошибка обновления', 'error');
+                console.error('Ошибка открытия тикета:', error);
+                showNotification('❌ Ошибка открытия тикета', 'error');
             }
         }
 
