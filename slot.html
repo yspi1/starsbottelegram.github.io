@@ -3,27 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Stars</title>
+    <title>Cosmic Stars</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Обновленные стили с неоновыми эффектами */
         :root {
             --primary: #6a4cff;
             --neon: #00e0ff;
             --bg: #0f0f1a;
-            --text: #ffffff;
-            --menu-bg: rgba(15,15,26,0.95);
+            --text: #fff;
             --card-bg: rgba(30,30,46,0.8);
+            --danger: #ff4d6d;
+            --success: #00e676;
         }
 
         body {
+            margin: 0;
             font-family: 'Segoe UI', sans-serif;
             background: var(--bg);
             color: var(--text);
-            margin: 0;
             overflow-x: hidden;
             background-image: 
                 radial-gradient(circle at 20% 30%, rgba(106,76,255,0.15) 0%, transparent 30%),
@@ -36,49 +36,31 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--bg);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            background: var(--bg);
             z-index: 1000;
         }
 
-        .loader-text {
-            margin-top: 20px;
-            font-size: 18px;
+        .loader-star {
+            font-size: 60px;
             color: var(--neon);
-            text-shadow: 0 0 10px var(--neon);
-        }
-
-        .star-button {
-            font-size: 80px;
-            cursor: pointer;
-            color: #FFD700;
-            text-shadow: 0 0 20px rgba(255,215,0,0.5);
-            transition: all 0.2s;
-            animation: pulse 2s infinite;
+            animation: pulse 1.5s infinite;
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
         }
 
-        .star-button:active {
-            transform: scale(0.8);
-            filter: brightness(1.2);
-        }
-
-        /* Меню из примера */
         .menu-icon {
             position: fixed;
             top: 16px;
             left: 16px;
             cursor: pointer;
             font-size: 24px;
-            z-index: 100;
             width: 40px;
             height: 40px;
             display: flex;
@@ -86,176 +68,222 @@
             justify-content: center;
             background: rgba(30,30,46,0.8);
             border-radius: 50%;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(106,76,255,0.3);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border: 1px solid var(--primary);
             color: var(--neon);
-            transition: transform 0.2s;
+            z-index: 100;
         }
 
         .menu {
             position: fixed;
             top: 70px;
             left: 16px;
-            background: var(--menu-bg);
+            background: rgba(15,15,26,0.95);
             border-radius: 14px;
-            display: none;
-            flex-direction: column;
-            gap: 4px;
             padding: 12px;
-            z-index: 100;
-            border: 1px solid var(--primary);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-            backdrop-filter: blur(10px);
             width: 220px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--primary);
+            display: none;
+            z-index: 99;
+        }
+
+        .profile-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(106,76,255,0.3);
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid var(--neon);
+            box-shadow: 0 0 20px rgba(0,224,255,0.3);
+        }
+
+        .balance {
+            font-size: 32px;
+            margin: 20px 0;
+            color: var(--neon);
+            text-shadow: 0 0 10px rgba(0,224,255,0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .stat-card {
+            background: rgba(20,20,36,0.7);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(106,76,255,0.2);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30,30,46,0.9);
+            padding: 12px 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--neon);
+            backdrop-filter: blur(10px);
+            display: none;
+            z-index: 100;
         }
     </style>
 </head>
 <body>
-    <!-- Экран загрузки -->
     <div class="loader" id="loader">
-        <div class="star-button">★</div>
-        <div class="loader-text">Загрузка...</div>
+        <div class="loader-star">★</div>
     </div>
 
-    <!-- Основной интерфейс -->
-    <div class="container" id="app" style="display: none;">
-        <div class="menu-icon" onclick="toggleMenu()">
-            <i class="fas fa-bars"></i>
-        </div>
+    <div class="menu-icon" onclick="toggleMenu()">
+        <i class="fas fa-bars"></i>
+    </div>
 
-        <div class="menu" id="menu">
-            <button class="menu-item" onclick="showSection('profile')">
-                <i class="fas fa-user"></i> Профиль
-            </button>
-            <button class="menu-item" onclick="showSection('game')">
-                <i class="fas fa-gamepad"></i> Игра
-            </button>
-            <div class="menu-divider"></div>
-            <button class="menu-item" onclick="showNotification('Функция в разработке', 'info')">
-                <i class="fas fa-wallet"></i> Кошелек
-            </button>
-        </div>
+    <div class="menu" id="menu">
+        <button class="menu-item" onclick="showSection('profile')">
+            <i class="fas fa-user"></i> Профиль
+        </button>
+        <button class="menu-item" onclick="showSection('game')">
+            <i class="fas fa-gamepad"></i> Игра
+        </button>
+        <div class="menu-divider"></div>
+        <button class="menu-item" onclick="showNotification('В разработке', 'info')">
+            <i class="fas fa-wallet"></i> Кошелек
+        </button>
+    </div>
 
-        <!-- Игровой раздел -->
-        <div class="game-section" id="gameSection">
-            <div class="star-button" id="star">★</div>
-            <div class="energy-bar">
-                <div class="energy-fill" id="energyFill"></div>
+    <div class="profile-card" id="profile" style="display: none;">
+        <img class="avatar" id="avatar" src="" alt="Аватар">
+        <h2 id="username">Загрузка...</h2>
+        <div class="balance" id="balance">0 ⭐</div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="games">0</div>
+                <div class="stat-label">Игр сыграно</div>
             </div>
-            <div class="balance">Баланс: <span id="balance">0</span> ⭐</div>
+            <div class="stat-card">
+                <div class="stat-value" id="wins">0</div>
+                <div class="stat-label">Побед</div>
+            </div>
         </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <span id="notification-text"></span>
     </div>
 
     <script>
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            databaseURL: "YOUR_DATABASE_URL"
+            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
+            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
         };
 
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const db = firebase.database();
 
         let user = {
             id: null,
-            balance: 0,
-            energy: 100,
-            lastTap: null
+            data: null,
+            ref: null
         };
 
         async function init() {
-            // Проверка платформы
-            if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
-                document.getElementById('loader').innerHTML = `
-                    <div class="error-message">
-                        <h2>Пожалуйста, откройте приложение через Telegram</h2>
-                        <button onclick="window.location.href='https://t.me/your_bot'">
-                            Перейти в бота
-                        </button>
-                    </div>
-                `;
-                return;
-            }
+            try {
+                if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
+                    showError();
+                    return;
+                }
 
-            // Инициализация пользователя
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+
+                await loadUser();
+                initUI();
+            } catch (error) {
+                console.error('Init error:', error);
+                showError();
+            }
+        }
+
+        async function loadUser() {
             const tgUser = Telegram.WebApp.initDataUnsafe.user;
             user.id = tgUser.id;
-            
-            // Загрузка данных
-            const snapshot = await database.ref('users/' + user.id).once('value');
-            if (snapshot.exists()) {
-                user = {...user, ...snapshot.val()};
-            } else {
-                await database.ref('users/' + user.id).set(user);
-            }
+            user.ref = db.ref(`users/${user.id}`);
 
-            // Показ интерфейса
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            updateUI();
-            checkEnergy();
+            const snapshot = await user.ref.once('value');
+            if (!snapshot.exists()) {
+                await createNewUser(tgUser);
+            }
+            
+            user.data = snapshot.val() || {};
+            initDataListeners();
+        }
+
+        async function createNewUser(tgUser) {
+            const newUser = {
+                name: tgUser.username || `${tgUser.first_name} ${tgUser.last_name}`,
+                avatar: tgUser.photo_url || '',
+                balance: 0,
+                games: 0,
+                wins: 0,
+                created: Date.now()
+            };
+
+            await user.ref.set(newUser);
+            user.data = newUser;
+        }
+
+        function initDataListeners() {
+            user.ref.on('value', (snap) => {
+                user.data = snap.val();
+                updateUI();
+            });
         }
 
         function updateUI() {
-            document.getElementById('balance').textContent = user.balance.toFixed(3);
-            document.getElementById('energyFill').style.width = `${user.energy}%`;
-        }
-
-        async function tapStar() {
-            if (user.energy <= 0) {
-                showNotification('Энергия закончилась!', 'error');
-                return;
-            }
-
-            // Анимация
-            const star = document.getElementById('star');
-            star.style.transform = 'scale(0.8)';
-            setTimeout(() => star.style.transform = 'scale(1)', 200);
-
-            // Обновление данных
-            user.energy--;
-            user.balance += 0.001;
-            user.lastTap = Date.now();
+            document.getElementById('avatar').src = user.data.avatar;
+            document.getElementById('username').textContent = user.data.name;
+            document.getElementById('balance').textContent = `${user.data.balance} ⭐`;
+            document.getElementById('games').textContent = user.data.games;
+            document.getElementById('wins').textContent = user.data.wins;
             
-            await database.ref('users/' + user.id).update(user);
-            updateUI();
-
-            if (user.energy === 0) startEnergyTimer();
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('profile').style.display = 'block';
         }
 
-        function startEnergyTimer() {
-            const timerElement = document.createElement('div');
-            timerElement.id = 'energyTimer';
-            document.getElementById('gameSection').appendChild(timerElement);
-
-            let seconds = 10800; // 3 часа
-            const timer = setInterval(() => {
-                seconds--;
-                const hours = Math.floor(seconds / 3600);
-                const minutes = Math.floor((seconds % 3600) / 60);
-                timerElement.textContent = `${hours}:${minutes.toString().padStart(2, '0')}:${(seconds%60).toString().padStart(2, '0')}`;
-
-                if (seconds <= 0) {
-                    clearInterval(timer);
-                    user.energy = 100;
-                    database.ref('users/' + user.id).update({energy: 100});
-                    updateUI();
-                }
-            }, 1000);
+        function showNotification(text, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = text;
+            notification.style.display = 'block';
+            setTimeout(() => notification.style.display = 'none', 3000);
         }
 
-        function checkEnergy() {
-            if (!user.lastTap) return;
-            const timePassed = Date.now() - user.lastTap;
-            if (timePassed > 10800000) { // 3 часа
-                user.energy = 100;
-                database.ref('users/' + user.id).update({energy: 100});
-                updateUI();
-            }
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function showError() {
+            document.getElementById('loader').innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <h2 style="color: var(--danger);">Ошибка доступа</h2>
+                    <p>Пожалуйста, откройте приложение через Telegram-бота</p>
+                </div>
+            `;
         }
 
         // Инициализация
-        document.getElementById('star').addEventListener('click', tapStar);
         init();
     </script>
 </body>
