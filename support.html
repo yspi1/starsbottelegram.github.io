@@ -207,6 +207,14 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        .reply-form {
+            margin-top: 15px;
+        }
+
+        .reply-form textarea {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -488,7 +496,7 @@
                         </div>
                         <div class="priority-tag">${getPriorityLabel(ticket.priority)}</div>
                     </div>
-                    <div class="ticket-body">
+                    <div class="ticket-body ${ticket.status === 'open' ? 'ticket-expanded' : ''}">
                         <div class="messages">${renderMessages(ticket)}</div>
                         ${ticket.status === 'open' ? createReplyForm(ticket.id, false) : ''}
                     </div>
@@ -513,7 +521,7 @@
                             ${createAdminControls(ticket)}
                         </div>
                     </div>
-                    <div class="ticket-body">
+                    <div class="ticket-body ticket-expanded">
                         <div class="messages">${renderMessages(ticket)}</div>
                         ${createReplyForm(ticket.id, true, ticket.status)}
                     </div>
@@ -530,32 +538,26 @@
 
         // Обработка действий
         function handleActions(e) {
-            // Проверяем, был ли клик внутри формы ответа
-            if (e.target.closest('.reply-form')) {
-                // Если клик был внутри формы ответа, не сворачиваем тикет
+            // Проверяем, был ли клик внутри формы ответа или по кнопкам действий
+            if (e.target.closest('.reply-form') || 
+                e.target.classList.contains('close-btn') || 
+                e.target.classList.contains('reopen-btn')) {
                 return;
             }
-
-            const actions = {
-                'close-btn': closeTicket,
-                'reopen-btn': reopenTicket,
-                'send-reply': (id) => sendReply(id, true),
-                'send-user-reply': (id) => sendReply(id, false),
-                'ticket-header': (el) => toggleTicket(el)
-            };
 
             // Проверяем клик по заголовку тикета
             if (e.target.closest('.ticket-header')) {
-                actions['ticket-header'](e.target.closest('.ticket-header'));
+                const ticketCard = e.target.closest('.ticket-card');
+                ticketCard.classList.toggle('ticket-expanded');
                 return;
             }
 
-            // Проверяем другие действия
-            for (const [cls, action] of Object.entries(actions)) {
-                if (e.target.classList.contains(cls)) {
-                    action(e.target.dataset.id);
-                    return;
-                }
+            // Обработка кнопок отправки ответа
+            if (e.target.classList.contains('send-reply') || e.target.classList.contains('send-user-reply')) {
+                const isAdmin = e.target.classList.contains('send-reply');
+                const ticketId = e.target.dataset.id;
+                sendReply(ticketId, isAdmin);
+                return;
             }
         }
 
@@ -616,14 +618,6 @@
             } catch (error) {
                 console.error('Ошибка обновления статуса:', error);
                 showNotification('❌ Ошибка обновления', 'error');
-            }
-        }
-
-        // Переключение состояния тикета
-        function toggleTicket(element) {
-            // Проверяем, был ли клик по самому заголовку (а не его дочерним элементам)
-            if (element.classList.contains('ticket-header')) {
-                element.closest('.ticket-card').classList.toggle('ticket-expanded');
             }
         }
 
