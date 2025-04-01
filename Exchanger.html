@@ -1,1 +1,939 @@
-.
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обменник звезд</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        
+        body.user-bg {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+        }
+        
+        body.admin-bg {
+            background: linear-gradient(135deg, #2c3e50, #4ca1af);
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .amount-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .amount-btn {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .amount-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .amount-btn.selected {
+            background-color: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        
+        .submit-btn:hover {
+            background-color: #5a6fd1;
+        }
+        
+        .submit-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .info-text {
+            font-size: 14px;
+            color: #666;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .warning-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+            font-size: 14px;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+            color: white;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message, .success-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        
+        .success-message {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+        
+        .message-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        /* Админ-панель */
+        #adminPanel {
+            display: none;
+        }
+        
+        .admin-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .admin-title {
+            font-size: 22px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .admin-subtitle {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            color: #7f8c8d;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            border-bottom-color: #3498db;
+            color: #2c3e50;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .exchange-item {
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid #ecf0f1;
+        }
+        
+        .exchange-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        
+        .exchange-amount {
+            font-weight: 600;
+            font-size: 18px;
+            color: #2c3e50;
+        }
+        
+        .exchange-status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+        
+        .status-completed {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status-rejected {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .exchange-details {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 5px;
+        }
+        
+        .detail-label {
+            font-weight: 500;
+            color: #34495e;
+            min-width: 100px;
+        }
+        
+        .detail-value {
+            color: #2c3e50;
+        }
+        
+        .exchange-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .action-btn {
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            flex: 1;
+        }
+        
+        .approve-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .approve-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        .reject-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .reject-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        
+        /* История обменов */
+        #exchangeHistory {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .history-item {
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid #ecf0f1;
+        }
+        
+        .history-status {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="user-bg">
+    <div class="card">
+        <h2>Обменник звезд</h2>
+        
+        <!-- Форма обмена -->
+        <div id="exchangeForm">
+            <div class="form-group">
+                <label for="amount">Сумма звезд для получения</label>
+                <input type="number" id="amount" placeholder="Введите количество звезд" min="1" oninput="updateSelectedAmount(this.value)">
+                
+                <div class="amount-buttons">
+                    <button class="amount-btn" onclick="setAmount(50)">50 ★</button>
+                    <button class="amount-btn" onclick="setAmount(100)">100 ★</button>
+                    <button class="amount-btn" onclick="setAmount(200)">200 ★</button>
+                    <button class="amount-btn" onclick="setAmount(300)">300 ★</button>
+                    <button class="amount-btn" onclick="setAmount(500)">500 ★</button>
+                    <button class="amount-btn" onclick="setAmount(1000)">1000 ★</button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="username">Telegram @username получателя</label>
+                <input type="text" id="username" placeholder="Введите @username без @">
+            </div>
+            
+            <div class="warning-message">
+                ⚠️ Внимание! Мы не несем ответственность за некорректно указанный username. 
+                Пожалуйста, проверьте правильность ввода перед отправкой заявки.
+            </div>
+            
+            <div class="info-text">
+                Курс обмена: 1 звезда = 1.45 ₽<br>
+                Минимальная сумма: 50 ★ (72.5 ₽)
+            </div>
+            
+            <button id="submitBtn" class="submit-btn" disabled onclick="submitExchange()">Обменять</button>
+        </div>
+        
+        <!-- История обменов -->
+        <div id="exchangeHistory" style="margin-top: 30px; display: none;">
+            <h3 style="margin-bottom: 15px;">История обменов</h3>
+            <div id="historyList"></div>
+        </div>
+        
+        <!-- Админ-панель -->
+        <div id="adminPanel">
+            <div class="admin-header">
+                <div class="admin-title">Панель администратора</div>
+                <div class="admin-subtitle">Управление заявками на обмен</div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('pending')">Ожидание</div>
+                <div class="tab" onclick="switchTab('processed')">Обработанные</div>
+            </div>
+            
+            <div id="pendingTab" class="tab-content active">
+                <h3 style="margin-bottom: 15px; color: #2c3e50;">Заявки на обмен</h3>
+                <div id="pendingList"></div>
+            </div>
+            
+            <div id="processedTab" class="tab-content">
+                <h3 style="margin-bottom: 15px; color: #2c3e50;">История обработки</h3>
+                <div id="processedList"></div>
+            </div>
+        </div>
+        
+        <!-- Сообщения об ошибках/успехе -->
+        <div id="errorMessage" class="error-message" style="display: none;">
+            <span class="message-icon">⚠️</span>
+            <span id="errorText"></span>
+        </div>
+        
+        <div id="successMessage" class="success-message" style="display: none;">
+            <span class="message-icon">✓</span>
+            <span id="successText"></span>
+        </div>
+    </div>
+    
+    <!-- Оверлей загрузки -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div id="loadingText">Загрузка...</div>
+    </div>
+
+    <script>
+        // Инициализация Firebase
+        const firebaseConfig = {
+            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com/",
+            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // Конфигурация
+        const config = {
+            minExchange: 50,
+            starRate: 1.45, // 1 звезда = 1.45 рубля
+            adminIds: ["1062148525", "1290724329"] // ID админов через запятую
+        };
+        
+        // Основные переменные
+        let currentUser = null;
+        let selectedAmount = 0;
+        let isAdmin = false;
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', async () => {
+            showLoading("Инициализация...");
+            
+            try {
+                // Получаем данные пользователя Telegram
+                const tgUser = tg.initDataUnsafe?.user;
+                if (tgUser) {
+                    currentUser = {
+                        id: tgUser.id.toString(),
+                        username: tgUser.username || '',
+                        firstName: tgUser.first_name || '',
+                        lastName: tgUser.last_name || ''
+                    };
+                    
+                    // Проверяем, является ли пользователь админом
+                    isAdmin = config.adminIds.includes(currentUser.id);
+                    
+                    if (isAdmin) {
+                        document.body.classList.remove('user-bg');
+                        document.body.classList.add('admin-bg');
+                        document.getElementById('adminPanel').style.display = 'block';
+                        document.getElementById('exchangeForm').style.display = 'none';
+                        loadExchanges();
+                        initTabs();
+                    } else {
+                        loadUserExchanges(currentUser.id);
+                        document.getElementById('exchangeHistory').style.display = 'block';
+                    }
+                    
+                    // Создаем/обновляем запись пользователя в базе
+                    await createOrUpdateUser(currentUser);
+                } else {
+                    showError("Не удалось получить данные пользователя");
+                }
+                
+                hideLoading();
+            } catch (error) {
+                console.error("Ошибка инициализации:", error);
+                hideLoading();
+                showError("Произошла ошибка при загрузке");
+            }
+        });
+
+        // Создание или обновление пользователя в базе
+        async function createOrUpdateUser(user) {
+            const userRef = database.ref(`users/${user.id}`);
+            const snapshot = await userRef.once('value');
+            
+            if (!snapshot.exists()) {
+                // Новый пользователь
+                await userRef.set({
+                    ...user,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    lastActive: firebase.database.ServerValue.TIMESTAMP
+                });
+            } else {
+                // Обновляем данные существующего пользователя
+                await userRef.update({
+                    ...user,
+                    lastActive: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
+        }
+        
+        // Установка суммы обмена
+        function setAmount(amount) {
+            selectedAmount = amount;
+            document.getElementById('amount').value = amount;
+            
+            // Обновляем выделение кнопок
+            document.querySelectorAll('.amount-btn').forEach(btn => {
+                btn.classList.toggle('selected', parseInt(btn.textContent) === amount);
+            });
+            
+            updateSubmitButton();
+        }
+        
+        // Обновление выбранной суммы из поля ввода
+        function updateSelectedAmount(value) {
+            selectedAmount = parseInt(value) || 0;
+            updateSubmitButton();
+        }
+        
+        // Обновление состояния кнопки отправки
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const username = document.getElementById('username').value.trim();
+            const isValid = selectedAmount >= config.minExchange && username.length > 0;
+            
+            submitBtn.disabled = !isValid;
+        }
+        
+        // Отправка заявки на обмен
+        async function submitExchange() {
+            if (!currentUser) {
+                showError("Не удалось идентифицировать пользователя");
+                return;
+            }
+            
+            if (selectedAmount < config.minExchange) {
+                showError(`Минимальная сумма обмена: ${config.minExchange} ★`);
+                return;
+            }
+            
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                showError("Введите username получателя");
+                return;
+            }
+            
+            try {
+                showLoading("Отправка заявки...");
+                
+                // Создаем заявку на обмен
+                const exchangeRef = database.ref('exchanges').push();
+                const exchangeData = {
+                    id: exchangeRef.key,
+                    userId: currentUser.id,
+                    username: currentUser.username || currentUser.id,
+                    amount: selectedAmount,
+                    recipient: username,
+                    status: "pending",
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    rate: config.starRate,
+                    equivalent: (selectedAmount * config.starRate).toFixed(2)
+                };
+                
+                await exchangeRef.set(exchangeData);
+                
+                // Обновляем историю обменов
+                loadUserExchanges(currentUser.id);
+                
+                hideLoading();
+                showSuccess("Заявка на обмен отправлена!");
+                
+                // Сбрасываем форму
+                initForm();
+                
+            } catch (error) {
+                console.error("Ошибка при отправке заявки:", error);
+                hideLoading();
+                showError("Произошла ошибка при отправке заявки");
+            }
+        }
+        
+        // Загрузка истории обменов пользователя
+        function loadUserExchanges(userId) {
+            const exchangesRef = database.ref('exchanges').orderByChild('userId').equalTo(userId);
+            
+            exchangesRef.on('value', (snapshot) => {
+                const exchanges = snapshot.val() || {};
+                const historyList = document.getElementById('historyList');
+                
+                if (Object.keys(exchanges).length === 0) {
+                    historyList.innerHTML = '<div class="empty-state">У вас еще нет заявок на обмен</div>';
+                    return;
+                }
+                
+                // Сортируем по дате (новые сверху)
+                const sortedExchanges = Object.values(exchanges).sort((a, b) => b.createdAt - a.createdAt);
+                
+                historyList.innerHTML = '';
+                
+                sortedExchanges.forEach(exchange => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    
+                    let statusText = '';
+                    let statusClass = '';
+                    
+                    if (exchange.status === 'completed') {
+                        statusText = '✓ Выполнено';
+                        statusClass = 'status-completed';
+                    } else if (exchange.status === 'rejected') {
+                        statusText = '✗ Отклонено';
+                        statusClass = 'status-rejected';
+                    } else {
+                        statusText = '⏳ В обработке';
+                        statusClass = 'status-pending';
+                    }
+                    
+                    const date = new Date(exchange.createdAt);
+                    const formattedDate = date.toLocaleString('ru-RU');
+                    
+                    item.innerHTML = `
+                        <div style="margin-bottom: 5px;">
+                            <strong>${exchange.amount} ★ (${exchange.equivalent} ₽)</strong>
+                            <span class="history-status ${statusClass}">${statusText}</span>
+                        </div>
+                        <div style="color: #666; margin-bottom: 5px;">Получатель: @${exchange.recipient}</div>
+                        <div style="font-size: 12px; color: #999;">${formattedDate}</div>
+                    `;
+                    
+                    historyList.appendChild(item);
+                });
+            });
+        }
+        
+        // Загрузка заявок на обмен для админа
+        function loadExchanges() {
+            const pendingRef = database.ref('exchanges').orderByChild('status').equalTo('pending');
+            const processedRef = database.ref('exchanges').orderByChild('status').startAt('completed').endAt('rejected');
+            
+            // Загрузка ожидающих заявок
+            pendingRef.on('value', (snapshot) => {
+                const exchanges = snapshot.val() || {};
+                const pendingList = document.getElementById('pendingList');
+                
+                if (Object.keys(exchanges).length === 0) {
+                    pendingList.innerHTML = '<div class="empty-state">Нет заявок на обмен</div>';
+                    return;
+                }
+                
+                // Сортируем по дате (старые сверху)
+                const sortedExchanges = Object.values(exchanges).sort((a, b) => a.createdAt - b.createdAt);
+                
+                pendingList.innerHTML = '';
+                
+                sortedExchanges.forEach(exchange => {
+                    const item = document.createElement('div');
+                    item.className = 'exchange-item';
+                    
+                    const date = new Date(exchange.createdAt);
+                    const formattedDate = date.toLocaleString('ru-RU');
+                    
+                    item.innerHTML = `
+                        <div class="exchange-header">
+                            <div class="exchange-amount">${exchange.amount} ★ (${exchange.equivalent} ₽)</div>
+                            <div class="exchange-status status-pending">В ожидании</div>
+                        </div>
+                        <div class="exchange-details">
+                            <div class="detail-row">
+                                <div class="detail-label">Отправитель:</div>
+                                <div class="detail-value">${exchange.username || exchange.userId}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Получатель:</div>
+                                <div class="detail-value">@${exchange.recipient}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Дата:</div>
+                                <div class="detail-value">${formattedDate}</div>
+                            </div>
+                        </div>
+                        <div class="exchange-actions">
+                            <button class="action-btn approve-btn" onclick="processExchange('${exchange.id}', 'completed')">Подтвердить</button>
+                            <button class="action-btn reject-btn" onclick="processExchange('${exchange.id}', 'rejected')">Отклонить</button>
+                        </div>
+                    `;
+                    
+                    pendingList.appendChild(item);
+                });
+            });
+            
+            // Загрузка обработанных заявок
+            processedRef.on('value', (snapshot) => {
+                const exchanges = snapshot.val() || {};
+                const processedList = document.getElementById('processedList');
+                
+                if (Object.keys(exchanges).length === 0) {
+                    processedList.innerHTML = '<div class="empty-state">Нет обработанных заявок</div>';
+                    return;
+                }
+                
+                // Сортируем по дате обработки (новые сверху)
+                const sortedExchanges = Object.values(exchanges).sort((a, b) => (b.processedAt || 0) - (a.processedAt || 0));
+                
+                processedList.innerHTML = '';
+                
+                sortedExchanges.forEach(exchange => {
+                    const item = document.createElement('div');
+                    item.className = 'exchange-item';
+                    
+                    const createdDate = new Date(exchange.createdAt);
+                    const processedDate = new Date(exchange.processedAt || exchange.createdAt);
+                    
+                    const formattedCreatedDate = createdDate.toLocaleString('ru-RU');
+                    const formattedProcessedDate = processedDate.toLocaleString('ru-RU');
+                    
+                    let statusText = '';
+                    let statusClass = '';
+                    
+                    if (exchange.status === 'completed') {
+                        statusText = 'Подтверждено';
+                        statusClass = 'status-completed';
+                    } else {
+                        statusText = 'Отклонено';
+                        statusClass = 'status-rejected';
+                    }
+                    
+                    item.innerHTML = `
+                        <div class="exchange-header">
+                            <div class="exchange-amount">${exchange.amount} ★ (${exchange.equivalent} ₽)</div>
+                            <div class="exchange-status ${statusClass}">${statusText}</div>
+                        </div>
+                        <div class="exchange-details">
+                            <div class="detail-row">
+                                <div class="detail-label">Отправитель:</div>
+                                <div class="detail-value">${exchange.username || exchange.userId}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Получатель:</div>
+                                <div class="detail-value">@${exchange.recipient}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Создано:</div>
+                                <div class="detail-value">${formattedCreatedDate}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Обработано:</div>
+                                <div class="detail-value">${formattedProcessedDate}</div>
+                            </div>
+                            ${exchange.processedBy ? `
+                            <div class="detail-row">
+                                <div class="detail-label">Обработал:</div>
+                                <div class="detail-value">${exchange.processedBy}</div>
+                            </div>` : ''}
+                        </div>
+                    `;
+                    
+                    processedList.appendChild(item);
+                });
+            });
+        }
+        
+        // Обработка заявки на обмен (для админа)
+        window.processExchange = async function(id, status) {
+            if (!isAdmin) return;
+            
+            try {
+                showLoading("Обработка заявки...");
+                
+                const exchangeRef = database.ref(`exchanges/${id}`);
+                const snapshot = await exchangeRef.once('value');
+                const exchange = snapshot.val();
+                
+                if (!exchange) {
+                    throw new Error("Заявка не найдена");
+                }
+                
+                // Обновляем статус заявки
+                const updates = {
+                    status: status,
+                    processedAt: firebase.database.ServerValue.TIMESTAMP,
+                    processedBy: currentUser.id
+                };
+                
+                await exchangeRef.update(updates);
+                
+                hideLoading();
+                showSuccess(`Заявка ${status === 'completed' ? 'подтверждена' : 'отклонена'}`);
+                
+                // Обновляем списки заявок
+                loadExchanges();
+                
+            } catch (error) {
+                console.error("Ошибка обработки заявки:", error);
+                hideLoading();
+                showError("Ошибка обработки заявки: " + error.message);
+                
+                // Откатываем статус заявки в случае ошибки
+                try {
+                    await database.ref(`exchanges/${id}/status`).set('pending');
+                } catch (rollbackError) {
+                    console.error("Ошибка при откате статуса:", rollbackError);
+                }
+            }
+        };
+        
+        // Инициализация вкладок админ-панели
+        function initTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const tabId = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(tabId + 'Tab').classList.add('active');
+                });
+            });
+        }
+        
+        // Переключение вкладок
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.getAttribute('onclick').includes(tabName)) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+                if (content.id === tabName + 'Tab') {
+                    content.classList.add('active');
+                }
+            });
+        }
+        
+        // Инициализация формы
+        function initForm() {
+            selectedAmount = 0;
+            document.getElementById('amount').value = '';
+            document.getElementById('username').value = '';
+            document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('selected'));
+            updateSubmitButton();
+        }
+        
+        // Показать сообщение об ошибке
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            document.getElementById('errorText').textContent = message;
+            errorElement.style.display = 'flex';
+            
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Показать сообщение об успехе
+        function showSuccess(message) {
+            const successElement = document.getElementById('successMessage');
+            document.getElementById('successText').textContent = message;
+            successElement.style.display = 'flex';
+            
+            setTimeout(() => {
+                successElement.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Показать индикатор загрузки
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text || 'Загрузка...';
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+        
+        // Скрыть индикатор загрузки
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
