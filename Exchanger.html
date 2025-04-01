@@ -144,6 +144,43 @@
             font-size: 14px;
         }
         
+        .payment-method {
+            display: none;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .payment-method.active {
+            display: block;
+        }
+
+        .payment-details {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .payment-warning {
+            color: #c62828;
+            font-size: 13px;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .confirmation-checkbox {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .confirmation-checkbox input {
+            width: auto;
+            margin-right: 10px;
+        }
+
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -402,9 +439,67 @@
                 <label for="username">Telegram @username получателя</label>
                 <input type="text" id="username" placeholder="Введите @username без @">
             </div>
-            
+
+            <div class="form-group">
+                <label>Способ оплаты</label>
+                <select id="paymentMethod" onchange="showPaymentDetails()">
+                    <option value="">Выберите способ оплаты</option>
+                    <option value="card">Банковская карта</option>
+                    <option value="crypto">Криптовалюта</option>
+                    <option value="lolz">Lolzteam</option>
+                </select>
+            </div>
+
+            <!-- Банковская карта -->
+            <div id="cardPayment" class="payment-method">
+                <div class="payment-details">
+                    <h4>Реквизиты для оплаты:</h4>
+                    <p><strong>Номер карты:</strong> 2204 3203 8130 4726</p>
+                    <p><strong>Имя получателя:</strong> Даниил Валерьевич С.</p>
+                    <p><strong>Сумма к оплате:</strong> <span id="cardAmount"></span> ₽</p>
+                </div>
+                <div class="form-group">
+                    <label for="cardSender">ФИО отправителя</label>
+                    <input type="text" id="cardSender" placeholder="Введите ваше ФИО как в платеже">
+                </div>
+                <p class="payment-warning">В случае проблемы с зачислением, обращайтесь в поддержку с чеком оплаты</p>
+            </div>
+
+            <!-- Криптовалюта -->
+            <div id="cryptoPayment" class="payment-method">
+                <div class="payment-details">
+                    <h4>Инструкция по оплате:</h4>
+                    <p>1. Отправьте точную сумму <span id="cryptoAmount"></span> ₽ через криптобота</p>
+                    <p>2. Вставьте чек (скриншот) оплаты в поле ниже</p>
+                </div>
+                <div class="form-group">
+                    <label for="cryptoProof">Чек криптобота</label>
+                    <input type="text" id="cryptoProof" placeholder="Вставьте ссылку на чек оплаты">
+                </div>
+                <p class="payment-warning">Без подтверждающего чека заявка не будет обработана</p>
+            </div>
+
+            <!-- Lolzteam -->
+            <div id="lolzPayment" class="payment-method">
+                <div class="payment-details">
+                    <h4>Инструкция по оплате:</h4>
+                    <p>1. Переведите средства на <a href="https://lolz.live/members/9101557/" target="_blank">Lolzteam профиль</a></p>
+                    <p>2. Введите ваш никнейм отправителя ниже</p>
+                </div>
+                <div class="form-group">
+                    <label for="lolzSender">Ваш никнейм Lolzteam</label>
+                    <input type="text" id="lolzSender" placeholder="Введите ваш никнейм на Lolzteam">
+                </div>
+                <p class="payment-warning">Проверяйте правильность никнейма перед отправкой</p>
+            </div>
+
+            <div class="confirmation-checkbox">
+                <input type="checkbox" id="paymentConfirmation" onchange="updateSubmitButton()">
+                <label for="paymentConfirmation">Я подтверждаю, что совершил оплату по указанным реквизитам</label>
+            </div>
+
             <div class="warning-message">
-                ⚠️ Внимание! Мы не несем ответственность за некорректно указанный username. 
+                ⚠️ Внимание! Мы не несем ответственность за некорректно указанные данные. 
                 Пожалуйста, проверьте правильность ввода перед отправкой заявки.
             </div>
             
@@ -413,7 +508,7 @@
                 Минимальная сумма: 50 ★ (72.5 ₽)
             </div>
             
-            <button id="submitBtn" class="submit-btn" disabled onclick="submitExchange()">Обменять</button>
+            <button id="submitBtn" class="submit-btn" disabled onclick="submitExchange()">Отправить заявку</button>
         </div>
         
         <!-- История обменов -->
@@ -480,8 +575,8 @@
         // Конфигурация
         const config = {
             minExchange: 50,
-            starRate: 1.45, // 1 звезда = 1.45 рубля
-            adminIds: ["1062148525", "1290724329"] // ID админов через запятую
+            starRate: 1.45,
+            adminIds: ["1062148525", "1290724329"]
         };
         
         // Основные переменные
@@ -564,24 +659,79 @@
                 btn.classList.toggle('selected', parseInt(btn.textContent) === amount);
             });
             
+            // Обновляем суммы в методах оплаты
+            if (document.getElementById('cardPayment').classList.contains('active')) {
+                document.getElementById('cardAmount').textContent = (selectedAmount * config.starRate).toFixed(2);
+            }
+            if (document.getElementById('cryptoPayment').classList.contains('active')) {
+                document.getElementById('cryptoAmount').textContent = (selectedAmount * config.starRate).toFixed(2);
+            }
+            
             updateSubmitButton();
         }
         
         // Обновление выбранной суммы из поля ввода
         function updateSelectedAmount(value) {
             selectedAmount = parseInt(value) || 0;
+            
+            // Обновляем суммы в методах оплаты
+            if (document.getElementById('cardPayment').classList.contains('active')) {
+                document.getElementById('cardAmount').textContent = (selectedAmount * config.starRate).toFixed(2);
+            }
+            if (document.getElementById('cryptoPayment').classList.contains('active')) {
+                document.getElementById('cryptoAmount').textContent = (selectedAmount * config.starRate).toFixed(2);
+            }
+            
             updateSubmitButton();
         }
         
+        // Показываем соответствующие поля для выбранного способа оплаты
+        function showPaymentDetails() {
+            const method = document.getElementById('paymentMethod').value;
+            
+            // Скрываем все методы
+            document.getElementById('cardPayment').classList.remove('active');
+            document.getElementById('cryptoPayment').classList.remove('active');
+            document.getElementById('lolzPayment').classList.remove('active');
+            
+            // Показываем выбранный метод
+            if (method === 'card') {
+                document.getElementById('cardPayment').classList.add('active');
+                document.getElementById('cardAmount').textContent = (selectedAmount * config.starRate).toFixed(2);
+            } else if (method === 'crypto') {
+                document.getElementById('cryptoPayment').classList.add('active');
+                document.getElementById('cryptoAmount').textContent = (selectedAmount * config.starRate).toFixed(2);
+            } else if (method === 'lolz') {
+                document.getElementById('lolzPayment').classList.add('active');
+            }
+            
+            updateSubmitButton();
+        }
+
         // Обновление состояния кнопки отправки
         function updateSubmitButton() {
             const submitBtn = document.getElementById('submitBtn');
             const username = document.getElementById('username').value.trim();
-            const isValid = selectedAmount >= config.minExchange && username.length > 0;
+            const method = document.getElementById('paymentMethod').value;
+            const isConfirmed = document.getElementById('paymentConfirmation').checked;
+            
+            let isValid = selectedAmount >= config.minExchange && 
+                         username.length > 0 &&
+                         method !== '' &&
+                         isConfirmed;
+            
+            // Проверяем дополнительные поля для каждого метода оплаты
+            if (method === 'card') {
+                isValid = isValid && document.getElementById('cardSender').value.trim().length > 0;
+            } else if (method === 'crypto') {
+                isValid = isValid && document.getElementById('cryptoProof').value.trim().length > 0;
+            } else if (method === 'lolz') {
+                isValid = isValid && document.getElementById('lolzSender').value.trim().length > 0;
+            }
             
             submitBtn.disabled = !isValid;
         }
-        
+
         // Отправка заявки на обмен
         async function submitExchange() {
             if (!currentUser) {
@@ -600,8 +750,44 @@
                 return;
             }
             
+            const method = document.getElementById('paymentMethod').value;
+            if (!method) {
+                showError("Выберите способ оплаты");
+                return;
+            }
+            
+            if (!document.getElementById('paymentConfirmation').checked) {
+                showError("Подтвердите, что совершили оплату");
+                return;
+            }
+            
             try {
                 showLoading("Отправка заявки...");
+                
+                // Собираем данные оплаты
+                let paymentDetails = {};
+                if (method === 'card') {
+                    paymentDetails = {
+                        type: 'card',
+                        sender: document.getElementById('cardSender').value.trim(),
+                        cardNumber: '2204 3203 8130 4726',
+                        cardName: 'Даниил Валерьевич С.',
+                        amount: (selectedAmount * config.starRate).toFixed(2)
+                    };
+                } else if (method === 'crypto') {
+                    paymentDetails = {
+                        type: 'crypto',
+                        proof: document.getElementById('cryptoProof').value.trim(),
+                        amount: (selectedAmount * config.starRate).toFixed(2)
+                    };
+                } else if (method === 'lolz') {
+                    paymentDetails = {
+                        type: 'lolz',
+                        sender: document.getElementById('lolzSender').value.trim(),
+                        profile: 'https://lolz.live/members/9101557/',
+                        amount: (selectedAmount * config.starRate).toFixed(2)
+                    };
+                }
                 
                 // Создаем заявку на обмен
                 const exchangeRef = database.ref('exchanges').push();
@@ -611,6 +797,7 @@
                     username: currentUser.username || currentUser.id,
                     amount: selectedAmount,
                     recipient: username,
+                    payment: paymentDetails,
                     status: "pending",
                     createdAt: firebase.database.ServerValue.TIMESTAMP,
                     rate: config.starRate,
@@ -620,7 +807,11 @@
                 await exchangeRef.set(exchangeData);
                 
                 // Обновляем историю обменов
-                loadUserExchanges(currentUser.id);
+                if (!isAdmin) {
+                    loadUserExchanges(currentUser.id);
+                } else {
+                    loadExchanges();
+                }
                 
                 hideLoading();
                 showSuccess("Заявка на обмен отправлена!");
@@ -634,7 +825,7 @@
                 showError("Произошла ошибка при отправке заявки");
             }
         }
-        
+
         // Загрузка истории обменов пользователя
         function loadUserExchanges(userId) {
             const exchangesRef = database.ref('exchanges').orderByChild('userId').equalTo(userId);
@@ -715,6 +906,62 @@
                     const date = new Date(exchange.createdAt);
                     const formattedDate = date.toLocaleString('ru-RU');
                     
+                    let paymentDetails = '';
+                    if (exchange.payment.type === 'card') {
+                        paymentDetails = `
+                            <div class="detail-row">
+                                <div class="detail-label">Способ:</div>
+                                <div class="detail-value">Банковская карта</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Отправитель:</div>
+                                <div class="detail-value">${exchange.payment.sender}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Карта:</div>
+                                <div class="detail-value">${exchange.payment.cardNumber}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Сумма:</div>
+                                <div class="detail-value">${exchange.payment.amount} ₽</div>
+                            </div>
+                        `;
+                    } else if (exchange.payment.type === 'crypto') {
+                        paymentDetails = `
+                            <div class="detail-row">
+                                <div class="detail-label">Способ:</div>
+                                <div class="detail-value">Криптовалюта</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Чек:</div>
+                                <div class="detail-value">${exchange.payment.proof}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Сумма:</div>
+                                <div class="detail-value">${exchange.payment.amount} ₽</div>
+                            </div>
+                        `;
+                    } else if (exchange.payment.type === 'lolz') {
+                        paymentDetails = `
+                            <div class="detail-row">
+                                <div class="detail-label">Способ:</div>
+                                <div class="detail-value">Lolzteam</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Отправитель:</div>
+                                <div class="detail-value">${exchange.payment.sender}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Профиль:</div>
+                                <div class="detail-value"><a href="${exchange.payment.profile}" target="_blank">${exchange.payment.profile}</a></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Сумма:</div>
+                                <div class="detail-value">${exchange.payment.amount} ₽</div>
+                            </div>
+                        `;
+                    }
+                    
                     item.innerHTML = `
                         <div class="exchange-header">
                             <div class="exchange-amount">${exchange.amount} ★ (${exchange.equivalent} ₽)</div>
@@ -729,6 +976,7 @@
                                 <div class="detail-label">Получатель:</div>
                                 <div class="detail-value">@${exchange.recipient}</div>
                             </div>
+                            ${paymentDetails}
                             <div class="detail-row">
                                 <div class="detail-label">Дата:</div>
                                 <div class="detail-value">${formattedDate}</div>
@@ -780,6 +1028,42 @@
                         statusClass = 'status-rejected';
                     }
                     
+                    let paymentDetails = '';
+                    if (exchange.payment.type === 'card') {
+                        paymentDetails = `
+                            <div class="detail-row">
+                                <div class="detail-label">Способ:</div>
+                                <div class="detail-value">Банковская карта</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Отправитель:</div>
+                                <div class="detail-value">${exchange.payment.sender}</div>
+                            </div>
+                        `;
+                    } else if (exchange.payment.type === 'crypto') {
+                        paymentDetails = `
+                            <div class="detail-row">
+                                <div class="detail-label">Способ:</div>
+                                <div class="detail-value">Криптовалюта</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Чек:</div>
+                                <div class="detail-value">${exchange.payment.proof}</div>
+                            </div>
+                        `;
+                    } else if (exchange.payment.type === 'lolz') {
+                        paymentDetails = `
+                            <div class="detail-row">
+                                <div class="detail-label">Способ:</div>
+                                <div class="detail-value">Lolzteam</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Отправитель:</div>
+                                <div class="detail-value">${exchange.payment.sender}</div>
+                            </div>
+                        `;
+                    }
+                    
                     item.innerHTML = `
                         <div class="exchange-header">
                             <div class="exchange-amount">${exchange.amount} ★ (${exchange.equivalent} ₽)</div>
@@ -794,6 +1078,7 @@
                                 <div class="detail-label">Получатель:</div>
                                 <div class="detail-value">@${exchange.recipient}</div>
                             </div>
+                            ${paymentDetails}
                             <div class="detail-row">
                                 <div class="detail-label">Создано:</div>
                                 <div class="detail-value">${formattedCreatedDate}</div>
@@ -898,7 +1183,13 @@
             selectedAmount = 0;
             document.getElementById('amount').value = '';
             document.getElementById('username').value = '';
+            document.getElementById('paymentMethod').value = '';
+            document.getElementById('cardSender').value = '';
+            document.getElementById('cryptoProof').value = '';
+            document.getElementById('lolzSender').value = '';
+            document.getElementById('paymentConfirmation').checked = false;
             document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('.payment-method').forEach(method => method.classList.remove('active'));
             updateSubmitButton();
         }
         
