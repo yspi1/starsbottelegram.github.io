@@ -357,25 +357,36 @@
         .status-completed { background: #d4edda; color: #155724; }
         .status-failed { background: #f8d7da; color: #721c24; }
 
+        /* Админ-панель */
         .admin-panel {
             margin-top: 20px;
             padding: 16px;
             background: #f8f9fa;
             border-radius: 12px;
-            display: none;
             border: 1px solid rgba(138, 43, 226, 0.1);
+            display: none;
             animation: fadeIn 0.6s ease;
         }
 
+        .admin-panel h3 {
+            color: var(--primary-color);
+            margin-bottom: 16px;
+            font-size: 18px;
+            text-align: center;
+        }
+
         .admin-controls {
-            margin-top: 12px;
             display: flex;
             gap: 8px;
+            margin-top: 12px;
         }
 
         .admin-controls button {
             padding: 8px 12px;
             font-size: 14px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
             transition: var(--transition-fast);
         }
 
@@ -385,13 +396,76 @@
         }
 
         .btn-approve {
-            background: var(--primary-color);
+            background: var(--success-color);
             color: white;
         }
 
         .btn-reject {
             background: var(--danger-color);
             color: white;
+        }
+
+        .admin-add-form {
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(138, 43, 226, 0.05);
+            border-radius: 8px;
+            border: 1px dashed var(--primary-color);
+        }
+
+        .admin-add-form h4 {
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 15px;
+        }
+
+        .admin-input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .admin-input-group input {
+            flex: 1;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .admin-input-group button {
+            padding: 8px 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 4px 0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
         }
 
         .loading-overlay {
@@ -454,27 +528,7 @@
             }
         }
 
-        /* Оптимизация для мобильных */
-        @media (max-width: 480px) {
-            .card {
-                padding: 12px;
-                animation: cardEntrance 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-            }
-            
-            .payment-method {
-                flex: 1 0 calc(50% - 8px);
-            }
-            
-            input, select, .btn {
-                padding: 12px;
-            }
-            
-            h2 {
-                font-size: 20px;
-            }
-        }
-
-        /* Анимация для модального окна */
+        /* Модальное окно */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -514,17 +568,33 @@
             transform: translateY(0);
         }
 
-        /* Анимация для списка транзакций */
-        .transaction-item {
-            opacity: 0;
-            animation: fadeInUp 0.5s ease forwards;
+        /* Оптимизация для мобильных */
+        @media (max-width: 480px) {
+            .card {
+                padding: 12px;
+                animation: cardEntrance 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            }
+            
+            .payment-method {
+                flex: 1 0 calc(50% - 8px);
+            }
+            
+            input, select, .btn {
+                padding: 12px;
+            }
+            
+            h2 {
+                font-size: 20px;
+            }
+            
+            .admin-controls {
+                flex-direction: column;
+            }
+            
+            .admin-stats {
+                grid-template-columns: 1fr;
+            }
         }
-
-        .transaction-item:nth-child(1) { animation-delay: 0.1s; }
-        .transaction-item:nth-child(2) { animation-delay: 0.2s; }
-        .transaction-item:nth-child(3) { animation-delay: 0.3s; }
-        .transaction-item:nth-child(4) { animation-delay: 0.4s; }
-        .transaction-item:nth-child(5) { animation-delay: 0.5s; }
     </style>
 </head>
 <body>
@@ -610,18 +680,39 @@
             <div id="transactionsList" style="max-height: 300px; overflow-y: auto;"></div>
         </div>
 
+        <!-- Админ-панель (будет показана только администраторам) -->
         <div class="admin-panel" id="adminPanel">
             <h3>Панель администратора</h3>
             
-            <div style="margin-top: 16px; padding: 12px; background: rgba(138, 43, 226, 0.05); border-radius: 8px; border: 1px dashed var(--primary-color);">
-                <h4 style="margin-bottom: 8px;">Добавить администратора</h4>
-                <div style="display: flex; gap: 8px; margin-top: 8px;">
-                    <input type="text" id="newAdminId" placeholder="Telegram ID" style="flex: 1; padding: 8px;">
-                    <button onclick="addAdmin()" style="padding: 8px 12px; background: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer;">Добавить</button>
+            <div class="admin-stats" id="adminStats">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalDeposits">0</div>
+                    <div class="stat-label">Всего пополнений</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pendingDeposits">0</div>
+                    <div class="stat-label">Ожидают</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completedDeposits">0</div>
+                    <div class="stat-label">Завершены</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalAmount">0 ₽</div>
+                    <div class="stat-label">Общая сумма</div>
                 </div>
             </div>
             
-            <div id="adminTransactions" style="margin-top: 16px;"></div>
+            <div class="admin-add-form">
+                <h4>Добавить администратора</h4>
+                <div class="admin-input-group">
+                    <input type="text" id="newAdminId" placeholder="Telegram ID">
+                    <button onclick="addAdmin()">Добавить</button>
+                </div>
+            </div>
+            
+            <h4 style="margin-top: 16px;">Последние транзакции</h4>
+            <div id="adminTransactions" style="margin-top: 12px;"></div>
         </div>
     </div>
 
@@ -647,13 +738,16 @@
         const config = {
             telegramSupport: "@support",
             minDeposit: 100,
-            maxDeposit: 50000
+            maxDeposit: 50000,
+            // ID администраторов (1290724329 и 1062148525)
+            adminIds: ["1290724329", "1062148525"]
         };
         
         // Основные переменные
         let currentUser = null;
         let selectedAmount = 0;
         let selectedMethod = "card";
+        let isAdmin = false;
         
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
@@ -665,9 +759,17 @@
                 if (tgUser) {
                     document.getElementById('username').value = tgUser.username ? `@${tgUser.username}` : '';
                     currentUser = await updateTelegramUser(tgUser);
+                    
+                    // Проверяем, является ли пользователь администратором
+                    isAdmin = config.adminIds.includes(tgUser.id.toString());
+                    if (isAdmin) {
+                        document.getElementById('adminPanel').style.display = 'block';
+                        loadAdminStats();
+                        loadAdminTransactions();
+                    }
+                    
                     await loadPaymentDetails();
                     loadUserTransactions(tgUser.id.toString());
-                    checkAdminStatus(tgUser.id.toString());
                 } else {
                     loadPaymentDetails();
                     loadUserTransactions('anonymous');
@@ -865,6 +967,10 @@
                     
                     showSuccess(btn, btnText, () => {
                         loadUserTransactions(userId);
+                        if (isAdmin) {
+                            loadAdminStats();
+                            loadAdminTransactions();
+                        }
                         showPaymentInstructions(selectedMethod, selectedAmount, transactionRef.key);
                     });
                     
@@ -974,20 +1080,36 @@
             return el;
         }
         
-        async function checkAdminStatus(userId) {
-            if (!userId) return;
-            
-            try {
-                const snapshot = await database.ref(`admins/${userId}`).once('value');
-                if (snapshot.exists()) {
-                    document.getElementById('adminPanel').style.display = 'block';
-                    loadAdminTransactions();
-                }
-            } catch (error) {
-                console.error('Ошибка проверки прав:', error);
-            }
+        // Загрузка статистики для админ-панели
+        function loadAdminStats() {
+            database.ref('transactions').on('value', snapshot => {
+                if (!snapshot.exists()) return;
+                
+                let total = 0;
+                let pending = 0;
+                let completed = 0;
+                let totalAmount = 0;
+                
+                snapshot.forEach(child => {
+                    const t = child.val();
+                    total++;
+                    
+                    if (t.status === 'pending') {
+                        pending++;
+                    } else if (t.status === 'completed') {
+                        completed++;
+                        totalAmount += t.amount || 0;
+                    }
+                });
+                
+                document.getElementById('totalDeposits').textContent = total;
+                document.getElementById('pendingDeposits').textContent = pending;
+                document.getElementById('completedDeposits').textContent = completed;
+                document.getElementById('totalAmount').textContent = `${totalAmount} ₽`;
+            });
         }
         
+        // Загрузка транзакций для админ-панели
         function loadAdminTransactions() {
             const container = document.getElementById('adminTransactions');
             container.innerHTML = '<p style="animation: fadeIn 0.5s ease;">Загрузка транзакций...</p>';
@@ -1030,20 +1152,22 @@
             
             el.innerHTML = `
                 <div style="flex: 1;">
-                    <strong>Транзакция #${t.id.slice(0, 6)}</strong>
-                    <div>${t.amount} руб., ${methods[t.method] || t.method}</div>
-                    <div>Пользователь: ${t.username}</div>
+                    <strong>${t.username}</strong>
+                    <div>${t.amount} руб. (${methods[t.method] || t.method})</div>
                     <small>${date}</small>
                 </div>
                 <div class="admin-controls">
-                    <button class="btn-approve" onclick="updateTransactionStatus('${t.id}', 'completed')">Подтвердить</button>
-                    <button class="btn-reject" onclick="updateTransactionStatus('${t.id}', 'failed')">Отклонить</button>
+                    ${t.status !== 'completed' ? 
+                        `<button class="btn-approve" onclick="updateTransactionStatus('${t.id}', 'completed')">✓</button>` : ''}
+                    ${t.status !== 'failed' ? 
+                        `<button class="btn-reject" onclick="updateTransactionStatus('${t.id}', 'failed')">✗</button>` : ''}
                 </div>
             `;
             
             return el;
         }
         
+        // Добавление нового администратора
         window.addAdmin = async function() {
             const newAdminId = document.getElementById('newAdminId').value.trim();
             
@@ -1054,13 +1178,23 @@
             }
             
             try {
-                showLoading("Добавление...");
+                showLoading("Добавление администратора...");
+                
+                // Проверяем, что текущий пользователь имеет права администратора
+                const tgUser = tg.initDataUnsafe?.user;
+                if (!tgUser || !config.adminIds.includes(tgUser.id.toString())) {
+                    throw new Error("Недостаточно прав");
+                }
+                
+                // Добавляем нового администратора
                 await database.ref(`admins/${newAdminId}`).set({
                     addedAt: firebase.database.ServerValue.TIMESTAMP,
-                    addedBy: tg.initDataUnsafe?.user?.id || 'unknown'
+                    addedBy: tgUser.id.toString()
                 });
+                
+                // Обновляем список администраторов
+                config.adminIds.push(newAdminId);
                 document.getElementById('newAdminId').value = '';
-                hideLoading();
                 
                 // Анимация успешного добавления
                 const adminPanel = document.getElementById('adminPanel');
@@ -1068,40 +1202,61 @@
                 setTimeout(() => {
                     adminPanel.style.backgroundColor = '#f8f9fa';
                 }, 1000);
+                
+                hideLoading();
+                showSuccess(null, null, "Администратор добавлен");
             } catch (error) {
                 console.error('Ошибка:', error);
                 hideLoading();
-                showError(null, null, 'Ошибка добавления');
+                showError(null, null, 'Ошибка добавления администратора');
             }
         }
         
+        // Обновление статуса транзакции
         window.updateTransactionStatus = async function(id, status) {
             try {
-                showLoading("Обновление...");
+                showLoading("Обновление статуса...");
+                
+                // Проверяем права администратора
+                const tgUser = tg.initDataUnsafe?.user;
+                if (!tgUser || !config.adminIds.includes(tgUser.id.toString())) {
+                    throw new Error("Недостаточно прав");
+                }
+                
                 const updates = {
                     status: status,
-                    processedAt: firebase.database.ServerValue.TIMESTAMP
+                    processedAt: firebase.database.ServerValue.TIMESTAMP,
+                    processedBy: tgUser.id.toString()
                 };
                 
-                if (tg.initDataUnsafe?.user) {
-                    updates.processedBy = tg.initDataUnsafe.user.id.toString();
+                // Если статус "completed", обновляем баланс пользователя
+                if (status === 'completed') {
+                    const transactionRef = database.ref(`transactions/${id}`);
+                    const snapshot = await transactionRef.once('value');
+                    const transaction = snapshot.val();
+                    
+                    if (transaction && transaction.userId && transaction.amount) {
+                        const userRef = database.ref(`users/${transaction.userId}`);
+                        const userSnapshot = await userRef.once('value');
+                        const userData = userSnapshot.val() || {};
+                        
+                        const newBalance = (userData.balance || 0) + transaction.amount;
+                        await userRef.update({ balance: newBalance });
+                    }
                 }
                 
                 await database.ref(`transactions/${id}`).update(updates);
-                hideLoading();
                 
-                // Анимация обновления статуса
-                const transactionElement = document.querySelector(`[onclick*="${id}"]`)?.closest('.transaction-item');
-                if (transactionElement) {
-                    transactionElement.classList.add('updated');
-                    setTimeout(() => {
-                        transactionElement.classList.remove('updated');
-                    }, 1000);
-                }
+                hideLoading();
+                showSuccess(null, null, "Статус обновлен");
+                
+                // Обновляем данные в админ-панели
+                loadAdminStats();
+                loadAdminTransactions();
             } catch (error) {
                 console.error('Ошибка:', error);
                 hideLoading();
-                showError(null, null, 'Ошибка обновления');
+                showError(null, null, 'Ошибка обновления статуса');
             }
         }
         
@@ -1147,21 +1302,44 @@
         }
         
         function showSuccess(btn, btnText, callback) {
-            btnText.textContent = '✓ Успешно!';
-            btn.style.backgroundColor = 'var(--success-color)';
-            
-            // Анимация пульсации
-            btn.style.animation = 'pulse 0.5s ease';
-            setTimeout(() => {
-                btn.style.animation = '';
-            }, 500);
-            
-            setTimeout(() => {
-                btnText.textContent = 'Перейти к оплате';
-                btn.style.backgroundColor = 'var(--primary-color)';
-                btn.disabled = false;
-                if (callback) callback();
-            }, 2000);
+            if (btn && btnText) {
+                btnText.textContent = '✓ Успешно!';
+                btn.style.backgroundColor = 'var(--success-color)';
+                
+                // Анимация пульсации
+                btn.style.animation = 'pulse 0.5s ease';
+                setTimeout(() => {
+                    btn.style.animation = '';
+                }, 500);
+                
+                setTimeout(() => {
+                    btnText.textContent = 'Перейти к оплате';
+                    btn.style.backgroundColor = 'var(--primary-color)';
+                    btn.disabled = false;
+                    if (callback) callback();
+                }, 2000);
+            } else {
+                // Показать модальное окно с успехом
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                
+                const content = document.createElement('div');
+                content.className = 'modal-content';
+                content.innerHTML = `
+                    <div style="margin-bottom: 16px; color: var(--success-color);">
+                        <h3 style="margin-bottom: 12px;">Успешно</h3>
+                        <p>${callback || 'Операция выполнена успешно'}</p>
+                    </div>
+                    <button class="btn" onclick="this.closest('.modal-overlay').classList.remove('active')" style="margin-top: 12px; background: var(--success-color);">Закрыть</button>
+                `;
+                
+                modal.appendChild(content);
+                document.body.appendChild(modal);
+                
+                setTimeout(() => {
+                    modal.classList.add('active');
+                }, 50);
+            }
         }
         
         function showError(btn, btnText, message) {
