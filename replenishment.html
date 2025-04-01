@@ -7,12 +7,16 @@
     <style>
         :root {
             --primary-color: #8A2BE2;
+            --primary-light: #9c4dff;
             --secondary-color: #BA55D3;
             --danger-color: #ff4444;
             --success-color: #4CAF50;
+            --warning-color: #ffbb33;
             --telegram-color: #0088cc;
             --text-color: #333;
             --light-gray: #f5f5f5;
+            --dark-bg: #1a0633;
+            --transition: all 0.3s ease;
         }
 
         body {
@@ -23,125 +27,165 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #f5f5f5;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #3a0b6b 100%);
             color: var(--text-color);
         }
 
         .card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
             width: 100%;
             max-width: 500px;
             margin: 1rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .payment-methods {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 1rem;
+            gap: 10px;
+            margin-bottom: 1.5rem;
         }
 
         .payment-method {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
             cursor: pointer;
             text-align: center;
             background: white;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .payment-method:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.2);
         }
 
         .payment-method.active {
             border-color: var(--primary-color);
             background-color: rgba(138, 43, 226, 0.1);
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.2);
         }
 
         .payment-method img {
-            width: 30px;
-            height: 30px;
-            margin-bottom: 5px;
+            width: 40px;
+            height: 40px;
+            margin-bottom: 8px;
         }
 
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 500;
+            color: #555;
         }
 
         input, select {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             border: 1px solid #ddd;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 1rem;
             box-sizing: border-box;
+            background: white;
+            transition: var(--transition);
         }
 
         input:focus, select:focus {
             border-color: var(--primary-color);
             outline: none;
+            box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.2);
         }
 
         .warning {
             color: var(--danger-color);
             font-size: 0.9rem;
-            margin: 1rem 0;
-            padding: 0.8rem;
+            margin: 1.5rem 0;
+            padding: 1rem;
             background: rgba(255, 68, 68, 0.08);
-            border-radius: 8px;
-            border-left: 3px solid var(--danger-color);
+            border-radius: 10px;
+            display: none;
+            border-left: 4px solid var(--danger-color);
         }
 
         .btn {
             width: 100%;
-            padding: 14px;
+            padding: 16px;
             background: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 1rem;
             font-weight: 600;
             margin-top: 0.5rem;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(154, 77, 255, 0.4);
         }
 
         .btn:active {
-            transform: translateY(1px);
+            transform: translateY(0);
         }
 
         h2 {
             text-align: center;
-            margin-bottom: 1.5rem;
-            color: var(--primary-color);
+            margin-bottom: 2rem;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary-color), #6a11cb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .amount-buttons {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 1rem;
+            gap: 10px;
+            margin-bottom: 1.5rem;
         }
 
         .amount-btn {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
             cursor: pointer;
             text-align: center;
             font-weight: 600;
             background: white;
+            transition: var(--transition);
+        }
+
+        .amount-btn:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 3px 10px rgba(138, 43, 226, 0.2);
         }
 
         .amount-btn.active {
             border-color: var(--primary-color);
             background-color: rgba(138, 43, 226, 0.1);
             color: var(--primary-color);
+            box-shadow: 0 3px 10px rgba(138, 43, 226, 0.2);
         }
 
         .custom-amount {
@@ -151,8 +195,9 @@
         .payment-details {
             background: rgba(138, 43, 226, 0.1);
             padding: 1rem;
-            border-radius: 8px;
+            border-radius: 10px;
             margin: 1rem 0;
+            font-family: monospace;
             word-break: break-all;
             border-left: 3px solid var(--primary-color);
         }
@@ -162,24 +207,46 @@
             color: white;
             border: none;
             border-radius: 5px;
-            padding: 0.5rem;
+            padding: 0.5rem 1rem;
             margin-top: 0.5rem;
             cursor: pointer;
-            width: 100%;
+            transition: var(--transition);
+        }
+
+        .copy-btn:hover {
+            background: #A74AC7;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(186, 85, 211, 0.3);
         }
 
         .telegram-link {
             color: var(--telegram-color);
             text-decoration: none;
             font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .telegram-link:hover {
+            text-decoration: underline;
         }
 
         .transaction-item {
             background: rgba(138, 43, 226, 0.05);
             padding: 1rem;
-            margin: 0.5rem 0;
-            border-radius: 8px;
+            margin: 1rem 0;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
             border: 1px solid rgba(138, 43, 226, 0.1);
+        }
+
+        .transaction-item:hover {
+            background: rgba(138, 43, 226, 0.1);
+            box-shadow: 0 3px 10px rgba(138, 43, 226, 0.1);
         }
 
         .transaction-status {
@@ -187,8 +254,6 @@
             border-radius: 5px;
             font-size: 0.8em;
             font-weight: 600;
-            margin-top: 0.5rem;
-            display: inline-block;
         }
 
         .status-pending { background: #fff3cd; color: #856404; }
@@ -198,27 +263,35 @@
         .status-waiting { background: #cce5ff; color: #004085; }
 
         .admin-panel {
-            margin-top: 1.5rem;
-            padding: 1rem;
+            margin-top: 2rem;
+            padding: 1.5rem;
             background: #f8f9fa;
-            border-radius: 8px;
+            border-radius: 15px;
             display: none;
             border: 1px solid rgba(138, 43, 226, 0.1);
         }
 
+        .admin-panel h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            background: linear-gradient(to right, var(--primary-color), #6a11cb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
         .admin-controls {
-            margin-top: 0.5rem;
+            margin-top: 1rem;
             display: flex;
             gap: 0.5rem;
         }
 
         .admin-controls button {
-            padding: 0.5rem;
+            padding: 0.5rem 1rem;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 0.8rem;
-            flex: 1;
+            font-size: 0.85rem;
+            transition: var(--transition);
         }
 
         .btn-approve {
@@ -226,9 +299,58 @@
             color: white;
         }
 
+        .btn-approve:hover {
+            background: var(--primary-light);
+            box-shadow: 0 3px 8px rgba(138, 43, 226, 0.3);
+        }
+
         .btn-reject {
             background: var(--danger-color);
             color: white;
+        }
+
+        .btn-reject:hover {
+            background: #ff6b6b;
+            box-shadow: 0 3px 8px rgba(255, 107, 107, 0.3);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .loading-content {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            color: #333;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(138, 43, 226, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         @media (max-width: 480px) {
@@ -237,12 +359,8 @@
             }
             
             .card {
-                padding: 1rem;
+                padding: 1.5rem;
                 margin: 0.5rem;
-            }
-            
-            input, select, .btn {
-                padding: 10px;
             }
         }
     </style>
@@ -251,8 +369,9 @@
     <div class="card">
         <h2>Пополнение баланса</h2>
         
-        <div style="background: rgba(138, 43, 226, 0.1); padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; border-left: 3px solid var(--primary-color);">
+        <div style="background: rgba(138, 43, 226, 0.1); padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; border-left: 3px solid var(--primary-color);">
             После оплаты средства будут зачислены в течение <strong>5-15 минут</strong>.
+            Если возникли проблемы, свяжитесь с поддержкой.
         </div>
 
         <form id="depositForm">
@@ -297,7 +416,7 @@
             <div class="form-group" id="phoneDetails">
                 <div class="payment-details">
                     <strong>Номер для оплаты:</strong> 
-                    <div style="font-size: 1.2rem; font-weight: bold; margin: 0.5rem 0;">+7 938 401-77-10</div>
+                    <div style="font-size: 1.2rem; font-weight: bold; margin: 0.5rem 0;" id="phoneNumberDisplay">+7 938 401-77-10</div>
                     <div style="font-size: 0.9rem;">После оплаты отправьте чек в поддержку</div>
                 </div>
             </div>
@@ -305,8 +424,8 @@
             <div class="form-group" id="cardDetails">
                 <div class="payment-details">
                     <strong>Реквизиты карты:</strong>
-                    <div style="font-size: 1.2rem; font-weight: bold; margin: 0.5rem 0;">4444 4444 4444 4444</div>
-                    <div>Получатель: ИВАН ИВАНОВИЧ И.</div>
+                    <div style="font-size: 1.2rem; font-weight: bold; margin: 0.5rem 0;" id="cardNumberDisplay">4444 4444 4444 4444</div>
+                    <div id="cardHolderDisplay">Получатель: ИВАН ИВАНОВИЧ И.</div>
                     <div style="font-size: 0.9rem; margin-top: 0.5rem;">После оплаты отправьте чек в поддержку</div>
                 </div>
             </div>
@@ -314,77 +433,146 @@
             <div class="form-group" id="cryptoDetails" style="display: none;">
                 <div class="payment-details">
                     <strong>USDT (TRC20):</strong> 
-                    <div style="font-size: 1.1rem; margin: 0.5rem 0; word-break: break-all;">TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB</div>
-                    <button class="copy-btn" onclick="copyToClipboard('TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB')">Копировать адрес</button>
+                    <div style="font-size: 1.1rem; margin: 0.5rem 0; word-break: break-all;" id="usdtAddressDisplay">TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB</div>
+                    <button class="copy-btn" onclick="copyToClipboard('usdtAddressDisplay')">Копировать адрес</button>
                 </div>
             </div>
 
-            <div class="warning" style="display: none;" id="warningMessage"></div>
+            <div class="warning" id="warningMessage"></div>
 
             <button type="submit" class="btn" id="submitBtn">
-                Перейти к оплате
+                <span id="btnText">Перейти к оплате</span>
             </button>
         </form>
 
         <!-- История транзакций -->
-        <div class="transaction-history" id="transactionHistory" style="margin-top: 1.5rem;">
-            <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">История пополнений</h3>
-            <div id="transactionsList" style="max-height: 300px; overflow-y: auto;">
-                <div class="transaction-item">
-                    <div>
-                        <strong>1000 руб.</strong>
-                        <div>Метод: По карте</div>
-                        <small>01.01.2023, 12:30</small>
-                        <div class="transaction-status status-completed">Завершена</div>
-                    </div>
-                </div>
-            </div>
+        <div class="transaction-history" id="transactionHistory" style="margin-top: 2rem;">
+            <h3 style="font-size: 1.3rem; margin-bottom: 1rem;">История пополнений</h3>
+            <div id="transactionsList" style="max-height: 300px; overflow-y: auto;"></div>
         </div>
 
         <!-- Панель администратора -->
         <div class="admin-panel" id="adminPanel">
-            <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">Панель администратора</h3>
+            <h3>Панель администратора</h3>
             <div id="adminTransactions"></div>
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <script>
-        // Конфигурация (можно менять администратором)
-        const config = {
-            phoneNumber: "+79384017710", // Номер для пополнения
-            cardNumber: "4444 4444 4444 4444", // Номер карты
-            cardHolder: "ИВАН ИВАНОВИЧ И.", // Владелец карты
-            usdtAddress: "TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB", // USDT адрес
-            telegramSupport: "@support" // Telegram для связи
+        // Инициализация Firebase
+        const firebaseConfig = {
+            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com/",
+            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8"
         };
-
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // Конфигурация
+        const config = {
+            telegramSupport: "@support"
+        };
+        
+        // Основные переменные
+        let currentUser = null;
+        let selectedAmount = 0;
+        let selectedMethod = "card";
+        
         // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            // Устанавливаем реквизиты из конфига
-            document.querySelector('#phoneDetails .payment-details div').textContent = config.phoneNumber;
-            document.querySelector('#cardDetails .payment-details div').textContent = config.cardNumber;
-            document.querySelector('#cardDetails .payment-details div:nth-child(3)').textContent = "Получатель: " + config.cardHolder;
-            document.querySelector('#cryptoDetails .payment-details div').textContent = config.usdtAddress;
+        document.addEventListener('DOMContentLoaded', async () => {
+            showLoading("Инициализация...");
             
-            // Инициализация формы
-            initForm();
-            
-            // Автоматический выбор первого метода оплаты
-            document.querySelector('.payment-method[data-method="card"]').classList.add('active');
-            
-            // Обработка кликов вне полей ввода (скрытие клавиатуры на мобильных)
-            document.addEventListener('click', function(e) {
-                if (!e.target.matches('input, select, textarea')) {
-                    document.activeElement.blur();
+            try {
+                // Получаем данные пользователя Telegram
+                const tgUser = tg.initDataUnsafe?.user;
+                if (tgUser) {
+                    // Автоматически заполняем username
+                    document.getElementById('username').value = tgUser.username ? `@${tgUser.username}` : '';
+                    
+                    // Создаем/обновляем пользователя в Firebase
+                    currentUser = await updateTelegramUser(tgUser);
+                    
+                    // Загружаем реквизиты из Firebase
+                    await loadPaymentDetails();
+                    
+                    // Загружаем историю транзакций
+                    loadUserTransactions(tgUser.id.toString());
+                    
+                    // Проверяем права администратора
+                    checkAdminStatus(tgUser.id.toString());
+                } else {
+                    // Режим без Telegram
+                    console.log("Не в Telegram Web App");
+                    loadPaymentDetails();
+                    loadUserTransactions('anonymous');
                 }
-            });
+                
+                // Инициализация формы
+                initForm();
+                
+                hideLoading();
+            } catch (error) {
+                console.error("Ошибка инициализации:", error);
+                hideLoading();
+                alert("Произошла ошибка при загрузке. Пожалуйста, попробуйте позже.");
+            }
         });
-
+        
+        // Обновление данных пользователя в Firebase
+        async function updateTelegramUser(tgUser) {
+            const userRef = database.ref(`users/${tgUser.id}`);
+            const snapshot = await userRef.once('value');
+            
+            const userData = {
+                id: tgUser.id,
+                username: tgUser.username || '',
+                first_name: tgUser.first_name || '',
+                last_name: tgUser.last_name || '',
+                last_active: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            if (!snapshot.exists()) {
+                userData.created_at = firebase.database.ServerValue.TIMESTAMP;
+                userData.balance = 0;
+                await userRef.set(userData);
+            } else {
+                await userRef.update(userData);
+            }
+            
+            return userRef;
+        }
+        
+        // Загрузка реквизитов из Firebase
+        async function loadPaymentDetails() {
+            const detailsRef = database.ref('paymentDetails');
+            const snapshot = await detailsRef.once('value');
+            
+            if (snapshot.exists()) {
+                const details = snapshot.val();
+                
+                // Устанавливаем реквизиты
+                document.getElementById('phoneNumberDisplay').textContent = details.phone || "+79384017710";
+                document.getElementById('cardNumberDisplay').textContent = details.cardNumber || "4444 4444 4444 4444";
+                document.getElementById('cardHolderDisplay').textContent = `Получатель: ${details.cardHolder || "ИВАН ИВАНОВИЧ И."}`;
+                document.getElementById('usdtAddressDisplay').textContent = details.usdtAddress || "TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB";
+            }
+        }
+        
         // Инициализация формы
         function initForm() {
             // Выбор суммы
             const amountBtns = document.querySelectorAll('.amount-btn');
-            let selectedAmount = 0;
             
             amountBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -414,26 +602,33 @@
                 crypto: document.getElementById('cryptoDetails')
             };
             
-            let selectedMethod = 'card';
-            
             paymentMethods.forEach(method => {
                 method.addEventListener('click', function() {
                     paymentMethods.forEach(m => m.classList.remove('active'));
                     this.classList.add('active');
                     selectedMethod = this.dataset.method;
                     
-                    // Скрываем все блоки с деталями
                     Object.values(paymentDetails).forEach(detail => detail.style.display = 'none');
-                    
-                    // Показываем нужный блок
                     paymentDetails[selectedMethod].style.display = 'block';
                 });
             });
 
             // Копирование в буфер обмена
-            window.copyToClipboard = function(text) {
+            window.copyToClipboard = function(elementId) {
+                const element = document.getElementById(elementId);
+                const text = element.textContent || element.innerText;
                 navigator.clipboard.writeText(text).then(() => {
-                    alert('Реквизиты скопированы: ' + text);
+                    const btn = element.nextElementSibling;
+                    if (btn && btn.classList.contains('copy-btn')) {
+                        btn.textContent = '✓ Скопировано!';
+                        btn.style.backgroundColor = 'var(--success-color)';
+                        setTimeout(() => {
+                            btn.textContent = 'Копировать';
+                            btn.style.backgroundColor = 'var(--secondary-color)';
+                        }, 2000);
+                    } else {
+                        alert('Реквизиты скопированы: ' + text);
+                    }
                 }).catch(err => {
                     console.error('Ошибка копирования: ', err);
                     alert('Не удалось скопировать. Пожалуйста, скопируйте вручную.');
@@ -442,58 +637,156 @@
 
             // Обработка формы
             const form = document.getElementById('depositForm');
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const btn = document.getElementById('submitBtn');
                 const warning = document.getElementById('warningMessage');
+                const btnText = document.getElementById('btnText');
                 
                 const username = document.getElementById('username').value.trim();
                 if (!username.startsWith('@') || username.length < 5) {
-                    warning.textContent = 'Введите корректный Telegram юзернейм (начинается с @)';
-                    warning.style.display = 'block';
+                    showWarning('Введите корректный Telegram юзернейм (начинается с @)');
                     return;
                 }
                 
                 if (selectedAmount < 100) {
-                    warning.textContent = 'Минимальная сумма пополнения - 100 руб.';
-                    warning.style.display = 'block';
+                    showWarning('Минимальная сумма пополнения - 100 руб.');
                     return;
                 }
                 
                 if (selectedAmount > 50000) {
-                    warning.textContent = 'Максимальная сумма пополнения - 50 000 руб.';
-                    warning.style.display = 'block';
+                    showWarning('Максимальная сумма пополнения - 50 000 руб.');
                     return;
                 }
 
                 // Блокировка кнопки
                 btn.disabled = true;
-                btn.textContent = 'Обработка...';
+                btnText.textContent = 'Обработка...';
                 
-                // Имитация отправки данных
-                setTimeout(() => {
-                    // Показываем сообщение об успехе
-                    alert('Заявка на пополнение создана!\nСумма: ' + selectedAmount + ' руб.\nМетод: ' + 
-                          (selectedMethod === 'phone' ? 'По номеру' : 
-                           selectedMethod === 'card' ? 'По карте' : 'USDT') + 
-                          '\nСвяжитесь с поддержкой: ' + config.telegramSupport);
+                try {
+                    showLoading("Создание транзакции...");
                     
-                    // Восстанавливаем кнопку
-                    btn.disabled = false;
-                    btn.textContent = 'Перейти к оплате';
+                    // Получаем ID пользователя
+                    const userId = currentUser?.key || 'anonymous';
                     
-                    // Добавляем транзакцию в историю
-                    addTransactionToHistory(selectedAmount, selectedMethod);
-                }, 1000);
+                    // Создаем данные транзакции
+                    const transactionData = {
+                        userId: userId,
+                        username: username,
+                        amount: selectedAmount,
+                        method: selectedMethod,
+                        status: 'pending',
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        details: getPaymentDetails(selectedMethod)
+                    };
+                    
+                    // Сохраняем транзакцию
+                    const transactionRef = database.ref('transactions').push();
+                    await transactionRef.set(transactionData);
+                    
+                    // Обновляем историю пользователя
+                    if (userId !== 'anonymous') {
+                        await database.ref(`users/${userId}/transactions/${transactionRef.key}`).set(true);
+                    }
+                    
+                    // Показываем успех
+                    showSuccess(btn, btnText, () => {
+                        loadUserTransactions(userId);
+                        showPaymentInstructions(selectedMethod, selectedAmount, transactionRef.key);
+                    });
+                    
+                    hideLoading();
+                } catch (error) {
+                    console.error('Ошибка при сохранении транзакции:', error);
+                    showError(btn, btnText, 'Произошла ошибка при создании заявки');
+                    hideLoading();
+                }
             });
         }
-
-        // Добавление транзакции в историю (для демонстрации)
-        function addTransactionToHistory(amount, method) {
+        
+        // Получение деталей платежа
+        function getPaymentDetails(method) {
+            const elements = {
+                phone: document.getElementById('phoneNumberDisplay'),
+                card: document.getElementById('cardNumberDisplay'),
+                crypto: document.getElementById('usdtAddressDisplay')
+            };
+            
+            return {
+                recipient: elements[method].textContent,
+                note: method === 'card' ? document.getElementById('cardHolderDisplay').textContent : ''
+            };
+        }
+        
+        // Загрузка истории транзакций пользователя
+        function loadUserTransactions(userId) {
+            if (!userId) return;
+            
             const transactionsList = document.getElementById('transactionsList');
-            const now = new Date();
-            const formattedDate = now.toLocaleString('ru-RU');
+            transactionsList.innerHTML = '<p>Загрузка истории...</p>';
+            
+            const transactionsRef = database.ref('transactions')
+                .orderByChild('userId')
+                .equalTo(userId)
+                .limitToLast(10);
+            
+            transactionsRef.on('value', snapshot => {
+                transactionsList.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    transactionsList.innerHTML = '<p>У вас пока нет операций</p>';
+                    return;
+                }
+                
+                const transactions = [];
+                snapshot.forEach(childSnapshot => {
+                    transactions.push({
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+                
+                // Сортируем по дате (новые сначала)
+                transactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                
+                // Отображаем транзакции
+                transactions.forEach(transaction => {
+                    transactionsList.appendChild(createTransactionElement(transaction));
+                });
+            });
+        }
+        
+        // Создание элемента транзакции
+        function createTransactionElement(transaction) {
+            const element = document.createElement('div');
+            element.className = 'transaction-item';
+            element.dataset.id = transaction.id;
+            
+            const date = transaction.timestamp ? new Date(transaction.timestamp) : new Date();
+            const formattedDate = date.toLocaleString('ru-RU');
+            
+            let statusText = '';
+            let statusClass = '';
+            
+            switch(transaction.status) {
+                case 'completed': 
+                    statusText = 'Завершена';
+                    statusClass = 'status-completed';
+                    break;
+                case 'failed': 
+                    statusText = 'Ошибка';
+                    statusClass = 'status-failed';
+                    break;
+                case 'confirming':
+                    statusText = 'Подтверждается';
+                    statusClass = 'status-confirming';
+                    break;
+                default: 
+                    statusText = 'Ожидает оплаты';
+                    statusClass = 'status-pending';
+                    break;
+            }
             
             const methodNames = {
                 'phone': 'По номеру',
@@ -501,65 +794,252 @@
                 'crypto': 'USDT'
             };
             
-            const transaction = document.createElement('div');
-            transaction.className = 'transaction-item';
-            transaction.innerHTML = `
+            element.innerHTML = `
                 <div>
-                    <strong>${amount} руб.</strong>
-                    <div>Метод: ${methodNames[method] || method}</div>
+                    <strong>${transaction.amount} руб.</strong>
+                    <div>Метод: ${methodNames[transaction.method] || transaction.method}</div>
                     <small>${formattedDate}</small>
-                    <div class="transaction-status status-pending">Ожидает оплаты</div>
                 </div>
+                <div class="transaction-status ${statusClass}">${statusText}</div>
             `;
             
-            transactionsList.insertBefore(transaction, transactionsList.firstChild);
+            return element;
         }
-
-        // Проверка прав администратора (для демонстрации)
-        function checkAdminStatus() {
-            // В реальном приложении здесь должна быть проверка прав
-            const isAdmin = confirm('Вы администратор? (Для демонстрации)');
-            if (isAdmin) {
-                document.getElementById('adminPanel').style.display = 'block';
-                loadAdminTransactions();
+        
+        // Проверка прав администратора
+        async function checkAdminStatus(userId) {
+            if (!userId) return;
+            
+            try {
+                const adminRef = database.ref(`admins/${userId}`);
+                const snapshot = await adminRef.once('value');
+                
+                if (snapshot.exists()) {
+                    document.getElementById('adminPanel').style.display = 'block';
+                    loadAdminTransactions();
+                }
+            } catch (error) {
+                console.error('Ошибка проверки прав администратора:', error);
             }
         }
-
-        // Загрузка транзакций для администратора (для демонстрации)
+        
+        // Загрузка транзакций для администратора
         function loadAdminTransactions() {
             const adminTransactions = document.getElementById('adminTransactions');
+            adminTransactions.innerHTML = '<p>Загрузка транзакций...</p>';
             
-            // Пример транзакции
-            const transaction = document.createElement('div');
-            transaction.className = 'transaction-item';
-            transaction.innerHTML = `
-                <div>
-                    <strong>Транзакция #DEMO</strong>
-                    <div>Сумма: 1000 руб., Метод: По карте</div>
-                    <div>Пользователь: @testuser</div>
-                    <div>Карта: ${config.cardNumber}</div>
-                    <small>01.01.2023, 12:30</small>
-                    <div class="admin-controls">
-                        <button class="btn-approve" onclick="adminAction('approve')">Подтвердить</button>
-                        <button class="btn-reject" onclick="adminAction('reject')">Отклонить</button>
-                    </div>
+            const transactionsRef = database.ref('transactions')
+                .orderByChild('timestamp')
+                .limitToLast(20);
+            
+            transactionsRef.on('value', snapshot => {
+                adminTransactions.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    adminTransactions.innerHTML = '<p>Нет транзакций для обработки</p>';
+                    return;
+                }
+                
+                const transactions = [];
+                snapshot.forEach(childSnapshot => {
+                    transactions.push({
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+                
+                // Сортируем по дате (новые сначала)
+                transactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                
+                // Отображаем транзакции
+                transactions.forEach(transaction => {
+                    adminTransactions.appendChild(createAdminTransactionElement(transaction));
+                });
+            });
+        }
+        
+        // Создание элемента транзакции для администратора
+        function createAdminTransactionElement(transaction) {
+            const element = document.createElement('div');
+            element.className = 'transaction-item';
+            element.dataset.id = transaction.id;
+            
+            const date = transaction.timestamp ? new Date(transaction.timestamp) : new Date();
+            const formattedDate = date.toLocaleString('ru-RU');
+            
+            const methodNames = {
+                'phone': 'По номеру',
+                'card': 'По карте',
+                'crypto': 'USDT'
+            };
+            
+            element.innerHTML = `
+                <div style="flex: 1;">
+                    <strong>Транзакция #${transaction.id.slice(0, 6)}</strong>
+                    <div>Сумма: ${transaction.amount} руб., Метод: ${methodNames[transaction.method] || transaction.method}</div>
+                    <div>Пользователь: ${transaction.username}</div>
+                    <div>Реквизиты: ${transaction.details.recipient}</div>
+                    <small>${formattedDate}</small>
+                </div>
+                <div class="admin-controls">
+                    <button class="btn-approve" onclick="updateTransactionStatus('${transaction.id}', 'completed')">Подтвердить</button>
+                    <button class="btn-reject" onclick="updateTransactionStatus('${transaction.id}', 'failed')">Отклонить</button>
                 </div>
             `;
             
-            adminTransactions.appendChild(transaction);
+            return element;
         }
-
-        // Действия администратора (для демонстрации)
-        window.adminAction = function(action) {
-            if (action === 'approve') {
-                alert('Транзакция подтверждена');
-            } else {
-                alert('Транзакция отклонена');
+        
+        // Обновление статуса транзакции
+        window.updateTransactionStatus = async function(id, status) {
+            if (!confirm(`Вы уверены, что хотите ${status === 'completed' ? 'подтвердить' : 'отклонить'} эту транзакцию?`)) {
+                return;
             }
-        };
-
-        // Для демонстрации панели администратора
-        setTimeout(checkAdminStatus, 1000);
+            
+            try {
+                showLoading("Обновление статуса...");
+                
+                const updates = {
+                    status: status,
+                    processedAt: firebase.database.ServerValue.TIMESTAMP
+                };
+                
+                // Если пользователь Telegram, добавляем его ID как обработавшего
+                const tgUser = tg.initDataUnsafe?.user;
+                if (tgUser) {
+                    updates.processedBy = tgUser.id.toString();
+                }
+                
+                await database.ref(`transactions/${id}`).update(updates);
+                
+                hideLoading();
+                alert(`Транзакция успешно ${status === 'completed' ? 'подтверждена' : 'отклонена'}`);
+            } catch (error) {
+                console.error('Ошибка обновления статуса:', error);
+                hideLoading();
+                alert('Произошла ошибка при обновлении статуса');
+            }
+        }
+        
+        // Показать инструкции по оплате
+        function showPaymentInstructions(method, amount, transactionId) {
+            let instructions = '';
+            
+            const methodNames = {
+                'phone': 'По номеру',
+                'card': 'По карте',
+                'crypto': 'USDT'
+            };
+            
+            const details = getPaymentDetails(method);
+            
+            instructions = `
+                <div class="payment-details">
+                    <h3 style="margin-top: 0;">Инструкция по оплате</h3>
+                    <p><strong>Метод:</strong> ${methodNames[method]}</p>
+                    <p><strong>Сумма:</strong> ${amount} руб.</p>
+                    <p><strong>Реквизиты:</strong> ${details.recipient}</p>
+                    ${details.note ? `<p>${details.note}</p>` : ''}
+                    <p><strong>ID транзакции:</strong> ${transactionId}</p>
+                    <p>После оплаты свяжитесь с поддержкой: ${config.telegramSupport}</p>
+                </div>
+            `;
+            
+            // Создаем модальное окно с инструкциями
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
+            modal.style.display = 'flex';
+            modal.style.justifyContent = 'center';
+            modal.style.alignItems = 'center';
+            modal.style.zIndex = '1000';
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.backgroundColor = 'white';
+            modalContent.style.padding = '2rem';
+            modalContent.style.borderRadius = '15px';
+            modalContent.style.maxWidth = '500px';
+            modalContent.style.width = '90%';
+            modalContent.style.maxHeight = '90vh';
+            modalContent.style.overflowY = 'auto';
+            modalContent.innerHTML = instructions;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = 'Закрыть';
+            closeBtn.className = 'btn';
+            closeBtn.style.marginTop = '1rem';
+            closeBtn.onclick = () => document.body.removeChild(modal);
+            
+            modalContent.appendChild(closeBtn);
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+        
+        // Вспомогательные функции
+        function showWarning(message) {
+            const warning = document.getElementById('warningMessage');
+            warning.textContent = message;
+            warning.style.display = 'block';
+        }
+        
+        function showSuccess(btn, btnText, callback) {
+            btnText.textContent = '✓ Успешно!';
+            btn.style.backgroundColor = 'var(--success-color)';
+            
+            setTimeout(() => {
+                btnText.textContent = 'Перейти к оплате';
+                btn.style.backgroundColor = 'var(--primary-color)';
+                btn.disabled = false;
+                
+                if (callback) callback();
+            }, 2000);
+        }
+        
+        function showError(btn, btnText, message) {
+            btnText.textContent = 'Ошибка!';
+            btn.style.backgroundColor = 'var(--danger-color)';
+            
+            setTimeout(() => {
+                btnText.textContent = 'Перейти к оплате';
+                btn.style.backgroundColor = 'var(--primary-color)';
+                btn.disabled = false;
+            }, 2000);
+            
+            alert(message);
+        }
+        
+        function showLoading(message = "Загрузка...") {
+            let overlay = document.querySelector('.loading-overlay');
+            
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'loading-overlay';
+                
+                const content = document.createElement('div');
+                content.className = 'loading-content';
+                content.innerHTML = `
+                    <div class="loader"></div>
+                    <p>${message}</p>
+                `;
+                
+                overlay.appendChild(content);
+                document.body.appendChild(overlay);
+            } else {
+                overlay.querySelector('p').textContent = message;
+                overlay.style.display = 'flex';
+            }
+        }
+        
+        function hideLoading() {
+            const overlay = document.querySelector('.loading-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
