@@ -182,6 +182,12 @@
             color: white;
             transition: all 0.3s ease;
         }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -189,6 +195,7 @@
 
     <div id="loadingScreen" class="container" style="color: white; text-align: center; padding-top: 100px;">
         <h2>🛰 Инициализация системы...</h2>
+        <div class="spinner" style="width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--neon-blue); border-radius: 50%; margin: 20px auto; animation: spin 1s linear infinite;"></div>
     </div>
 
     <div id="appContent" style="display: none;">
@@ -236,70 +243,120 @@
     <div id="notification" class="notification"></div>
 
     <script>
+        // Конфигурация Firebase
         const firebaseConfig = {
             apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
             databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
         };
 
+        // ID администраторов
         const ADMIN_IDS = ['1290724329', '1062148525'];
-        let currentUser = { id: null, username: 'Гость', isAdmin: false };
+        
+        // Текущий пользователь
+        let currentUser = { 
+            id: null, 
+            username: 'Гость', 
+            isAdmin: false 
+        };
 
+        // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        document.addEventListener('DOMContentLoaded', async () => {
+        // Основная функция инициализации
+        async function initializeApp() {
             try {
+                // Инициализация пользователя
                 await initUser();
+                
+                // Настройка обработчиков событий
                 setupEventListeners();
-                renderContent();
+                
+                // Загрузка и отображение контента
+                await renderContent();
+                
+                // Скрытие загрузочного экрана
                 toggleLoader(false);
+                
             } catch (error) {
-                showNotification('❌ Ошибка инициализации', 'error');
+                console.error('Ошибка инициализации:', error);
+                showNotification('❌ Ошибка загрузки системы', 'error');
+                toggleLoader(false);
             }
-        });
+        }
 
+        // Инициализация пользователя
         async function initUser() {
+            // Проверка Telegram WebApp
             if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
                 const tgUser = Telegram.WebApp.initDataUnsafe.user;
                 currentUser.id = tgUser.id.toString();
-                currentUser.username = tgUser.username || [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
+                currentUser.username = tgUser.username || 
+                    [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 
+                    'Пользователь';
+                
+                // Инициализация Telegram WebApp
                 Telegram.WebApp.ready();
                 Telegram.WebApp.expand();
             } else {
+                // Гостевой доступ
                 currentUser.id = 'guest_' + Math.random().toString(36).substr(2, 9);
             }
+            
+            // Проверка прав администратора
             currentUser.isAdmin = ADMIN_IDS.includes(currentUser.id);
+            
+            // Переключение интерфейсов
             toggleAdminPanel();
         }
 
+        // Переключение между панелями
         function toggleAdminPanel() {
             document.querySelector('.admin-panel').classList.toggle('hidden', !currentUser.isAdmin);
             document.querySelector('.user-interface').classList.toggle('hidden', currentUser.isAdmin);
         }
 
+        // Настройка обработчиков событий
         function setupEventListeners() {
+            // Форма создания тикета
             document.getElementById('ticketForm').addEventListener('submit', handleSubmit);
+            
+            // Элементы админ-панели
             document.getElementById('adminSearch').addEventListener('input', () => renderAdminTickets());
             document.getElementById('filterStatus').addEventListener('change', () => renderAdminTickets());
+            
+            // Глобальные обработчики
             document.addEventListener('click', handleActions);
         }
 
+        // Обработка отправки формы
         async function handleSubmit(e) {
             e.preventDefault();
+            
             try {
+                // Создание нового тикета
                 const newTicket = createTicketObject();
+                
+                // Сохранение в Firebase
                 await database.ref(`tickets/${newTicket.id}`).set(newTicket);
+                
+                // Сброс формы и уведомление
                 document.getElementById('ticketForm').reset();
                 showNotification('🚀 Запрос успешно отправлен!');
+                
+                // Обновление интерфейса
                 renderContent();
+                
             } catch (error) {
-                showNotification('❌ Ошибка отправки', 'error');
+                console.error('Ошибка отправки тикета:', error);
+                showNotification('❌ Ошибка отправки запроса', 'error');
             }
         }
 
+        // Создание объекта тикета
         function createTicketObject() {
             return {
-                id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+                id: generateId(),
                 userId: currentUser.id,
                 username: currentUser.username,
                 subject: document.getElementById('subject').value.trim(),
@@ -312,52 +369,86 @@
             };
         }
 
+        // Генерация ID
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
+
+        // Основная функция рендеринга
         async function renderContent() {
             if (currentUser.isAdmin) {
-                renderAdminTickets();
+                await renderAdminTickets();
             } else {
                 const tickets = await loadUserTickets();
                 renderUserTickets(tickets);
             }
         }
 
+        // Загрузка тикетов пользователя
         async function loadUserTickets() {
-            const snapshot = await database.ref('tickets')
-                .orderByChild('userId')
-                .equalTo(currentUser.id)
-                .once('value');
-            return parseFirebaseData(snapshot);
+            try {
+                const snapshot = await database.ref('tickets')
+                    .orderByChild('userId')
+                    .equalTo(currentUser.id)
+                    .once('value');
+                
+                return parseFirebaseData(snapshot);
+                
+            } catch (error) {
+                console.error('Ошибка загрузки тикетов:', error);
+                showNotification('❌ Ошибка загрузки запросов', 'error');
+                return [];
+            }
         }
 
+        // Рендеринг админ-панели
         async function renderAdminTickets() {
-            const snapshot = await database.ref('tickets').once('value');
-            const allTickets = parseFirebaseData(snapshot);
-            const filteredTickets = filterTickets(allTickets);
-            document.getElementById('adminTicketsContainer').innerHTML = 
-                filteredTickets.map(t => createAdminTicketElement(t)).join('');
+            try {
+                const snapshot = await database.ref('tickets').once('value');
+                const allTickets = parseFirebaseData(snapshot);
+                const filteredTickets = filterTickets(allTickets);
+                
+                document.getElementById('adminTicketsContainer').innerHTML = 
+                    filteredTickets.map(t => createAdminTicketElement(t)).join('');
+                    
+            } catch (error) {
+                console.error('Ошибка загрузки тикетов:', error);
+                showNotification('❌ Ошибка загрузки запросов', 'error');
+            }
         }
 
+        // Фильтрация тикетов
         function filterTickets(tickets) {
             const searchTerm = document.getElementById('adminSearch').value.toLowerCase();
             const statusFilter = document.getElementById('filterStatus').value;
             
             return tickets
-                .filter(t => !ADMIN_IDS.includes(t.userId))
+                .filter(t => !ADMIN_IDS.includes(t.userId)) // Исключаем тикеты админов
                 .filter(t => statusFilter === 'all' || t.status === statusFilter)
                 .filter(t => 
                     t.userId.includes(searchTerm) ||
                     t.subject.toLowerCase().includes(searchTerm) ||
                     t.problem.toLowerCase().includes(searchTerm)
-                );
+                )
+                .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         }
 
+        // Рендеринг тикетов пользователя
         function renderUserTickets(tickets) {
             const container = document.getElementById('ticketsContainer');
-            container.innerHTML = tickets.length ? 
-                tickets.sort(sortByDate).map(t => createUserTicketElement(t)).join('') : 
-                '<p>Нет активных запросов</p>';
+            
+            if (tickets.length === 0) {
+                container.innerHTML = '<p>У вас пока нет активных запросов</p>';
+                return;
+            }
+            
+            container.innerHTML = tickets
+                .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                .map(t => createUserTicketElement(t))
+                .join('');
         }
 
+        // Создание элемента тикета для пользователя
         function createUserTicketElement(ticket) {
             return `
                 <div class="ticket-card ${ticket.status}" onclick="toggleTicket(this)">
@@ -376,6 +467,7 @@
             `;
         }
 
+        // Создание элемента тикета для администратора
         function createAdminTicketElement(ticket) {
             return `
                 <div class="ticket-card ${ticket.status}" onclick="toggleTicket(this)">
@@ -400,12 +492,14 @@
             `;
         }
 
+        // Создание элементов управления для админа
         function createAdminControls(ticket) {
             return ticket.status === 'open' ? 
                 `<button class="btn btn-danger close-btn" data-id="${ticket.id}">Закрыть</button>` :
                 `<button class="btn btn-success reopen-btn" data-id="${ticket.id}">Открыть</button>`;
         }
 
+        // Обработка действий
         function handleActions(e) {
             const actions = {
                 'close-btn': closeTicket,
@@ -421,41 +515,62 @@
             });
         }
 
+        // Отправка ответа
         async function sendReply(ticketId, isAdmin) {
             const textareaId = isAdmin ? `adminReply-${ticketId}` : `userReply-${ticketId}`;
             const text = document.getElementById(textareaId)?.value.trim();
-            if (!text) return;
+            
+            if (!text) {
+                showNotification('✏️ Введите текст сообщения', 'error');
+                return;
+            }
 
             try {
-                await database.ref(`tickets/${ticketId}/messages`).push({
+                // Создание сообщения
+                const message = {
                     message: text,
                     timestamp: new Date().toISOString(),
                     isAdmin
-                });
+                };
+
+                // Сохранение в Firebase
+                await database.ref(`tickets/${ticketId}/messages`).push(message);
                 await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
+                
+                // Очистка поля и уведомление
                 document.getElementById(textareaId).value = '';
                 showNotification(isAdmin ? '👾 Ответ отправлен' : '🚀 Сообщение доставлено');
+                
+                // Обновление интерфейса
                 renderContent();
+                
             } catch (error) {
+                console.error('Ошибка отправки ответа:', error);
                 showNotification('❌ Ошибка отправки', 'error');
             }
         }
 
+        // Закрытие тикета
         async function closeTicket(ticketId) {
             await updateTicketStatus(ticketId, 'closed', '🔒 Запрос закрыт');
         }
 
+        // Повторное открытие тикета
         async function reopenTicket(ticketId) {
             await updateTicketStatus(ticketId, 'open', '🔓 Запрос открыт');
         }
 
+        // Обновление статуса тикета
         async function updateTicketStatus(ticketId, status, message) {
             try {
                 await database.ref(`tickets/${ticketId}/status`).set(status);
                 await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
+                
                 showNotification(message);
                 renderContent();
+                
             } catch (error) {
+                console.error('Ошибка обновления статуса:', error);
                 showNotification('❌ Ошибка обновления', 'error');
             }
         }
@@ -465,28 +580,34 @@
             return snapshot.val() ? Object.values(snapshot.val()) : [];
         }
 
-        function sortByDate(a, b) {
-            return new Date(b.updatedAt) - new Date(a.updatedAt);
-        }
-
         function getPriorityLabel(priority) {
-            return {
+            const labels = {
                 low: '🌌 Низкий',
                 medium: '🛸 Средний',
                 high: '🚨 Высокий'
-            }[priority];
+            };
+            return labels[priority] || '🛸 Средний';
         }
 
         function formatDate(dateString) {
-            return new Date(dateString).toLocaleString('ru-RU');
+            const options = { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            };
+            return new Date(dateString).toLocaleString('ru-RU', options);
         }
 
         function renderMessages(ticket) {
-            return [
+            const messages = [
                 createMessage(ticket.problem, ticket.username, ticket.createdAt, false),
                 ...(ticket.messages || []).map(msg => 
                     createMessage(msg.message, msg.isAdmin ? 'Администратор' : ticket.username, msg.timestamp, msg.isAdmin)
-            ].join('');
+                )
+            ];
+            return messages.join('');
         }
 
         function createMessage(text, author, date, isAdmin) {
@@ -500,6 +621,7 @@
 
         function createReplyForm(ticketId, isAdmin, status = 'open') {
             if (status !== 'open') return '';
+            
             return `
                 <div class="reply-form">
                     <textarea id="${isAdmin ? 'admin' : 'user'}Reply-${ticketId}" 
@@ -516,17 +638,33 @@
             const notification = document.getElementById('notification');
             notification.className = `notification ${type} show`;
             notification.textContent = message;
-            setTimeout(() => notification.classList.remove('show'), 3000);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
         }
-
-        window.toggleTicket = (element) => {
-            element.closest('.ticket-card').classList.toggle('ticket-expanded');
-        };
 
         function toggleLoader(show = true) {
             document.getElementById('loadingScreen').style.display = show ? 'block' : 'none';
             document.getElementById('appContent').style.display = show ? 'none' : 'block';
         }
+
+        // Глобальные функции
+        window.toggleTicket = (element) => {
+            element.closest('.ticket-card').classList.toggle('ticket-expanded');
+        };
+
+        // Запуск приложения
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        // Анимация спиннера
+        document.head.insertAdjacentHTML('beforeend', `
+            <style>
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+            </style>
+        `);
     </script>
 </body>
 </html>
