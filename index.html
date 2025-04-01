@@ -200,7 +200,7 @@
         /* Статистика */
         .profile-stats {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             margin-top: 25px;
             padding-top: 20px;
@@ -281,10 +281,6 @@
                 width: 85%;
             }
             
-            .profile-stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
             .avatar {
                 width: 100px;
                 height: 100px;
@@ -305,9 +301,9 @@
     <!-- Выпадающее меню -->
     <div class="menu" id="menu">
         <button onclick="window.location.href='games.html'"><span>🎮</span> Игры</button>
-        <button onclick="openWithdraw()"><span>💳</span> Вывод</button>
-        <button onclick="openDeposit()"><span>💰</span> Депозит</button>
-        <button onclick="openSupport()"><span>🛟</span> Поддержка</button>
+        <button onclick="window.location.href='conclusion.html'"><span>💳</span> Вывод</button>
+        <button onclick="window.location.href='replenishment.html'"><span>💰</span> Депозит</button>
+        <button onclick="window.location.href='support.html'"><span>🛟</span> Поддержка</button>
         <button onclick="openHistory()"><span>📊</span> История</button>
     </div>
 
@@ -333,10 +329,6 @@
                     <div class="stat-value" id="wins">0</div>
                     <div class="stat-label">Побед</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="profit">0</div>
-                    <div class="stat-label">Прибыль</div>
-                </div>
             </div>
         </div>
     </div>
@@ -361,8 +353,7 @@
             username: document.getElementById('username'),
             balance: document.getElementById('balance'),
             gamesPlayed: document.getElementById('games-played'),
-            wins: document.getElementById('wins'),
-            profit: document.getElementById('profit')
+            wins: document.getElementById('wins')
         };
 
         // Данные пользователя
@@ -373,7 +364,6 @@
             balance: 0,
             gamesPlayed: 0,
             wins: 0,
-            profit: 0,
             registrationDate: new Date().toISOString()
         };
 
@@ -474,7 +464,6 @@
             elements.balance.textContent = userData.balance;
             elements.gamesPlayed.textContent = userData.gamesPlayed;
             elements.wins.textContent = userData.wins;
-            elements.profit.textContent = userData.profit;
         }
 
         // Обновить данные в Firebase
@@ -483,8 +472,7 @@
                 database.ref('users/' + userData.userId).update({
                     balance: userData.balance,
                     gamesPlayed: userData.gamesPlayed,
-                    wins: userData.wins,
-                    profit: userData.profit
+                    wins: userData.wins
                 });
             }
         }
@@ -492,9 +480,6 @@
         // Функции для изменения данных
         function addBalance(amount) {
             userData.balance += amount;
-            if (amount > 0) {
-                userData.profit += amount;
-            }
             updateUserData();
             showProfile();
         }
@@ -508,7 +493,6 @@
         function addWin() {
             userData.wins += 1;
             userData.balance += 100; // Награда за победу
-            userData.profit += 100;
             updateUserData();
             showProfile();
         }
@@ -565,31 +549,16 @@
             });
         }
 
-    
- 
-    // Функции меню
-    function toggleMenu() {
-        const menu = document.getElementById('menu');
-        menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-    }
+        // Функции меню
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+        }
 
-    function openWithdraw() {
-        window.location.href = 'conclusion.html';
-    }
-
-    function openDeposit() {
-        window.location.href = 'replenishment.html';
-    }
-
-    function openSupport() {
-           window.location.href = 'Support.html';
-    }
-
-    function openHistory() {
-        alert(`История игр:
+        function openHistory() {
+            alert(`История игр:
 Игр сыграно: ${userData.gamesPlayed}
-Побед: ${userData.wins}
-Прибыль: ${userData.profit} ⭐`);
+Побед: ${userData.wins}`);
         }
     </script>
 </body>
