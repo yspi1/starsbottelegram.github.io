@@ -20,6 +20,7 @@
             --menu-border: #6a4cff;
             --danger: #ff4d6d;
             --success: #00e676;
+            --exchange-color: #ff4d4d;
         }
         
         body {
@@ -372,24 +373,21 @@
     <!-- Выпадающее меню -->
     <div class="menu" id="menu">
         <button class="menu-item" onclick="window.location.href='index.html'">
-            <i class="fas fa-home"></i> Главная
-        </button>
-        <button class="menu-item" onclick="window.location.href='profile.html'">
             <i class="fas fa-user"></i> Профиль
         </button>
         <div class="menu-divider"></div>
-        <button class="menu-item" onclick="openDeposit()">
+        <button class="menu-item" onclick="window.location.href='Replenishment.html'">
             <i class="fas fa-wallet"></i> Пополнить
         </button>
-        <button class="menu-item" onclick="openWithdraw()">
+        <button class="menu-item" onclick="window.location.href='Conclusion.html'">
             <i class="fas fa-money-bill-wave"></i> Вывод
         </button>
         <div class="menu-divider"></div>
-        <button class="menu-item" onclick="openHistory()">
-            <i class="fas fa-history"></i> История
-        </button>
-        <button class="menu-item" onclick="openSupport()">
+        <button class="menu-item" onclick="window.location.href='support.html'">
             <i class="fas fa-headset"></i> Поддержка
+        </button>
+        <button class="menu-item" style="color: var(--exchange-color);" onclick="window.location.href='Exchanger.html'">
+            <i class="fas fa-exchange-alt"></i> Обменник
         </button>
     </div>
 
@@ -533,26 +531,6 @@
         function toggleMenu() {
             const menu = document.getElementById('menu');
             menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-        }
-
-        function openWithdraw() {
-            showNotification('Функция вывода доступна в разделе "Профиль"', 'info');
-            toggleMenu();
-        }
-
-        function openDeposit() {
-            showNotification('Функция пополнения доступна в разделе "Профиль"', 'info');
-            toggleMenu();
-        }
-
-        function openSupport() {
-            showNotification('Поддержка: @cosmic_support', 'info');
-            toggleMenu();
-        }
-
-        function openHistory() {
-            showNotification('История игр будет доступна в следующем обновлении', 'warning');
-            toggleMenu();
         }
 
         function showComingSoon() {
