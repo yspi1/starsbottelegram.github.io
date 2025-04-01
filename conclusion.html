@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система вывода средств</title>
+    <style>
+        :root {
+            --primary-color: #8A2BE2; /* Фиолетовый */
+            --primary-light: #9c4dff;
+            --success-color: #4CAF50;
+            --danger-color: #ff4444;
+            --warning-color: #ffbb33;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            overflow: hidden;
+            position: relative;
+            color: var(--text-color);
+        }
+
+        .bg-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(138, 43, 226, 0.1);
+            border-radius: 50%;
+            animation: float 15s linear infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-100px) scale(1);
+                opacity: 0;
+            }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: var(--transition);
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            z-index: 1;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: cardAppear 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes cardAppear {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .switch-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 2rem;
+            background: var(--light-gray);
+            padding: 6px;
+            border-radius: 12px;
+        }
+
+        .switch-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            font-weight: 600;
+            color: #666;
+            background: transparent;
+            font-size: 0.95rem;
+        }
+
+        .switch-btn.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-section {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .form-section.active {
+            max-height: 800px;
+            opacity: 1;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: var(--transition);
+            box-sizing: border-box;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.2);
+        }
+
+        .warning {
+            color: var(--danger-color);
+            font-size: 0.9rem;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(255, 68, 68, 0.08);
+            border-radius: 10px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(138, 43, 226, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(45deg);
+            transition: var(--transition);
+            opacity: 0;
+        }
+
+        .btn:hover::after {
+            opacity: 1;
+            animation: shine 1.5s ease infinite;
+        }
+
+        @keyframes shine {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #333;
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary-color), #6a11cb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .method-group {
+            margin-top: 1rem;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-icon {
+            position: relative;
+        }
+
+        .input-icon input {
+            padding-left: 3rem;
+        }
+
+        .input-icon::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 2;
+        }
+
+        .phone-icon::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238A2BE2'%3E%3Cpath d='M20 15.5c-1.2 0-2.5-.2-3.6-.6h-.3c-.3 0-.5.1-.7.3l-2.2 2.2c-2.8-1.5-5.2-3.8-6.6-6.6l2.2-2.2c.3-.3.4-.7.2-1-.3-1.1-.5-2.4-.5-3.6 0-.5-.5-1-1-1H4c-.5 0-1 .5-1 1 0 9.4 7.6 17 17 17 .5 0 1-.5 1-1v-3.5c0-.5-.5-1-1-1z'/%3E%3C/svg%3E");
+        }
+
+        .card-icon::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238A2BE2'%3E%3Cpath d='M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10z'/%3E%3C/svg%3E");
+        }
+
+        .crypto-icon::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238A2BE2'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E");
+        }
+
+        .exchange-rate {
+            background: rgba(138, 43, 226, 0.1);
+            padding: 0.8rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .exchange-rate strong {
+            color: var(--primary-color);
+        }
+
+        .success-animation {
+            animation: successPulse 0.5s ease;
+        }
+
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Новые стили для дополнительных функций */
+        .transaction-history {
+            margin-top: 2rem;
+            border-top: 1px solid #eee;
+            padding-top: 1.5rem;
+        }
+
+        .transaction-item {
+            background: rgba(138, 43, 226, 0.05);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .transaction-item:hover {
+            background: rgba(138, 43, 226, 0.1);
+        }
+
+        .transaction-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-processing { background: #cce5ff; color: #004085; }
+
+        .comment-section {
+            margin-top: 1rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+            display: none;
+        }
+
+        .comment {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .comment-admin {
+            background: #e2e3e5;
+            border-left: 3px solid #6c757d;
+        }
+
+        .comment-user {
+            background: #e2f0fd;
+            border-left: 3px solid #0d6efd;
+        }
+
+        .admin-panel {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .admin-panel h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .admin-transaction-item {
+            background: white;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .admin-controls {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .admin-controls button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .btn-approve {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-reject {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-comment {
+            background: var(--warning-color);
+            color: #333;
+        }
+
+        .statistics-chart {
+            margin-top: 1.5rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .export-buttons button {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--primary-light);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .processing-info {
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .toggle-comments {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Анимированный фон -->
+    <div class="bg-particles" id="bgParticles"></div>
+    
+    <!-- Основная карточка -->
+    <div class="card">
+        <h2>Вывод средств</h2>
+        
+        <div class="switch-buttons">
+            <div class="switch-btn active" data-type="stars">Звёзды</div>
+            <div class="switch-btn" data-type="money">Деньги</div>
+        </div>
+
+        <form id="withdrawalForm">
+            <!-- Вывод в звездах -->
+            <div class="form-section active" id="starsSection">
+                <div class="exchange-rate">
+                    Курс обмена: <strong>1 звезда = 1.46 рубля</strong>
+                </div>
+                
+                <div class="processing-info">
+                    После отправки заявки с вами свяжется администратор в Telegram для начисления звёзд.<br>
+                    Обычное время обработки: <strong>15 минут - 1 час</strong>
+                </div>
+                
+                <div class="form-group">
+                    <label for="username">Ваш Telegram юзернейм</label>
+                    <input type="text" id="username" placeholder="@username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="starsAmount">Количество звёзд</label>
+                    <input type="number" id="starsAmount" min="50" value="50" required>
+                    <small style="display: block; margin-top: 5px; color: #666;">Минимальная сумма: 50 звёзд</small>
+                </div>
+            </div>
+
+            <!-- Вывод в деньгах -->
+            <div class="form-section" id="moneySection">
+                <div class="processing-info">
+                    Время обработки вывода: <strong>1-24 часа</strong> в зависимости от загруженности системы.<br>
+                    Транзакции отслеживаются в вашем профиле.
+                </div>
+
+                <div class="form-group">
+                    <label for="moneyAmount">Сумма вывода (рубли)</label>
+                    <input type="number" id="moneyAmount" min="100" value="100" required>
+                    <small style="display: block; margin-top: 5px; color: #666;">Минимальная сумма: 100 руб.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="moneyMethod">Способ вывода</label>
+                    <select id="moneyMethod" required>
+                        <option value="phone">На телефон</option>
+                        <option value="bank">Банковская карта</option>
+                        <option value="usdt">USDT (TRC20)</option>
+                    </select>
+                </div>
+
+                <!-- Группа для телефона -->
+                <div class="form-group" id="phoneGroup">
+                    <div class="input-icon phone-icon">
+                        <label for="phoneInput">Номер телефона</label>
+                        <input type="text" id="phoneInput" 
+                            placeholder="+7 (999) 999-99-99" 
+                            pattern="^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$">
+                    </div>
+                    
+                    <div class="method-group" id="bankSelectGroup">
+                        <label for="bankSelect">Банк</label>
+                        <select id="bankSelect">
+                            <option value="sber">Сбербанк</option>
+                            <option value="tinkoff">Тинькофф</option>
+                            <option value="vtb">ВТБ</option>
+                            <option value="alfa">Альфа-Банк</option>
+                            <option value="gazprom">Газпромбанк</option>
+                            <option value="other">Другой банк</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Группа для банковской карты -->
+                <div class="form-group" id="bankGroup" style="display: none;">
+                    <div class="input-icon card-icon">
+                        <label for="bankInput">Номер карты</label>
+                        <input type="text" id="bankInput" 
+                            placeholder="0000 0000 0000 0000" 
+                            pattern="^\d{4}\s\d{4}\s\d{4}\s\d{4}$">
+                    </div>
+                </div>
+
+                <!-- Группа для USDT -->
+                <div class="form-group" id="usdtGroup" style="display: none;">
+                    <div class="input-icon crypto-icon">
+                        <label for="usdtInput">USDT кошелёк (TRC20)</label>
+                        <input type="text" id="usdtInput" 
+                            placeholder="Txxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 
+                            pattern="^T[A-Za-z1-9]{33}$">
+                    </div>
+                    <small style="display: block; margin-top: 5px; color: #666;">Адрес должен начинаться с T и содержать 34 символа</small>
+                </div>
+            </div>
+
+            <div class="warning">
+                <strong>Внимание:</strong> Проверьте правильность введённых данных. Администрация не несёт ответственности за ошибки в указанных реквизитах.
+            </div>
+
+            <button type="submit" class="btn">
+                <span class="btn-text">Отправить заявку</span>
+            </button>
+        </form>
+
+        <!-- История транзакций -->
+        <div class="transaction-history" id="transactionHistory">
+            <h3>История транзакций</h3>
+            <div id="transactionsList"></div>
+        </div>
+
+        <!-- Панель администратора -->
+        <div class="admin-panel" id="adminPanel">
+            <h3>Панель администратора</h3>
+            <div id="adminTransactions"></div>
+            <div class="statistics-chart">
+                <canvas id="statsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Кнопки экспорта -->
+        <div class="export-buttons">
+            <button onclick="exportData('csv')" class="btn">Экспорт в CSV</button>
+            <button onclick="exportData('json')" class="btn">Экспорт в JSON</button>
+        </div>
+    </div>
+
+    <!-- Подключаем Firebase и Chart.js -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Конфигурация Firebase (замените на свои данные)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyApiKey1234567890",
+            authDomain: "your-project-id.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project-id.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef1234567890abcdef"
+        };
+
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Основные переменные
+        let currentUser = null;
+        let transactionsUnsubscribe = null;
+        let adminTransactionsUnsubscribe = null;
+        let statsChart = null;
+        const exchangeRate = 1.46; // 1 звезда = 1.46 рубля
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Создаем анимированные частицы фона
+            createParticles();
+            
+            // Инициализация формы
+            initForm();
+            
+            // Аутентификация пользователя
+            try {
+                currentUser = await auth.signInAnonymously();
+                console.log("Анонимный пользователь вошел:", currentUser.user.uid);
+                
+                // Загрузка истории транзакций
+                loadUserTransactions();
+                
+                // Проверка прав администратора
+                checkAdminStatus();
+                
+            } catch (error) {
+                console.error("Ошибка аутентификации:", error);
+            }
+        });
+
+        // Создаем анимированные частицы фона
+        function createParticles() {
+            const bgParticles = document.getElementById('bgParticles');
+            const colors = ['rgba(138, 43, 226, 0.1)', 'rgba(154, 80, 255, 0.1)', 'rgba(178, 130, 255, 0.1)'];
+            
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Случайные параметры
+                const size = Math.random() * 100 + 50;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.background = color;
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = 10 + Math.random() * 20 + 's';
+                
+                bgParticles.appendChild(particle);
+            }
+        }
+
+        // Инициализация формы
+        function initForm() {
+            const switchBtns = document.querySelectorAll('.switch-btn');
+            const sections = {
+                stars: document.getElementById('starsSection'),
+                money: document.getElementById('moneySection')
+            };
+
+            // Переключение между вкладками
+            switchBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    switchBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    const type = btn.dataset.type;
+                    Object.values(sections).forEach(section => 
+                        section.classList.remove('active'));
+                    sections[type].classList.add('active');
+                    
+                    document.querySelector('.warning').style.display = 'block';
+                });
+            });
+
+            // Элементы формы
+            const moneyMethod = document.getElementById('moneyMethod');
+            const phoneGroup = document.getElementById('phoneGroup');
+            const bankGroup = document.getElementById('bankGroup');
+            const usdtGroup = document.getElementById('usdtGroup');
+            const bankSelectGroup = document.getElementById('bankSelectGroup');
+            const phoneInput = document.getElementById('phoneInput');
+            const bankInput = document.getElementById('bankInput');
+            const usdtInput = document.getElementById('usdtInput');
+            const form = document.getElementById('withdrawalForm');
+            const btnText = document.querySelector('.btn-text');
+            const starsAmount = document.getElementById('starsAmount');
+            const moneyAmount = document.getElementById('moneyAmount');
+
+            // Изменение способа выплаты
+            moneyMethod.addEventListener('change', () => {
+                // Скрываем все группы
+                phoneGroup.style.display = 'none';
+                bankGroup.style.display = 'none';
+                usdtGroup.style.display = 'none';
+                bankSelectGroup.style.display = 'none';
+
+                // Показываем нужную группу
+                switch(moneyMethod.value) {
+                    case 'phone':
+                        phoneGroup.style.display = 'block';
+                        bankSelectGroup.style.display = 'block';
+                        break;
+                    
+                    case 'bank':
+                        bankGroup.style.display = 'block';
+                        break;
+                    
+                    case 'usdt':
+                        usdtGroup.style.display = 'block';
+                        break;
+                }
+            });
+
+            // Инициализация при загрузке
+            moneyMethod.dispatchEvent(new Event('change'));
+
+            // Обработка формы
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const btn = this.querySelector('.btn');
+                if (btn.disabled) return;
+                
+                const activeType = document.querySelector('.switch-btn.active').dataset.type;
+                let formData = {
+                    type: activeType,
+                    username: document.getElementById('username').value.trim()
+                };
+
+                // Валидация звёзд
+                if(activeType === 'stars') {
+                    formData.amount = parseFloat(starsAmount.value);
+                    formData.amount_rub = (formData.amount * exchangeRate).toFixed(2);
+                    
+                    if (formData.amount < 50) {
+                        alert('Минимальная сумма вывода - 50 звёзд');
+                        return;
+                    }
+                    if (!formData.username.startsWith('@') || formData.username.length < 5) {
+                        alert('Введите корректный Telegram юзернейм (начинается с @)');
+                        return;
+                    }
+                }
+
+                // Валидация денег
+                if(activeType === 'money') {
+                    formData.amount_rub = parseFloat(moneyAmount.value);
+                    formData.amount = (formData.amount_rub * exchangeRate).toFixed(2);
+                    formData.method = moneyMethod.value;
+                    
+                    if (formData.amount_rub < 100) {
+                        alert('Минимальная сумма вывода - 100 руб.');
+                        return;
+                    }
+                    
+                    switch(moneyMethod.value) {
+                        case 'phone':
+                            formData.phone = phoneInput.value;
+                            formData.bank = document.getElementById('bankSelect').value;
+                            if(!/^\+7\s\(\d{3}\)\s\d{3}-\d{2}-\d{2}$/.test(formData.phone)) {
+                                alert('Пожалуйста, введите корректный номер телефона в формате: +7 (999) 999-99-99');
+                                return;
+                            }
+                            break;
+                        
+                        case 'bank':
+                            formData.card = bankInput.value.replace(/\s/g, '');
+                            if(!/^\d{16}$/.test(formData.card)) {
+                                alert('Пожалуйста, введите корректный номер карты (16 цифр)');
+                                return;
+                            }
+                            break;
+                        
+                        case 'usdt':
+                            formData.usdt = usdtInput.value.trim();
+                            if(!/^T[A-Za-z1-9]{33}$/.test(formData.usdt)) {
+                                alert('Пожалуйста, введите корректный USDT TRC20 адрес (начинается с T, 34 символа)');
+                                return;
+                            }
+                            break;
+                    }
+                }
+
+                // Блокировка кнопки
+                btn.disabled = true;
+                
+                // Анимация успешной отправки
+                btnText.textContent = 'Обработка...';
+                btn.style.backgroundColor = 'var(--warning-color)';
+                
+                try {
+                    // Сохраняем транзакцию в Firestore
+                    const transactionRef = await db.collection('transactions').add({
+                        ...formData,
+                        userId: currentUser.user.uid,
+                        status: 'pending',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        comments: []
+                    });
+
+                    console.log('Транзакция сохранена с ID:', transactionRef.id);
+
+                    // Обновляем историю пользователя
+                    await db.collection('users').doc(currentUser.user.uid).update({
+                        transactions: firebase.firestore.FieldValue.arrayUnion(transactionRef.id)
+                    });
+
+                    // Имитация отправки на сервер
+                    setTimeout(() => {
+                        btnText.textContent = '✓ Успешно!';
+                        btn.style.backgroundColor = 'var(--success-color)';
+                        btn.classList.add('success-animation');
+                        
+                        setTimeout(() => {
+                            btnText.textContent = 'Отправить заявку';
+                            btn.style.backgroundColor = 'var(--primary-color)';
+                            btn.classList.remove('success-animation');
+                            btn.disabled = false;
+                            form.reset();
+                            
+                            // Сброс к первому варианту
+                            switchBtns[0].click();
+                            moneyMethod.value = 'phone';
+                            moneyMethod.dispatchEvent(new Event('change'));
+                            starsAmount.value = 50;
+                            moneyAmount.value = 100;
+                            
+                            // Обновляем список транзакций
+                            loadUserTransactions();
+                        }, 2000);
+                    }, 1500);
+
+                } catch (error) {
+                    console.error('Ошибка при сохранении транзакции:', error);
+                    alert('Произошла ошибка при отправке заявки');
+                    btnText.textContent = 'Ошибка!';
+                    btn.style.backgroundColor = 'var(--danger-color)';
+                    
+                    setTimeout(() => {
+                        btnText.textContent = 'Отправить заявку';
+                        btn.style.backgroundColor = 'var(--primary-color)';
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            });
+
+            // Маска для номера телефона
+            phoneInput.addEventListener('input', function(e) {
+                let value = this.value.replace(/\D/g, '');
+                if(value.length > 0) value = '+7' + value.substring(1);
+                value = value.replace(/(\+\d)(\d{3})(\d{3})(\d{2})(\d{2})/, '$1 ($2) $3-$4-$5');
+                this.value = value.substring(0, 18);
+            });
+
+            // Маска для номера карты
+            bankInput.addEventListener('input', function(e) {
+                let value = this.value.replace(/\D/g, '');
+                value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+                this.value = value.substring(0, 19);
+            });
+
+            // Валидация в реальном времени
+            usdtInput.addEventListener('input', function() {
+                const isValid = /^T[A-Za-z1-9]{0,33}$/.test(this.value);
+                this.style.borderColor = isValid ? '#ddd' : 'var(--danger-color)';
+            });
+
+            bankInput.addEventListener('input', function() {
+                const isValid = /^\d{0,4}\s?\d{0,4}\s?\d{0,4}\s?\d{0,4}$/.test(this.value);
+                this.style.borderColor = isValid ? '#ddd' : 'var(--danger-color)';
+            });
+
+            phoneInput.addEventListener('input', function() {
+                const isValid = /^\+7\s?\(?\d{0,3}\)?\s?\d{0,3}-?\d{0,2}-?\d{0,2}$/.test(this.value);
+                this.style.borderColor = isValid ? '#ddd' : 'var(--danger-color)';
+            });
+        }
+
+        // Загрузка транзакций пользователя
+        async function loadUserTransactions() {
+            if (!currentUser) return;
+            
+            try {
+                // Подписываемся на обновления транзакций пользователя
+                transactionsUnsubscribe = db.collection('transactions')
+                    .where('userId', '==', currentUser.user.uid)
+                    .orderBy('timestamp', 'desc')
+                    .limit(10)
+                    .onSnapshot(snapshot => {
+                        const transactionsList = document.getElementById('transactionsList');
+                        transactionsList.innerHTML = '';
+                        
+                        if (snapshot.empty) {
+                            transactionsList.innerHTML = '<p>У вас пока нет транзакций</p>';
+                            return;
+                        }
+                        
+                        snapshot.forEach(doc => {
+                            const transaction = doc.data();
+                            const transactionElement = createTransactionElement(doc.id, transaction);
+                            transactionsList.appendChild(transactionElement);
+                        });
+                    });
+                    
+            } catch (error) {
+                console.error('Ошибка загрузки транзакций:', error);
+            }
+        }
+
+        // Создание элемента транзакции
+        function createTransactionElement(id, transaction) {
+            const element = document.createElement('div');
+            element.className = 'transaction-item';
+            element.dataset.id = id;
+            
+            // Форматирование даты
+            const date = transaction.timestamp?.toDate() || new Date();
+            const formattedDate = date.toLocaleString('ru-RU');
+            
+            // Определение типа транзакции
+            const typeText = transaction.type === 'stars' ? 'Звёзды' : 'Деньги';
+            const amountText = transaction.type === 'stars' 
+                ? `${transaction.amount} звёзд` 
+                : `${transaction.amount_rub} руб.`;
+            
+            // Статус транзакции
+            let statusText = '';
+            switch(transaction.status) {
+                case 'approved': statusText = 'Одобрена'; break;
+                case 'rejected': statusText = 'Отклонена'; break;
+                case 'processing': statusText = 'В обработке'; break;
+                default: statusText = 'Ожидает'; break;
+            }
+            
+            element.innerHTML = `
+                <div>
+                    <strong>${typeText}</strong>
+                    <div>Сумма: ${amountText}</div>
+                    <small>${formattedDate}</small>
+                    <button class="toggle-comments">Показать комментарии</button>
+                </div>
+                <div class="transaction-status status-${transaction.status}">${statusText}</div>
+                <div class="comment-section">
+                    ${transaction.comments?.map(comment => `
+                        <div class="comment ${comment.isAdmin ? 'comment-admin' : 'comment-user'}">
+                            <strong>${comment.isAdmin ? 'Администратор' : 'Вы'}:</strong>
+                            <p>${comment.text}</p>
+                            <small>${comment.timestamp?.toDate().toLocaleString() || ''}</small>
+                        </div>
+                    `).join('') || '<p>Нет комментариев</p>'}
+                </div>
+            `;
+            
+            // Обработчик для показа/скрытия комментариев
+            const toggleBtn = element.querySelector('.toggle-comments');
+            const commentSection = element.querySelector('.comment-section');
+            
+            toggleBtn.addEventListener('click', () => {
+                if (commentSection.style.display === 'block') {
+                    commentSection.style.display = 'none';
+                    toggleBtn.textContent = 'Показать комментарии';
+                } else {
+                    commentSection.style.display = 'block';
+                    toggleBtn.textContent = 'Скрыть комментарии';
+                }
+            });
+            
+            return element;
+        }
+
+        // Проверка прав администратора
+        async function checkAdminStatus() {
+            if (!currentUser) return;
+            
+            try {
+                const adminDoc = await db.collection('admins').doc(currentUser.user.uid).get();
+                if (adminDoc.exists) {
+                    document.getElementById('adminPanel').style.display = 'block';
+                    loadAdminTransactions();
+                    initStatisticsChart();
+                }
+            } catch (error) {
+                console.error('Ошибка проверки прав администратора:', error);
+            }
+        }
+
+        // Загрузка транзакций для администратора
+        function loadAdminTransactions() {
+            adminTransactionsUnsubscribe = db.collection('transactions')
+                .orderBy('timestamp', 'desc')
+                .limit(20)
+                .onSnapshot(snapshot => {
+                    const adminTransactions = document.getElementById('adminTransactions');
+                    adminTransactions.innerHTML = '';
+                    
+                    if (snapshot.empty) {
+                        adminTransactions.innerHTML = '<p>Нет транзакций для обработки</p>';
+                        return;
+                    }
+                    
+                    snapshot.forEach(doc => {
+                        const transaction = doc.data();
+                        const transactionElement = createAdminTransactionElement(doc.id, transaction);
+                        adminTransactions.appendChild(transactionElement);
+                    });
+                });
+        }
+
+        // Создание элемента транзакции для администратора
+        function createAdminTransactionElement(id, transaction) {
+            const element = document.createElement('div');
+            element.className = 'admin-transaction-item';
+            element.dataset.id = id;
+            
+            // Форматирование даты
+            const date = transaction.timestamp?.toDate() || new Date();
+            const formattedDate = date.toLocaleString('ru-RU');
+            
+            // Определение типа транзакции
+            const typeText = transaction.type === 'stars' ? 'Звёзды' : 'Деньги';
+            const amountText = transaction.type === 'stars' 
+                ? `${transaction.amount} звёзд` 
+                : `${transaction.amount_rub} руб.`;
+            
+            // Детали в зависимости от типа
+            let details = '';
+            if (transaction.type === 'money') {
+                if (transaction.method === 'phone') {
+                    details = `Телефон: ${transaction.phone}, Банк: ${getBankName(transaction.bank)}`;
+                } else if (transaction.method === 'bank') {
+                    details = `Карта: **** **** **** ${transaction.card.slice(-4)}`;
+                } else if (transaction.method === 'usdt') {
+                    details = `USDT: ${transaction.usdt.slice(0, 6)}...${transaction.usdt.slice(-4)}`;
+                }
+            } else {
+                details = `Telegram: ${transaction.username}`;
+            }
+            
+            element.innerHTML = `
+                <div>
+                    <strong>Транзакция #${id.slice(0, 6)}</strong>
+                    <div>Тип: ${typeText}, Сумма: ${amountText}</div>
+                    <div>${details}</div>
+                    <small>${formattedDate}</small>
+                    <div class="admin-controls">
+                        <button class="btn-approve" onclick="updateTransactionStatus('${id}', 'approved')">Одобрить</button>
+                        <button class="btn-reject" onclick="updateTransactionStatus('${id}', 'rejected')">Отклонить</button>
+                        <button class="btn-comment" onclick="addComment('${id}')">Комментарий</button>
+                    </div>
+                    <div class="comment-section">
+                        ${transaction.comments?.map(comment => `
+                            <div class="comment ${comment.isAdmin ? 'comment-admin' : 'comment-user'}">
+                                <strong>${comment.isAdmin ? 'Администратор' : 'Пользователь'}:</strong>
+                                <p>${comment.text}</p>
+                                <small>${comment.timestamp?.toDate().toLocaleString() || ''}</small>
+                            </div>
+                        `).join('') || '<p>Нет комментариев</p>'}
+                    </div>
+                </div>
+            `;
+            
+            return element;
+        }
+
+        // Получение названия банка
+        function getBankName(bankCode) {
+            const banks = {
+                'sber': 'Сбербанк',
+                'tinkoff': 'Тинькофф',
+                'vtb': 'ВТБ',
+                'alfa': 'Альфа-Банк',
+                'gazprom': 'Газпромбанк',
+                'other': 'Другой банк'
+            };
+            return banks[bankCode] || bankCode;
+        }
+
+        // Обновление статуса транзакции
+        async function updateTransactionStatus(id, status) {
+            if (!confirm(`Вы уверены, что хотите ${status === 'approved' ? 'одобрить' : 'отклонить'} эту транзакцию?`)) {
+                return;
+            }
+            
+            try {
+                await db.collection('transactions').doc(id).update({
+                    status: status,
+                    processedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Обновление статистики
+                updateStatistics(id, status);
+                
+                alert(`Транзакция успешно ${status === 'approved' ? 'одобрена' : 'отклонена'}`);
+            } catch (error) {
+                console.error('Ошибка обновления статуса:', error);
+                alert('Произошла ошибка при обновлении статуса');
+            }
+        }
+
+        // Добавление комментария
+        async function addComment(transactionId) {
+            const commentText = prompt('Введите комментарий:');
+            if (!commentText) return;
+            
+            try {
+                const transactionRef = db.collection('transactions').doc(transactionId);
+                await transactionRef.update({
+                    comments: firebase.firestore.FieldValue.arrayUnion({
+                        text: commentText,
+                        isAdmin: true,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    })
+                });
+                
+                alert('Комментарий успешно добавлен');
+            } catch (error) {
+                console.error('Ошибка добавления комментария:', error);
+                alert('Произошла ошибка при добавлении комментария');
+            }
+        }
+
+        // Инициализация графика статистики
+        async function initStatisticsChart() {
+            try {
+                const statsDoc = await db.collection('stats').doc('main').get();
+                const statsData = statsDoc.exists ? statsDoc.data() : {
+                    totalStars: 0,
+                    totalMoney: 0,
+                    approvedStars: 0,
+                    approvedMoney: 0
+                };
+                
+                const ctx = document.getElementById('statsChart').getContext('2d');
+                statsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Всего звёзд', 'Всего денег', 'Одобрено звёзд', 'Одобрено денег'],
+                        datasets: [{
+                            label: 'Статистика',
+                            data: [
+                                statsData.totalStars,
+                                statsData.totalMoney,
+                                statsData.approvedStars,
+                                statsData.approvedMoney
+                            ],
+                            backgroundColor: [
+                                'rgba(138, 43, 226, 0.7)',
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(138, 43, 226, 0.4)',
+                                'rgba(75, 192, 192, 0.4)'
+                            ],
+                            borderColor: [
+                                'rgba(138, 43, 226, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(138, 43, 226, 1)',
+                                'rgba(75, 192, 192, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки статистики:', error);
+            }
+        }
+
+        // Обновление статистики
+        async function updateStatistics(transactionId, status) {
+            try {
+                const transactionDoc = await db.collection('transactions').doc(transactionId).get();
+                const transaction = transactionDoc.data();
+                
+                const statsRef = db.collection('stats').doc('main');
+                const updateData = {};
+                
+                if (transaction.type === 'stars') {
+                    updateData.totalStars = firebase.firestore.FieldValue.increment(parseFloat(transaction.amount));
+                    if (status === 'approved') {
+                        updateData.approvedStars = firebase.firestore.FieldValue.increment(parseFloat(transaction.amount));
+                    }
+                } else {
+                    updateData.totalMoney = firebase.firestore.FieldValue.increment(parseFloat(transaction.amount_rub));
+                    if (status === 'approved') {
+                        updateData.approvedMoney = firebase.firestore.FieldValue.increment(parseFloat(transaction.amount_rub));
+                    }
+                }
+                
+                await statsRef.set(updateData, { merge: true });
+                
+                // Обновляем график
+                if (statsChart) {
+                    const statsDoc = await statsRef.get();
+                    const statsData = statsDoc.data();
+                    
+                    statsChart.data.datasets[0].data = [
+                        statsData.totalStars,
+                        statsData.totalMoney,
+                        statsData.approvedStars,
+                        statsData.approvedMoney
+                    ];
+                    statsChart.update();
+                }
+            } catch (error) {
+                console.error('Ошибка обновления статистики:', error);
+            }
+        }
+
+        // Экспорт данных
+        async function exportData(format) {
+            try {
+                const snapshot = await db.collection('transactions')
+                    .where('userId', '==', currentUser.user.uid)
+                    .get();
+                
+                const data = snapshot.docs.map(doc => {
+                    const transaction = doc.data();
+                    return {
+                        id: doc.id,
+                        type: transaction.type === 'stars' ? 'Звёзды' : 'Деньги',
+                        amount: transaction.type === 'stars' ? transaction.amount : transaction.amount_rub,
+                        currency: transaction.type === 'stars' ? 'звёзд' : 'руб.',
+                        status: getStatusText(transaction.status),
+                        date: transaction.timestamp?.toDate().toLocaleString() || 'Неизвестно',
+                        details: transaction.type === 'stars' 
+                            ? `Telegram: ${transaction.username}`
+                            : getTransactionDetails(transaction)
+                    };
+                });
+                
+                if (format === 'csv') {
+                    const csvContent = convertToCSV(data);
+                    downloadFile(csvContent, 'transactions.csv', 'text/csv');
+                } else {
+                    const jsonContent = JSON.stringify(data, null, 2);
+                    downloadFile(jsonContent, 'transactions.json', 'application/json');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка экспорта данных:', error);
+                alert('Произошла ошибка при экспорте данных');
+            }
+        }
+
+        // Получение текста статуса
+        function getStatusText(status) {
+            switch(status) {
+                case 'approved': return 'Одобрена';
+                case 'rejected': return 'Отклонена';
+                case 'processing': return 'В обработке';
+                default: return 'Ожидает';
+            }
+        }
+
+        // Получение деталей транзакции
+        function getTransactionDetails(transaction) {
+            if (transaction.type !== 'money') return '';
+            
+            switch(transaction.method) {
+                case 'phone': 
+                    return `Телефон: ${transaction.phone}, Банк: ${getBankName(transaction.bank)}`;
+                case 'bank':
+                    return `Карта: **** **** **** ${transaction.card?.slice(-4) || '****'}`;
+                case 'usdt':
+                    return `USDT: ${transaction.usdt?.slice(0, 6)}...${transaction.usdt?.slice(-4) || '****'}`;
+                default:
+                    return '';
+            }
+        }
+
+        // Конвертация в CSV
+        function convertToCSV(data) {
+            const headers = ['ID', 'Тип', 'Сумма', 'Валюта', 'Статус', 'Дата', 'Детали'];
+            const rows = data.map(item => [
+                item.id,
+                item.type,
+                item.amount,
+                item.currency,
+                item.status,
+                item.date,
+                item.details
+            ]);
+            
+            let csv = headers.join(';') + '\r\n';
+            rows.forEach(row => {
+                csv += row.map(field => `"${field}"`).join(';') + '\r\n';
+            });
+            
+            return csv;
+        }
+
+        // Скачивание файла
+        function downloadFile(content, fileName, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+
+        // Глобальные функции для обработчиков событий
+        window.updateTransactionStatus = updateTransactionStatus;
+        window.addComment = addComment;
+        window.exportData = exportData;
+    </script>
+</body>
+</html>
