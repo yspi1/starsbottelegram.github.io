@@ -99,18 +99,47 @@
             justify-content: space-between;
             align-items: center;
             background: rgba(0, 243, 255, 0.05);
+            user-select: none;
         }
 
+        /* Основное решение с анимацией */
         .ticket-body {
             padding: 0 15px;
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
+            transition: max-height 0.3s ease-out, padding 0.3s ease;
         }
 
-        .ticket-expanded .ticket-body {
-            max-height: 1000px;
+        .ticket-card.expanded .ticket-body {
+            max-height: var(--dynamic-height, 1000px);
             padding: 15px;
+        }
+
+        /* Альтернативное решение 1: без анимации */
+        .ticket-body.simple {
+            padding: 15px !important;
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        /* Альтернативное решение 2: с плавной анимацией */
+        .ticket-body.smooth {
+            max-height: 0;
+            padding: 0 15px;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ticket-card.expanded .ticket-body.smooth {
+            max-height: 5000px; /* Достаточно большое значение */
+        }
+
+        .toggle-indicator {
+            margin-left: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .ticket-card.expanded .toggle-indicator {
+            transform: rotate(180deg);
         }
 
         .message {
@@ -206,10 +235,25 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Кнопка переключения режимов анимации */
+        .animation-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            padding: 8px 15px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="space-background"></div>
+
+    <!-- Кнопка переключения режимов анимации -->
+    <div class="animation-toggle" onclick="toggleAnimationMode()">Переключить режим анимации</div>
 
     <div id="loadingScreen" class="container" style="color: white; text-align: center; padding-top: 100px;">
         <h2>🛰 Инициализация системы...</h2>
@@ -275,6 +319,9 @@
             isAdmin: false 
         };
 
+        // Режим анимации: 'default', 'simple', 'smooth'
+        let animationMode = 'default';
+
         // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
@@ -300,6 +347,37 @@
                 toggleLoader(false);
             }
         });
+
+        // Переключение режимов анимации
+        function toggleAnimationMode() {
+            const modes = ['default', 'simple', 'smooth'];
+            const currentIndex = modes.indexOf(animationMode);
+            animationMode = modes[(currentIndex + 1) % modes.length];
+            
+            // Обновляем все тикеты
+            document.querySelectorAll('.ticket-body').forEach(body => {
+                body.className = 'ticket-body ' + animationMode;
+            });
+            
+            showNotification(`Режим анимации: ${getAnimationModeName(animationMode)}`);
+            if (animationMode === 'default') {
+                // Для default режима нужно пересчитать высоту
+                document.querySelectorAll('.ticket-card.expanded').forEach(card => {
+                    const body = card.querySelector('.ticket-body');
+                    const height = body.scrollHeight;
+                    body.style.setProperty('--dynamic-height', `${height}px`);
+                });
+            }
+        }
+
+        function getAnimationModeName(mode) {
+            const names = {
+                'default': 'Стандартный',
+                'simple': 'Без анимации',
+                'smooth': 'Плавный'
+            };
+            return names[mode] || mode;
+        }
 
         // Инициализация пользователя
         async function initUser() {
@@ -351,6 +429,17 @@
             
             // Глобальные обработчики
             document.addEventListener('click', handleActions);
+            
+            // Обработка клавиатуры для доступности
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    const focused = document.activeElement.closest('.ticket-header');
+                    if (focused) {
+                        e.preventDefault();
+                        toggleTicket(focused);
+                    }
+                }
+            });
         }
 
         // Обработка отправки формы
@@ -407,9 +496,20 @@
                     const tickets = await loadUserTickets();
                     renderUserTickets(tickets);
                 }
+                // Инициализация тикетов после рендеринга
+                setTimeout(initTickets, 50);
             } catch (error) {
                 console.error('Ошибка рендеринга:', error);
                 showNotification('❌ Ошибка загрузки данных', 'error');
+            }
+        }
+
+        // Инициализация тикетов
+        function initTickets() {
+            // Автоматически разворачиваем первый тикет
+            const firstTicket = document.querySelector('.ticket-card');
+            if (firstTicket && !document.querySelector('.ticket-card.expanded')) {
+                toggleTicket(firstTicket);
             }
         }
 
@@ -479,15 +579,16 @@
         // Создание элемента тикета для пользователя
         function createUserTicketElement(ticket) {
             return `
-                <div class="ticket-card ${ticket.status}" onclick="toggleTicket(this)">
+                <div class="ticket-card ${ticket.status}" data-id="${ticket.id}">
                     <div class="ticket-header">
                         <div style="display: flex; align-items: center;">
                             <div class="status-indicator ${ticket.status}"></div>
                             <h3 style="margin: 0">${ticket.subject}</h3>
+                            <span class="toggle-indicator">▼</span>
                         </div>
                         <div class="priority-tag">${getPriorityLabel(ticket.priority)}</div>
                     </div>
-                    <div class="ticket-body">
+                    <div class="ticket-body ${animationMode}">
                         <div class="messages">${renderMessages(ticket)}</div>
                         ${ticket.status === 'open' ? createReplyForm(ticket.id, false) : ''}
                     </div>
@@ -498,7 +599,7 @@
         // Создание элемента тикета для администратора
         function createAdminTicketElement(ticket) {
             return `
-                <div class="ticket-card ${ticket.status}" onclick="toggleTicket(this)">
+                <div class="ticket-card ${ticket.status}" data-id="${ticket.id}">
                     <div class="ticket-header">
                         <div style="display: flex; align-items: center; gap: 15px;">
                             <div class="status-indicator ${ticket.status}"></div>
@@ -506,13 +607,14 @@
                                 <h3 style="margin: 0">${ticket.subject}</h3>
                                 <small>${ticket.username} • ${formatDate(ticket.createdAt)}</small>
                             </div>
+                            <span class="toggle-indicator">▼</span>
                         </div>
                         <div style="display: flex; gap: 10px;">
                             <div class="priority-tag">${getPriorityLabel(ticket.priority)}</div>
                             ${createAdminControls(ticket)}
                         </div>
                     </div>
-                    <div class="ticket-body">
+                    <div class="ticket-body ${animationMode}">
                         <div class="messages">${renderMessages(ticket)}</div>
                         ${createReplyForm(ticket.id, true, ticket.status)}
                     </div>
@@ -533,14 +635,23 @@
                 'close-btn': closeTicket,
                 'reopen-btn': reopenTicket,
                 'send-reply': (id) => sendReply(id, true),
-                'send-user-reply': (id) => sendReply(id, false)
+                'send-user-reply': (id) => sendReply(id, false),
+                'ticket-header': (el) => toggleTicket(el)
             };
 
-            Object.entries(actions).forEach(([cls, action]) => {
+            // Проверяем клик по заголовку тикета
+            if (e.target.closest('.ticket-header')) {
+                actions['ticket-header'](e.target.closest('.ticket-header'));
+                return;
+            }
+
+            // Проверяем другие действия
+            for (const [cls, action] of Object.entries(actions)) {
                 if (e.target.classList.contains(cls)) {
                     action(e.target.dataset.id);
+                    return;
                 }
-            });
+            }
         }
 
         // Отправка ответа
@@ -600,6 +711,21 @@
             } catch (error) {
                 console.error('Ошибка обновления статуса:', error);
                 showNotification('❌ Ошибка обновления', 'error');
+            }
+        }
+
+        // Переключение состояния тикета
+        function toggleTicket(element) {
+            const ticketCard = element.closest('.ticket-card');
+            const isExpanding = !ticketCard.classList.contains('expanded');
+            
+            ticketCard.classList.toggle('expanded');
+            
+            if (isExpanding && animationMode === 'default') {
+                // Для default режима рассчитываем точную высоту
+                const body = ticketCard.querySelector('.ticket-body');
+                const height = body.scrollHeight;
+                body.style.setProperty('--dynamic-height', `${height}px`);
             }
         }
 
@@ -677,11 +803,6 @@
             document.getElementById('loadingScreen').classList.toggle('hidden', !show);
             document.getElementById('appContent').classList.toggle('hidden', show);
         }
-
-        // Глобальные функции
-        window.toggleTicket = (element) => {
-            element.closest('.ticket-card').classList.toggle('ticket-expanded');
-        };
     </script>
 </body>
 </html>
