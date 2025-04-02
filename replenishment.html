@@ -5,6 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Пополнение баланса</title>
     <style>
+         .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.3s ease;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            background: #9932CC;
+        }
+
+        .back-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
         :root {
             --primary-color: #8A2BE2;
             --secondary-color: #BA55D3;
@@ -302,6 +330,13 @@
     </style>
 </head>
 <body>
+     <a href="javascript:history.back()" class="back-btn">
+        <svg viewBox="0 0 24 24">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+        Назад
+    </a>
+    
     <div class="container">
         <div class="card">
             <h1>Пополнение баланса</h1>
