@@ -1064,7 +1064,7 @@
             
             // Обновляем данные в базе
             const updates = {
-                balance: state.balance + winAmount,
+                balance: state.balance + winAmount, // Добавляем только сумму выигрыша
                 wins: state.wins + 1,
                 maxWin: Math.max(state.maxWin, winAmount),
                 lastPlayed: firebase.database.ServerValue.TIMESTAMP
@@ -1072,7 +1072,7 @@
             
             database.ref('users/' + state.userId).update(updates)
                 .then(() => {
-                    // Только после успешного обновления базы обновляем локальное состояние
+                    // Обновляем локальное состояние
                     state.balance += winAmount;
                     state.wins += 1;
                     if (winAmount > state.maxWin) {
