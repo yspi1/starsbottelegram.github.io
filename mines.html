@@ -1053,7 +1053,7 @@
             }
         }
 
-     // Забрать выигрыш
+ // Забрать выигрыш
 function cashOut() {
     if (!state.gameActive) return;
     
@@ -1062,22 +1062,32 @@ function cashOut() {
     // Сохраняем результат игры
     saveGameHistory(true, winAmount);
     
+    // Блокируем кнопку, чтобы предотвратить повторное нажатие
+    elements.cashoutBtn.disabled = true;
+    
     // Получаем текущий баланс из базы данных
-    database.ref('users/' + state.userId + '/balance').once('value')
+    database.ref('users/' + state.userId).once('value')
         .then((snapshot) => {
-            const currentBalance = snapshot.val() || 0;
+            const userData = snapshot.val();
+            const currentBalance = userData.balance || 0;
+            const currentWins = userData.wins || 0;
+            const currentMaxWin = userData.maxWin || 0;
+            
+            // Рассчитываем новые значения
             const newBalance = currentBalance + winAmount;
+            const newWins = currentWins + 1;
+            const newMaxWin = Math.max(currentMaxWin, winAmount);
             
             // Обновляем данные в базе
             return database.ref('users/' + state.userId).update({
                 balance: newBalance,
-                wins: state.wins + 1,
-                maxWin: Math.max(state.maxWin, winAmount),
+                wins: newWins,
+                maxWin: newMaxWin,
                 lastPlayed: firebase.database.ServerValue.TIMESTAMP
             });
         })
         .then(() => {
-            // Обновляем локальное состояние
+            // Обновляем локальное состояние ОДИН РАЗ
             state.balance += winAmount;
             state.wins += 1;
             if (winAmount > state.maxWin) {
@@ -1091,9 +1101,10 @@ function cashOut() {
         .catch(error => {
             console.error("Ошибка при сохранении выигрыша:", error);
             showNotification('Ошибка при сохранении выигрыша', 'error');
+            // Разблокируем кнопку при ошибке
+            elements.cashoutBtn.disabled = false;
         });
 }
-
         // Завершение игры
         function endGame(isWin) {
             state.gameActive = false;
