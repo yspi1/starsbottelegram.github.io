@@ -1053,41 +1053,46 @@
             }
         }
 
-        // Забрать выигрыш
-        function cashOut() {
-            if (!state.gameActive) return;
-            
-            const winAmount = Math.floor(state.bet * state.multiplier);
-            
-            // Сохраняем результат игры
-            saveGameHistory(true, winAmount);
+     // Забрать выигрыш
+function cashOut() {
+    if (!state.gameActive) return;
+    
+    const winAmount = Math.floor(state.bet * state.multiplier);
+    
+    // Сохраняем результат игры
+    saveGameHistory(true, winAmount);
+    
+    // Получаем текущий баланс из базы данных
+    database.ref('users/' + state.userId + '/balance').once('value')
+        .then((snapshot) => {
+            const currentBalance = snapshot.val() || 0;
+            const newBalance = currentBalance + winAmount;
             
             // Обновляем данные в базе
-            const updates = {
-                balance: state.balance + winAmount, // Добавляем только сумму выигрыша
+            return database.ref('users/' + state.userId).update({
+                balance: newBalance,
                 wins: state.wins + 1,
                 maxWin: Math.max(state.maxWin, winAmount),
                 lastPlayed: firebase.database.ServerValue.TIMESTAMP
-            };
+            });
+        })
+        .then(() => {
+            // Обновляем локальное состояние
+            state.balance += winAmount;
+            state.wins += 1;
+            if (winAmount > state.maxWin) {
+                state.maxWin = winAmount;
+            }
             
-            database.ref('users/' + state.userId).update(updates)
-                .then(() => {
-                    // Обновляем локальное состояние
-                    state.balance += winAmount;
-                    state.wins += 1;
-                    if (winAmount > state.maxWin) {
-                        state.maxWin = winAmount;
-                    }
-                    
-                    // Завершаем игру
-                    endGame(false);
-                    showNotification(`Вы забрали ⭐${winAmount}!`, 'success');
-                })
-                .catch(error => {
-                    console.error("Ошибка при сохранении выигрыша:", error);
-                    showNotification('Ошибка при сохранении выигрыша', 'error');
-                });
-        }
+            // Завершаем игру
+            endGame(false);
+            showNotification(`Вы забрали ⭐${winAmount}!`, 'success');
+        })
+        .catch(error => {
+            console.error("Ошибка при сохранении выигрыша:", error);
+            showNotification('Ошибка при сохранении выигрыша', 'error');
+        });
+}
 
         // Завершение игры
         function endGame(isWin) {
