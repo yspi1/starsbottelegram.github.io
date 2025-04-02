@@ -819,10 +819,12 @@
                     state.maxWin = userData.maxWin || 0;
                     state.wins = userData.wins || 0;
                     
+                    // Обновляем интерфейс
+                    updateUI();
+                    
                     // Показываем игровой интерфейс
                     elements.loginScreen.style.display = 'none';
                     elements.gameContainer.style.display = 'block';
-                    updateUI();
                 } else {
                     // Создаем нового пользователя
                     const initialData = {
@@ -841,10 +843,12 @@
                             state.maxWin = initialData.maxWin;
                             state.wins = initialData.wins;
                             
+                            // Обновляем интерфейс
+                            updateUI();
+                            
                             // Показываем игровой интерфейс
                             elements.loginScreen.style.display = 'none';
                             elements.gameContainer.style.display = 'block';
-                            updateUI();
                         })
                         .catch(error => {
                             console.error("Ошибка при создании пользователя:", error);
@@ -869,6 +873,10 @@
             };
             
             database.ref('users/' + state.userId).update(updates)
+                .then(() => {
+                    // После сохранения обновляем интерфейс
+                    updateUI();
+                })
                 .catch(error => {
                     console.error("Ошибка при сохранении данных:", error);
                 });
@@ -1182,7 +1190,7 @@
         }
 
         // Обновление интерфейса
-        function updateBalance() {
+        function updateUI() {
             elements.balance.textContent = state.balance;
             elements.maxWin.textContent = state.maxWin;
             elements.currentBet.textContent = state.bet;
