@@ -2,738 +2,844 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Космическая поддержка</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Пополнение баланса</title>
     <style>
         :root {
-            --space-dark: #0B0D21;
-            --neon-blue: #00F3FF;
-            --star-yellow: #FFE81F;
-            --planet-purple: #6C63FF;
-            --danger-red: #FF4D4D;
-            --success-green: #00CC88;
-            --primary-color: #6a4cff;
-            --menu-bg: rgba(15, 15, 26, 0.95);
+            --primary-color: #8A2BE2;
+            --secondary-color: #BA55D3;
+            --danger-color: #ff4444;
+            --success-color: #4CAF50;
+            --warning-color: #FFA500;
+            --text-color: #333;
+            --dark-bg: #1a0633;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
-            background: var(--space-dark);
-            color: white;
             min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .space-background {
-            position: fixed;
-            width: 100vw;
-            height: 100vh;
-            background: 
-                radial-gradient(circle at 20% 80%, var(--planet-purple), transparent 30%),
-                radial-gradient(circle at 80% 20%, var(--neon-blue), transparent 30%),
-                linear-gradient(to bottom, #000000, var(--space-dark));
-            z-index: -1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--primary-color);
+            color: var(--text-color);
+            line-height: 1.5;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 500px;
             padding: 20px;
-            position: relative;
-        }
-
-        /* Кнопка "Назад" как в index.html */
-        .menu-icon {
-            position: fixed;
-            top: 16px;
-            left: 16px;
-            cursor: pointer;
-            font-size: 24px;
-            z-index: 100;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(30, 30, 46, 0.8);
-            border-radius: 50%;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(106, 76, 255, 0.3);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            color: var(--neon-blue);
-            transition: transform 0.2s;
-        }
-
-        .menu-icon:hover {
-            transform: scale(1.1);
         }
 
         .card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 24px;
             margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+        }
+
+        h1, h2, h3 {
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        h1 { font-size: 24px; margin-bottom: 20px; }
+        h2 { font-size: 20px; margin: 20px 0 15px; }
+        h3 { font-size: 18px; margin: 15px 0 10px; }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
+        }
+
+        .amount-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .amount-btn {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .amount-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .method-tabs {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            border: 1px solid #ddd;
+        }
+
+        .method-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: white;
+            cursor: pointer;
+        }
+
+        .method-tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .payment-details {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .payment-details.active {
+            display: block;
+        }
+
+        .payment-comment {
+            background: rgba(138, 43, 226, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-weight: bold;
+            text-align: center;
+            font-size: 16px;
+            border: 1px dashed var(--primary-color);
+        }
+
+        .comment-hint {
+            font-size: 13px;
+            color: #666;
+            margin-top: 4px;
+            text-align: center;
         }
 
         .btn {
-            padding: 12px 25px;
-            border-radius: 8px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--neon-blue);
-            color: var(--space-dark);
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 243, 255, 0.3);
-        }
-
-        .btn-danger {
-            background: var(--danger-red);
+            width: 100%;
+            padding: 14px;
+            background: var(--primary-color);
             color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
 
         .btn-success {
-            background: var(--success-green);
-            color: white;
+            background: var(--success-color);
         }
 
-        .ticket-card {
-            margin-bottom: 15px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            overflow: hidden;
-            transition: all 0.3s ease;
+        .btn-danger {
+            background: var(--danger-color);
         }
 
-        .ticket-header {
-            padding: 15px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 243, 255, 0.05);
-            user-select: none;
-        }
-
-        .ticket-body {
-            padding: 0 15px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-        }
-
-        .ticket-expanded .ticket-body {
-            max-height: 1000px;
-            padding: 15px;
-        }
-
-        .message {
-            margin: 15px 0;
-            padding: 15px;
-            border-radius: 10px;
-            position: relative;
-            background: rgba(255,255,255,0.1);
-        }
-
-        .admin-message {
-            background: rgba(108, 99, 255, 0.15);
-            border-left: 3px solid var(--planet-purple);
-        }
-
-        .user-message {
-            background: rgba(0, 243, 255, 0.15);
-            border-left: 3px solid var(--neon-blue);
-        }
-
-        .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 10px;
-        }
-
-        .open { background: var(--success-green); }
-        .closed { background: var(--danger-red); }
-
-        .priority-tag {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            background: rgba(255, 232, 31, 0.15);
-            color: var(--star-yellow);
-        }
-
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 15px 25px;
+        .transaction-item {
+            background: white;
             border-radius: 8px;
-            background: rgba(255,255,255,0.9);
-            color: var(--space-dark);
-            backdrop-filter: blur(5px);
-            transform: translateY(100%);
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-
-        .notification.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        form {
-            display: grid;
-            gap: 15px;
-        }
-
-        input, textarea, select {
-            width: 100%;
             padding: 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.05);
+            margin-bottom: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .transaction-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .status-pending {
+            background: var(--warning-color);
             color: white;
-            transition: all 0.3s ease;
         }
 
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: var(--neon-blue);
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+        .status-completed {
+            background: var(--success-color);
+            color: white;
         }
 
-        .hidden {
-            display: none !important;
+        .status-failed {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .admin-panel {
+            background: #f0f0f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .admin-btn {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .approve-btn {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .reject-btn {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            flex-direction: column;
         }
 
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255,255,255,0.1);
-            border-top-color: var(--neon-blue);
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            margin: 20px auto;
-            animation: spin 1s linear infinite;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        .reply-form {
-            margin-top: 15px;
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
         }
 
-        .reply-form textarea {
-            margin-bottom: 10px;
+        .stars-info {
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .rate-info {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
-    <div class="space-background"></div>
-
-    <!-- Кнопка "Назад" как в index.html -->
-    <div class="menu-icon" onclick="window.location.href='index.html'">
-        <i class="fas fa-arrow-left"></i>
-    </div>
-
-    <div id="loadingScreen" class="container" style="color: white; text-align: center; padding-top: 100px;">
-        <h2>🛰 Инициализация системы...</h2>
-        <div class="spinner"></div>
-    </div>
-
-    <div id="appContent" class="hidden">
-        <!-- Интерфейс пользователя -->
-        <div id="userInterface" class="container">
-            <div class="card">
-                <h1 style="color: var(--neon-blue);">🚀 Космическая поддержка</h1>
-                <form id="ticketForm">
-                    <input type="text" id="subject" placeholder="Тема вопроса" required>
-                    <select id="priority" required>
-                        <option value="low">🌌 Низкий приоритет</option>
-                        <option value="medium" selected>🛸 Средний приоритет</option>
-                        <option value="high">🚨 Высокий приоритет</option>
-                    </select>
-                    <textarea id="problem" rows="4" placeholder="Опишите вашу проблему..." required></textarea>
-                    <button type="submit" class="btn">📡 Отправить запрос</button>
-                </form>
-            </div>
-
-            <div class="card">
-                <h2>📬 Мои запросы</h2>
-                <div id="ticketsContainer"></div>
-            </div>
-        </div>
-
-        <!-- Панель администратора -->
-        <div id="adminPanel" class="container hidden">
-            <div class="card">
-                <h2 style="color: var(--planet-purple);">👾 Панель управления</h2>
-                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <input type="text" id="adminSearch" placeholder="Поиск по запросам..." style="flex: 1;">
-                    <select id="filterStatus">
-                        <option value="all">Все статусы</option>
-                        <option value="open">Открытые</option>
-                        <option value="closed">Закрытые</option>
-                    </select>
+    <div class="container">
+        <div class="card">
+            <h1>Пополнение баланса</h1>
+            
+            <form id="depositForm">
+                <div class="form-group">
+                    <label for="username">Ваш Telegram</label>
+                    <input type="text" id="username" placeholder="@username" required>
                 </div>
-                <div id="adminTicketsContainer"></div>
-            </div>
+                
+                <div class="form-group">
+                    <label>Сумма пополнения (звёзды)</label>
+                    <div class="amount-buttons">
+                        <button type="button" class="amount-btn" data-amount="50">50</button>
+                        <button type="button" class="amount-btn" data-amount="100">100</button>
+                        <button type="button" class="amount-btn" data-amount="200">200</button>
+                        <button type="button" class="amount-btn" data-amount="500">500</button>
+                        <button type="button" class="amount-btn" data-amount="1000">1000</button>
+                        <input type="number" id="customAmount" class="amount-btn" placeholder="Другая сумма" min="50">
+                    </div>
+                    <div class="rate-info">1 звезда = 1.45₽ (мин. 50 звёзд)</div>
+                    <div class="stars-info" id="amountInRub">0 звёзд = 0₽</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Способ оплаты</label>
+                    <div class="method-tabs">
+                        <div class="method-tab active" data-method="phone">По номеру</div>
+                        <div class="method-tab" data-method="card">По карте</div>
+                        <div class="method-tab" data-method="crypto">USDT</div>
+                    </div>
+                    
+                    <div class="payment-details active" id="phoneDetails">
+                        <p><strong>Номер телефона:</strong> +79384017710</p>
+                        <div class="payment-comment">
+                            <div>Комментарий к платежу:</div>
+                            <div style="margin: 8px 0; font-size: 18px;" id="paymentComment"></div>
+                            <div class="comment-hint">Обязательно укажите этот комментарий при переводе</div>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-details" id="cardDetails">
+                        <p><strong>Номер карты:</strong> 4444 4444 4444 4444</p>
+                        <p><strong>Получатель:</strong> ИВАН ИВАНОВИЧ И.</p>
+                        <div class="payment-comment">
+                            <div>Комментарий к платежу:</div>
+                            <div style="margin: 8px 0; font-size: 18px;" id="paymentCommentCard"></div>
+                            <div class="comment-hint">Обязательно укажите этот комментарий при переводе</div>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-details" id="cryptoDetails">
+                        <p><strong>Адрес USDT (TRC20):</strong> TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB</p>
+                        <div class="payment-comment">
+                            <div>Комментарий к платежу:</div>
+                            <div style="margin: 8px 0; font-size: 18px;" id="paymentCommentCrypto"></div>
+                            <div class="comment-hint">Обязательно укажите этот комментарий при переводе</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn" id="submitBtn">
+                    <span id="btnText">Пополнить</span>
+                </button>
+            </form>
+        </div>
+
+        <div class="card" id="transactionsCard">
+            <h2>Мои транзакции</h2>
+            <div id="transactionsList"></div>
+        </div>
+
+        <div class="admin-panel" id="adminPanel">
+            <h2>Админ-панель</h2>
+            <div id="adminTransactions"></div>
         </div>
     </div>
 
-    <div id="notification" class="notification"></div>
-
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
     <script>
-        // Конфигурация Firebase
-        const firebaseConfig = {
-            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
-            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
-        };
-
-        // ID администраторов
-        const ADMIN_IDS = ['1290724329', '1062148525'];
-        
-        // Текущий пользователь
-        let currentUser = { 
-            id: null, 
-            username: 'Гость', 
-            isAdmin: false 
-        };
-
         // Инициализация Firebase
+        const firebaseConfig = {
+            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com/",
+            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8"
+        };
+        
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        if (tg) {
+            tg.expand();
+        }
+        
+        // Конфигурация
+        const config = {
+            telegramSupport: "@support",
+            minStars: 50,
+            maxStars: 10000,
+            starRate: 1.45,
+            adminIds: ["1062148525", "1290724329"]
+        };
+        
+        // Основные переменные
+        let currentUser = null;
+        let selectedStars = 0;
+        let selectedMethod = "phone";
+        let paymentComment = 'ID' + Math.floor(100000 + Math.random() * 900000);
+        let isAdmin = false;
 
-        // Основная функция инициализации
+        // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
+            showLoading("Инициализация...");
+            
             try {
-                // Инициализация пользователя
-                await initUser();
+                // Установка комментария
+                document.getElementById('paymentComment').textContent = paymentComment;
+                document.getElementById('paymentCommentCard').textContent = paymentComment;
+                document.getElementById('paymentCommentCrypto').textContent = paymentComment;
                 
-                // Настройка обработчиков событий
-                setupEventListeners();
+                // Получаем данные пользователя Telegram
+                const tgUser = tg?.initDataUnsafe?.user;
+                if (tgUser) {
+                    document.getElementById('username').value = tgUser.username ? `@${tgUser.username}` : '';
+                    currentUser = await updateTelegramUser(tgUser);
+                    
+                    // Проверяем, является ли пользователь администратором
+                    isAdmin = config.adminIds.includes(tgUser.id.toString());
+                    if (isAdmin) {
+                        document.getElementById('adminPanel').style.display = 'block';
+                        loadAdminTransactions();
+                    }
+                    
+                    loadUserTransactions(tgUser.id.toString());
+                } else {
+                    loadUserTransactions('anonymous');
+                }
                 
-                // Загрузка и отображение контента
-                await renderContent();
-                
-                // Скрытие загрузочного экрана
-                toggleLoader(false);
-                
+                initForm();
+                hideLoading();
             } catch (error) {
-                console.error('Ошибка инициализации:', error);
-                showNotification('❌ Ошибка загрузки системы', 'error');
-                toggleLoader(false);
+                console.error("Ошибка инициализации:", error);
+                hideLoading();
+                showError("Произошла ошибка при загрузке. Пожалуйста, попробуйте позже.");
             }
         });
 
-        // Инициализация пользователя
-        async function initUser() {
-            // Проверка Telegram WebApp
-            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-                const tgUser = Telegram.WebApp.initDataUnsafe.user;
-                currentUser.id = tgUser.id.toString();
-                currentUser.username = tgUser.username || 
-                    [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 
-                    'Пользователь';
-                
-                // Инициализация Telegram WebApp
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-            } else {
-                // Гостевой доступ
-                currentUser.id = 'guest_' + Math.random().toString(36).substr(2, 9);
-            }
+        // Обновление данных пользователя
+        async function updateTelegramUser(tgUser) {
+            if (!tgUser?.id) return;
             
-            // Проверка прав администратора
-            currentUser.isAdmin = ADMIN_IDS.includes(currentUser.id);
+            const userId = tgUser.id.toString();
+            const userRef = database.ref(`users/${userId}`);
+            const snapshot = await userRef.once('value');
             
-            // Переключение интерфейсов
-            toggleUserInterface();
-        }
-
-        // Переключение между интерфейсами
-        function toggleUserInterface() {
-            const userInterface = document.getElementById('userInterface');
-            const adminPanel = document.getElementById('adminPanel');
-            
-            if (currentUser.isAdmin) {
-                userInterface.classList.add('hidden');
-                adminPanel.classList.remove('hidden');
-            } else {
-                userInterface.classList.remove('hidden');
-                adminPanel.classList.add('hidden');
-            }
-        }
-
-        // Настройка обработчиков событий
-        function setupEventListeners() {
-            // Форма создания тикета
-            document.getElementById('ticketForm').addEventListener('submit', handleSubmit);
-            
-            // Элементы админ-панели
-            document.getElementById('adminSearch').addEventListener('input', () => renderAdminTickets());
-            document.getElementById('filterStatus').addEventListener('change', () => renderAdminTickets());
-            
-            // Глобальные обработчики
-            document.addEventListener('click', handleActions);
-        }
-
-        // Обработка отправки формы
-        async function handleSubmit(e) {
-            e.preventDefault();
-            
-            try {
-                // Создание нового тикета
-                const newTicket = createTicketObject();
-                
-                // Сохранение в Firebase
-                await database.ref(`tickets/${newTicket.id}`).set(newTicket);
-                
-                // Сброс формы и уведомление
-                document.getElementById('ticketForm').reset();
-                showNotification('🚀 Запрос успешно отправлен!');
-                
-                // Обновление интерфейса
-                renderContent();
-                
-            } catch (error) {
-                console.error('Ошибка отправки тикета:', error);
-                showNotification('❌ Ошибка отправки запроса', 'error');
-            }
-        }
-
-        // Создание объекта тикета
-        function createTicketObject() {
-            return {
-                id: generateId(),
-                userId: currentUser.id,
-                username: currentUser.username,
-                subject: document.getElementById('subject').value.trim(),
-                problem: document.getElementById('problem').value.trim(),
-                priority: document.getElementById('priority').value,
-                status: 'open',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                messages: []
+            const userData = {
+                id: userId,
+                username: tgUser.username || '',
+                first_name: tgUser.first_name || '',
+                last_name: tgUser.last_name || '',
+                last_active: firebase.database.ServerValue.TIMESTAMP
             };
-        }
-
-        // Генерация ID
-        function generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-        }
-
-        // Основная функция рендеринга
-        async function renderContent() {
-            try {
-                if (currentUser.isAdmin) {
-                    await renderAdminTickets();
-                } else {
-                    const tickets = await loadUserTickets();
-                    renderUserTickets(tickets);
-                }
-            } catch (error) {
-                console.error('Ошибка рендеринга:', error);
-                showNotification('❌ Ошибка загрузки данных', 'error');
+            
+            if (!snapshot.exists()) {
+                userData.created_at = firebase.database.ServerValue.TIMESTAMP;
+                userData.balance = 0;
+                await userRef.set(userData);
+            } else {
+                await userRef.update(userData);
             }
+            
+            return { key: userId, ref: userRef };
         }
 
-        // Загрузка тикетов пользователя
-        async function loadUserTickets() {
-            try {
-                const snapshot = await database.ref('tickets')
-                    .orderByChild('userId')
-                    .equalTo(currentUser.id)
-                    .once('value');
-                
-                return parseFirebaseData(snapshot);
-                
-            } catch (error) {
-                console.error('Ошибка загрузки тикетов:', error);
-                throw error;
-            }
-        }
+        // Инициализация формы
+        function initForm() {
+            // Обработчики кнопок суммы
+            document.querySelectorAll('.amount-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const stars = parseInt(this.dataset.amount) || parseInt(this.value) || 0;
+                    selectStars(stars);
+                });
+            });
+            
+            // Обработчик ввода произвольной суммы
+            document.getElementById('customAmount').addEventListener('input', function() {
+                const stars = parseInt(this.value) || 0;
+                selectStars(stars);
+            });
 
-        // Рендеринг админ-панели
-        async function renderAdminTickets() {
-            try {
-                const snapshot = await database.ref('tickets').once('value');
-                const allTickets = parseFirebaseData(snapshot);
-                const filteredTickets = filterTickets(allTickets);
-                
-                document.getElementById('adminTicketsContainer').innerHTML = 
-                    filteredTickets.map(t => createAdminTicketElement(t)).join('');
+            // Обработчики вкладок методов оплаты
+            document.querySelectorAll('.method-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
                     
-            } catch (error) {
-                console.error('Ошибка загрузки тикетов:', error);
-                throw error;
-            }
+                    selectedMethod = this.dataset.method;
+                    
+                    document.querySelectorAll('.payment-details').forEach(d => d.classList.remove('active'));
+                    document.getElementById(`${selectedMethod}Details`).classList.add('active');
+                });
+            });
         }
-
-        // Фильтрация тикетов
-        function filterTickets(tickets) {
-            const searchTerm = document.getElementById('adminSearch').value.toLowerCase();
-            const statusFilter = document.getElementById('filterStatus').value;
+        
+        // Выбор суммы в звездах
+        function selectStars(stars) {
+            selectedStars = stars;
             
-            return tickets
-                .filter(t => !ADMIN_IDS.includes(t.userId)) // Исключаем тикеты админов
-                .filter(t => statusFilter === 'all' || t.status === statusFilter)
-                .filter(t => 
-                    t.userId.includes(searchTerm) ||
-                    t.subject.toLowerCase().includes(searchTerm) ||
-                    t.problem.toLowerCase().includes(searchTerm)
-                )
-                .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        }
-
-        // Рендеринг тикетов пользователя
-        function renderUserTickets(tickets) {
-            const container = document.getElementById('ticketsContainer');
+            // Обновляем активные кнопки
+            document.querySelectorAll('.amount-btn').forEach(btn => {
+                const btnStars = parseInt(btn.dataset.amount) || 0;
+                btn.classList.toggle('active', btnStars === stars && stars > 0);
+            });
             
-            if (tickets.length === 0) {
-                container.innerHTML = '<p>У вас пока нет активных запросов</p>';
-                return;
+            // Обновляем поле произвольной суммы
+            if (stars > 0 && !document.querySelector(`.amount-btn[data-amount="${stars}"]`)) {
+                document.getElementById('customAmount').value = stars;
+            } else if (stars === 0) {
+                document.getElementById('customAmount').value = '';
             }
             
-            container.innerHTML = tickets
-                .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-                .map(t => createUserTicketElement(t))
-                .join('');
+            // Обновляем отображение суммы в рублях
+            updateAmountInRub();
+        }
+        
+        // Обновление отображения суммы в рублях
+        function updateAmountInRub() {
+            const rub = (selectedStars * config.starRate).toFixed(2);
+            document.getElementById('amountInRub').textContent = 
+                `${selectedStars} звёзд = ${rub}₽`;
         }
 
-        // Создание элемента тикета для пользователя
-        function createUserTicketElement(ticket) {
-            return `
-                <div class="ticket-card ${ticket.status}" data-id="${ticket.id}">
-                    <div class="ticket-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="status-indicator ${ticket.status}"></div>
-                            <h3 style="margin: 0">${ticket.subject}</h3>
-                        </div>
-                        <div class="priority-tag">${getPriorityLabel(ticket.priority)}</div>
-                    </div>
-                    <div class="ticket-body ${ticket.status === 'open' ? 'ticket-expanded' : ''}">
-                        <div class="messages">${renderMessages(ticket)}</div>
-                        ${ticket.status === 'open' ? createReplyForm(ticket.id, false) : ''}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Создание элемента тикета для администратора
-        function createAdminTicketElement(ticket) {
-            return `
-                <div class="ticket-card ${ticket.status}" data-id="${ticket.id}">
-                    <div class="ticket-header">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div class="status-indicator ${ticket.status}"></div>
-                            <div>
-                                <h3 style="margin: 0">${ticket.subject}</h3>
-                                <small>${ticket.username} • ${formatDate(ticket.createdAt)}</small>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 10px;">
-                            <div class="priority-tag">${getPriorityLabel(ticket.priority)}</div>
-                            ${createAdminControls(ticket)}
-                        </div>
-                    </div>
-                    <div class="ticket-body ticket-expanded">
-                        <div class="messages">${renderMessages(ticket)}</div>
-                        ${createReplyForm(ticket.id, true, ticket.status)}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Создание элементов управления для админа
-        function createAdminControls(ticket) {
-            return ticket.status === 'open' ? 
-                `<button class="btn btn-danger close-btn" data-id="${ticket.id}">Закрыть</button>` :
-                `<button class="btn btn-success reopen-btn" data-id="${ticket.id}">Открыть</button>`;
-        }
-
-        // Обработка действий
-        function handleActions(e) {
-            // Обработка кнопок закрыть/открыть
-            if (e.target.classList.contains('close-btn')) {
-                closeTicket(e.target.dataset.id);
-                return;
-            }
+        // Загрузка транзакций пользователя
+        function loadUserTransactions(userId) {
+            const container = document.getElementById('transactionsList');
+            container.innerHTML = '<p>Загрузка истории...</p>';
             
-            if (e.target.classList.contains('reopen-btn')) {
-                reopenTicket(e.target.dataset.id);
-                return;
-            }
+            database.ref('transactions')
+                .orderByChild('userId')
+                .equalTo(userId)
+                .limitToLast(10)
+                .once('value', snapshot => {
+                    container.innerHTML = '';
+                    
+                    if (!snapshot.exists()) {
+                        container.innerHTML = '<p>Нет транзакций</p>';
+                        return;
+                    }
+                    
+                    const transactions = [];
+                    snapshot.forEach(child => {
+                        transactions.push({
+                            id: child.key,
+                            ...child.val()
+                        });
+                    });
+                    
+                    transactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    
+                    transactions.forEach(t => {
+                        container.appendChild(createTransactionElement(t));
+                    });
+                });
+        }
+        
+        // Создание элемента транзакции
+        function createTransactionElement(t) {
+            const el = document.createElement('div');
+            el.className = 'transaction-item';
             
-            // Обработка кнопок отправки ответа
-            if (e.target.classList.contains('send-reply') || e.target.classList.contains('send-user-reply')) {
-                const isAdmin = e.target.classList.contains('send-reply');
-                const ticketId = e.target.dataset.id;
-                sendReply(ticketId, isAdmin);
-                return;
-            }
-            
-            // Обработка клика по заголовку тикета (только если клик не по кнопке или другому интерактивному элементу)
-            if (e.target.closest('.ticket-header') && !e.target.closest('button') && !e.target.closest('a')) {
-                const ticketCard = e.target.closest('.ticket-card');
-                ticketCard.classList.toggle('ticket-expanded');
-            }
-        }
-
-        // Отправка ответа
-        async function sendReply(ticketId, isAdmin) {
-            const textareaId = isAdmin ? `adminReply-${ticketId}` : `userReply-${ticketId}`;
-            const textarea = document.getElementById(textareaId);
-            const text = textarea?.value.trim();
-            
-            if (!text) {
-                showNotification('✏️ Введите текст сообщения', 'error');
-                return;
-            }
-
-            try {
-                // Создание сообщения
-                const message = {
-                    message: text,
-                    timestamp: new Date().toISOString(),
-                    isAdmin
-                };
-
-                // Сохранение в Firebase
-                await database.ref(`tickets/${ticketId}/messages`).push(message);
-                await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
-                
-                // Очистка поля и уведомление
-                textarea.value = '';
-                showNotification(isAdmin ? '👾 Ответ отправлен' : '🚀 Сообщение доставлено');
-                
-                // Обновление интерфейса
-                renderContent();
-                
-            } catch (error) {
-                console.error('Ошибка отправки ответа:', error);
-                showNotification('❌ Ошибка отправки', 'error');
-            }
-        }
-
-        // Закрытие тикета
-        async function closeTicket(ticketId) {
-            try {
-                await database.ref(`tickets/${ticketId}/status`).set('closed');
-                await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
-                showNotification('🔒 Запрос закрыт');
-                renderContent();
-            } catch (error) {
-                console.error('Ошибка закрытия тикета:', error);
-                showNotification('❌ Ошибка закрытия тикета', 'error');
-            }
-        }
-
-        // Повторное открытие тикета
-        async function reopenTicket(ticketId) {
-            try {
-                await database.ref(`tickets/${ticketId}/status`).set('open');
-                await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
-                showNotification('🔓 Запрос открыт');
-                renderContent();
-            } catch (error) {
-                console.error('Ошибка открытия тикета:', error);
-                showNotification('❌ Ошибка открытия тикета', 'error');
-            }
-        }
-
-        // Вспомогательные функции
-        function parseFirebaseData(snapshot) {
-            if (!snapshot.val()) return [];
-            return Object.entries(snapshot.val()).map(([id, value]) => ({ id, ...value }));
-        }
-
-        function getPriorityLabel(priority) {
-            const labels = {
-                low: '🌌 Низкий',
-                medium: '🛸 Средний',
-                high: '🚨 Высокий'
+            const methods = { 
+                'phone': 'По номеру', 
+                'card': 'По карте', 
+                'crypto': 'USDT' 
             };
-            return labels[priority] || '🛸 Средний';
-        }
-
-        function formatDate(dateString) {
-            const options = { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            };
-            return new Date(dateString).toLocaleString('ru-RU', options);
-        }
-
-        function renderMessages(ticket) {
-            const messages = [
-                createMessage(ticket.problem, ticket.username, ticket.createdAt, false),
-                ...(ticket.messages ? Object.values(ticket.messages) : []).map(msg => 
-                    createMessage(msg.message, msg.isAdmin ? 'Администратор' : ticket.username, msg.timestamp, msg.isAdmin)
-                )
-            ];
-            return messages.join('');
-        }
-
-        function createMessage(text, author, date, isAdmin) {
-            return `
-                <div class="message ${isAdmin ? 'admin-message' : 'user-message'}">
-                    <div class="message-text">${text}</div>
-                    <div class="message-info">${author} • ${formatDate(date)}</div>
-                </div>
-            `;
-        }
-
-        function createReplyForm(ticketId, isAdmin, status = 'open') {
-            if (status !== 'open') return '';
             
-            return `
-                <div class="reply-form">
-                    <textarea id="${isAdmin ? 'admin' : 'user'}Reply-${ticketId}" 
-                              placeholder="${isAdmin ? 'Ваш ответ...' : 'Ваше сообщение...'}"></textarea>
-                    <button class="btn ${isAdmin ? 'btn-success' : ''} ${isAdmin ? 'send-reply' : 'send-user-reply'}" 
-                            data-id="${ticketId}">
-                        ${isAdmin ? '📡 Ответить' : '📤 Отправить'}
+            const statuses = {
+                'pending': { class: 'status-pending', text: 'Ожидает' },
+                'completed': { class: 'status-completed', text: 'Одобрено' },
+                'failed': { class: 'status-failed', text: 'Отклонено' }
+            };
+            
+            const status = statuses[t.status] || { class: '', text: t.status };
+            const date = t.timestamp ? new Date(t.timestamp).toLocaleString('ru-RU') : '';
+            const rub = (t.stars * config.starRate).toFixed(2);
+            
+            el.innerHTML = `
+                <div>
+                    <span class="transaction-status ${status.class}">${status.text}</span>
+                    <strong>${t.stars} звёзд (${rub}₽)</strong>
+                </div>
+                <div>Метод: ${methods[t.method] || t.method}</div>
+                <div>Комментарий: ${t.comment || 'нет'}</div>
+                <small>${date}</small>
+            `;
+            
+            return el;
+        }
+
+        // Загрузка транзакций для админ-панели
+        function loadAdminTransactions() {
+            const container = document.getElementById('adminTransactions');
+            container.innerHTML = '<p>Загрузка транзакций...</p>';
+            
+            database.ref('transactions')
+                .orderByChild('timestamp')
+                .limitToLast(50)
+                .once('value', snapshot => {
+                    container.innerHTML = '';
+                    
+                    if (!snapshot.exists()) {
+                        container.innerHTML = '<p>Нет транзакций</p>';
+                        return;
+                    }
+                    
+                    const transactions = [];
+                    snapshot.forEach(child => {
+                        transactions.push({
+                            id: child.key,
+                            ...child.val()
+                        });
+                    });
+                    
+                    transactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    
+                    transactions.forEach(t => {
+                        container.appendChild(createAdminTransactionElement(t));
+                    });
+                });
+        }
+        
+        // Создание элемента транзакции для админ-панели
+        function createAdminTransactionElement(t) {
+            const el = document.createElement('div');
+            el.className = 'transaction-item';
+            
+            const methods = { 
+                'phone': 'По номеру', 
+                'card': 'По карте', 
+                'crypto': 'USDT' 
+            };
+            
+            const statuses = {
+                'pending': { class: 'status-pending', text: 'Ожидает' },
+                'completed': { class: 'status-completed', text: 'Одобрено' },
+                'failed': { class: 'status-failed', text: 'Отклонено' }
+            };
+            
+            const status = statuses[t.status] || { class: '', text: t.status };
+            const date = t.timestamp ? new Date(t.timestamp).toLocaleString('ru-RU') : '';
+            const rub = (t.stars * config.starRate).toFixed(2);
+            
+            el.innerHTML = `
+                <div>
+                    <span class="transaction-status ${status.class}">${status.text}</span>
+                    <strong>${t.username || 'Аноним'}</strong>
+                </div>
+                <div>${t.stars} звёзд (${rub}₽) - ${methods[t.method] || t.method}</div>
+                <div>Комментарий: ${t.comment || 'нет'}</div>
+                <small>${date}</small>
+                
+                ${t.status === 'pending' ? `
+                <div class="admin-controls">
+                    <button class="admin-btn approve-btn" onclick="updateTransactionStatus('${t.id}', 'completed', ${t.stars}, '${t.userId}')">
+                        Одобрить
+                    </button>
+                    <button class="admin-btn reject-btn" onclick="updateTransactionStatus('${t.id}', 'failed')">
+                        Отклонить
                     </button>
                 </div>
+                ` : ''}
             `;
-        }
-
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.className = `notification ${type} show`;
-            notification.textContent = message;
             
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+            return el;
         }
 
-        function toggleLoader(show = true) {
-            document.getElementById('loadingScreen').classList.toggle('hidden', !show);
-            document.getElementById('appContent').classList.toggle('hidden', show);
+        // Обновление статуса транзакции
+        async function updateTransactionStatus(id, status, stars, userId) {
+            showLoading("Обновление статуса...");
+            
+            try {
+                // Обновляем статус транзакции
+                await database.ref(`transactions/${id}`).update({ status });
+                
+                // Если статус "completed", добавляем звёзды пользователю
+                if (status === 'completed' && userId && stars) {
+                    const userRef = database.ref(`users/${userId}`);
+                    const snapshot = await userRef.once('value');
+                    
+                    if (snapshot.exists()) {
+                        const currentBalance = snapshot.val().balance || 0;
+                        await userRef.update({ 
+                            balance: currentBalance + stars 
+                        });
+                    }
+                }
+                
+                hideLoading();
+                showSuccess("Статус транзакции обновлен");
+                loadAdminTransactions();
+            } catch (error) {
+                hideLoading();
+                console.error("Ошибка обновления статуса:", error);
+                showError("Не удалось обновить статус транзакции");
+            }
         }
+
+        // Обработка формы
+        document.getElementById('depositForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const username = document.getElementById('username').value.trim();
+            
+            // Валидация
+            if (!username.startsWith('@') || username.length < 5) {
+                showError("Username должен начинаться с @ и содержать не менее 5 символов");
+                return;
+            }
+            
+            if (selectedStars < config.minStars) {
+                showError(`Минимальная сумма пополнения - ${config.minStars} звёзд`);
+                return;
+            }
+            
+            if (selectedStars > config.maxStars) {
+                showError(`Максимальная сумма пополнения - ${config.maxStars} звёзд`);
+                return;
+            }
+
+            btn.disabled = true;
+            btnText.textContent = 'Обработка...';
+            
+            try {
+                showLoading("Создание транзакции...");
+                
+                const userId = currentUser?.key || 'anonymous';
+                const rub = (selectedStars * config.starRate).toFixed(2);
+                
+                const transactionData = {
+                    userId: userId,
+                    username: username,
+                    stars: selectedStars,
+                    rub: rub,
+                    method: selectedMethod,
+                    status: 'pending',
+                    comment: paymentComment,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
+                
+                const transactionRef = database.ref('transactions').push();
+                await transactionRef.set(transactionData);
+                
+                if (userId !== 'anonymous') {
+                    await database.ref(`users/${userId}/transactions/${transactionRef.key}`).set(true);
+                }
+                
+                showSuccess(btn, btnText, "Заявка на пополнение создана! Ожидайте подтверждения.");
+                loadUserTransactions(userId);
+                
+                // Генерируем новый комментарий для следующего платежа
+                paymentComment = 'ID' + Math.floor(100000 + Math.random() * 900000);
+                document.getElementById('paymentComment').textContent = paymentComment;
+                document.getElementById('paymentCommentCard').textContent = paymentComment;
+                document.getElementById('paymentCommentCrypto').textContent = paymentComment;
+                
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                console.error('Ошибка:', error);
+                showError(btn, btnText, 'Произошла ошибка при создании транзакции');
+            }
+        });
+
+        // Показать загрузку
+        function showLoading(message) {
+            let overlay = document.querySelector('.loading-overlay');
+            
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'loading-overlay';
+                overlay.innerHTML = `
+                    <div class="spinner"></div>
+                    <div>${message || 'Загрузка...'}</div>
+                `;
+                document.body.appendChild(overlay);
+            } else {
+                overlay.querySelector('div:last-child').textContent = message || 'Загрузка...';
+            }
+        }
+
+        // Скрыть загрузку
+        function hideLoading() {
+            const overlay = document.querySelector('.loading-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        // Показать успех
+        function showSuccess(btn, btnText, message) {
+            if (btn && btnText) {
+                btn.classList.add('btn-success');
+                btnText.textContent = 'Успешно!';
+                
+                setTimeout(() => {
+                    btn.classList.remove('btn-success');
+                    btn.disabled = false;
+                    btnText.textContent = 'Пополнить';
+                }, 2000);
+            }
+            
+            alert(message);
+        }
+
+        // Показать ошибку
+        function showError(btn, btnText, message) {
+            if (btn && btnText) {
+                btn.classList.add('btn-danger');
+                btnText.textContent = 'Ошибка';
+                
+                setTimeout(() => {
+                    btn.classList.remove('btn-danger');
+                    btn.disabled = false;
+                    btnText.textContent = 'Пополнить';
+                }, 2000);
+            }
+            
+            alert(message);
+        }
+
+        // Глобальные функции для вызова из HTML
+        window.updateTransactionStatus = updateTransactionStatus;
     </script>
 </body>
 </html>
