@@ -121,6 +121,19 @@
             margin: 4px 0;
         }
 
+        /* Красная кнопка обменника */
+        .menu-item.exchanger {
+            color: #ff4d6d;
+        }
+
+        .menu-item.exchanger i {
+            color: #ff4d6d;
+        }
+
+        .menu-item.exchanger:hover {
+            background: rgba(255, 77, 109, 0.2);
+        }
+
         /* Звездный фон */
         .stars {
             position: fixed;
@@ -439,9 +452,6 @@
         <button class="menu-item" onclick="window.location.href='games.html'">
             <i class="fas fa-gamepad"></i> Игры
         </button>
-        <button class="menu-item" onclick="window.location.href='profile.html'">
-            <i class="fas fa-user"></i> Профиль
-        </button>
         <div class="menu-divider"></div>
         <button class="menu-item" onclick="window.location.href='replenishment.html'">
             <i class="fas fa-wallet"></i> Пополнение
@@ -449,13 +459,10 @@
         <button class="menu-item" onclick="window.location.href='conclusion.html'">
             <i class="fas fa-money-bill-wave"></i> Вывод
         </button>
-        <button class="menu-item" onclick="window.location.href='exchanger.html'">
+        <button class="menu-item exchanger" onclick="window.location.href='exchanger.html'">
             <i class="fas fa-exchange-alt"></i> Обменник
         </button>
         <div class="menu-divider"></div>
-        <button class="menu-item" onclick="openHistory()">
-            <i class="fas fa-history"></i> История
-        </button>
         <button class="menu-item" onclick="window.location.href='support.html'">
             <i class="fas fa-headset"></i> Поддержка
         </button>
@@ -593,7 +600,9 @@
                                  `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
                                  "Космонавт",
                             avatar: dbData.avatar || tgUser.photo_url || 
-                                  `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`
+                                  `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`,
+                            // Гарантируем, что баланс не может быть отрицательным
+                            balance: Math.max(0, dbData.balance || 0)
                         };
                     } else {
                         // Создаем новый профиль
@@ -602,6 +611,7 @@
                                       "Космонавт";
                         userData.avatar = tgUser.photo_url || 
                                         `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`;
+                        userData.balance = 0; // Начальный баланс 0
                         
                         // Сохраняем новый профиль
                         database.ref('users/' + userData.userId).set(userData);
@@ -644,31 +654,61 @@
         function updateUserData() {
             if (userData.userId) {
                 database.ref('users/' + userData.userId).update({
-                    balance: userData.balance,
+                    balance: Math.max(0, userData.balance), // Гарантируем, что баланс не может быть отрицательным
                     gamesPlayed: userData.gamesPlayed,
                     wins: userData.wins
+                }).then(() => {
+                    // После обновления данных в базе, загружаем их снова для синхронизации
+                    database.ref('users/' + userData.userId).once('value').then(snapshot => {
+                        if (snapshot.exists()) {
+                            const dbData = snapshot.val();
+                            userData.balance = Math.max(0, dbData.balance || 0);
+                            showProfile(); // Обновляем интерфейс
+                        }
+                    });
                 });
             }
         }
 
         // Функции для изменения данных
         function addBalance(amount) {
-            userData.balance += amount;
-            updateUserData();
-            showProfile();
+            if (userData.userId) {
+                // Сначала получаем текущий баланс из базы данных
+                database.ref('users/' + userData.userId).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        const dbData = snapshot.val();
+                        const currentBalance = Math.max(0, dbData.balance || 0);
+                        userData.balance = currentBalance + amount;
+                        updateUserData();
+                        showNotification(`Баланс изменен на ${amount} ⭐`, 'success');
+                    }
+                });
+            }
         }
 
         function addGame() {
             userData.gamesPlayed += 1;
             updateUserData();
-            showProfile();
         }
 
         function addWin() {
-            userData.wins += 1;
-            userData.balance += 100; // Награда за победу
-            updateUserData();
-            showProfile();
+            if (userData.userId) {
+                // Сначала получаем текущий баланс из базы данных
+                database.ref('users/' + userData.userId).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        const dbData = snapshot.val();
+                        const currentBalance = Math.max(0, dbData.balance || 0);
+                        const winAmount = 100; // Награда за победу
+                        
+                        userData.balance = currentBalance + winAmount;
+                        userData.wins += 1;
+                        userData.gamesPlayed += 1;
+                        
+                        updateUserData();
+                        showNotification(`Поздравляем с победой! +${winAmount} ⭐`, 'success');
+                    }
+                });
+            }
         }
 
         // Создание звездного фона
@@ -764,11 +804,6 @@
         function toggleMenu() {
             const menu = document.getElementById('menu');
             menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-        }
-
-        function openHistory() {
-            showNotification('История игр будет доступна в следующем обновлении', 'info');
-            toggleMenu();
         }
 
         // Глобальные функции
