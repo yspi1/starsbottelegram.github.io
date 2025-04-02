@@ -534,21 +534,21 @@
 
     <!-- Выпадающее меню -->
     <div class="menu" id="menu">
-        <button class="menu-item" onclick="window.location.href='profile.html'">
+        <button class="menu-item" onclick="window.location.href='index.html'">
             <i class="fas fa-user"></i> Профиль
         </button>
         <div class="menu-divider"></div>
-        <button class="menu-item" onclick="openDeposit()">
+        <button class="menu-item" onclick="window.location.href='replenishment.html'">
             <i class="fas fa-wallet"></i> Пополнить
         </button>
-        <button class="menu-item" onclick="openWithdraw()">
+        <button class="menu-item" onclick="window.location.href='conclusion.html'">
             <i class="fas fa-money-bill-wave"></i> Вывод
         </button>
         <div class="menu-divider"></div>
-        <button class="menu-item" onclick="openSupport()">
+        <button class="menu-item" onclick="window.location.href='support.html'">
             <i class="fas fa-headset"></i> Поддержка
         </button>
-        <button class="menu-item" style="color: var(--exchange-color);" onclick="openExchanger()">
+        <button class="menu-item" style="color: var(--exchange-color);" onclick="window.location.href='exchanger.html'">
             <i class="fas fa-exchange-alt"></i> Обменник
         </button>
     </div>
@@ -733,26 +733,6 @@
             elements.menu.style.display = elements.menu.style.display === 'flex' ? 'none' : 'flex';
         }
 
-        function openWithdraw() {
-            showNotification('Функция вывода доступна в разделе "Профиль"', 'info');
-            toggleMenu();
-        }
-
-        function openDeposit() {
-            showNotification('Функция пополнения доступна в разделе "Профиль"', 'info');
-            toggleMenu();
-        }
-
-        function openSupport() {
-            showNotification('Поддержка: @cosmic_support', 'info');
-            toggleMenu();
-        }
-
-        function openExchanger() {
-            showNotification('Обменник будет доступен в следующем обновлении', 'warning');
-            toggleMenu();
-        }
-
         // Закрыть меню при клике вне его
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.menu') && !e.target.closest('.menu-icon')) {
@@ -872,7 +852,7 @@
                 lastPlayed: firebase.database.ServerValue.TIMESTAMP
             };
             
-            database.ref('users/' + state.userId).update(updates)
+            return database.ref('users/' + state.userId).update(updates)
                 .then(() => {
                     // После сохранения обновляем интерфейс
                     updateUI();
@@ -1019,6 +999,7 @@
             if (newBet >= config.minBet && newBet <= config.maxBet) {
                 state.bet = newBet;
                 elements.currentBet.textContent = state.bet;
+                updateUI();
             }
         }
 
@@ -1066,8 +1047,9 @@
             
             // Списание ставки
             state.balance -= state.bet;
-            updateBalance();
-            saveUserData();
+            saveUserData().then(() => {
+                updateUI();
+            });
             
             disableControls(true);
             calculateMultipliers();
@@ -1084,17 +1066,23 @@
             cell.element.classList.add('revealed', 'reveal-animation');
             
             if (cell.isBomb) {
-                // Клетка с бомбой
+                // Клетка с бомбой - проигрыш
                 cell.element.textContent = '💣';
                 cell.element.classList.add('bomb');
+                
+                // Сохраняем результат игры
                 saveGameHistory(false, 0);
+                
+                // Завершаем игру с проигрышем
                 endGame(false);
+                
                 showNotification('Вы проиграли! Попробуйте еще раз', 'error');
             } else {
                 // Клетка с звездой
                 state.revealed++;
                 state.starOffset++;
                 
+                // Обновляем множитель
                 if (state.bombs === 24) {
                     state.multiplier = config.maxMultiplier;
                 } else {
@@ -1116,34 +1104,12 @@
                 
                 // Если открыты все безопасные клетки
                 if (state.revealed === (config.gridSize * config.gridSize - state.bombs)) {
-                    saveGameHistory(true, state.currentWin);
-                    endGame(true);
-                    showNotification(`Победа! Выигрыш: ⭐${state.currentWin}`, 'success');
+                    // Автоматически забираем выигрыш
+                    cashOut();
                 } else {
                     showNotification(`+${winAmount} звезд!`, 'success', 1000);
                 }
             }
-        }
-
-        // Завершение игры
-        function endGame(isWin) {
-            state.gameActive = false;
-            
-            if (isWin) {
-                const winAmount = Math.floor(state.bet * state.multiplier);
-                state.balance += winAmount;
-                state.wins += 1;
-                
-                if (winAmount > state.maxWin) {
-                    state.maxWin = winAmount;
-                }
-                
-                updateBalance();
-                saveUserData();
-            }
-            
-            disableControls(false);
-            resetCashoutButton();
         }
 
         // Забрать выигрыш
@@ -1158,12 +1124,23 @@
                 state.maxWin = winAmount;
             }
             
-            updateBalance();
-            saveUserData();
+            // Сохраняем результат игры
             saveGameHistory(true, winAmount);
             
-            endGame(false);
-            showNotification(`Вы забрали ⭐${winAmount}!`, 'success');
+            // Сохраняем обновленные данные пользователя
+            saveUserData().then(() => {
+                // Завершаем игру
+                endGame(false);
+                showNotification(`Вы забрали ⭐${winAmount}!`, 'success');
+            });
+        }
+
+        // Завершение игры
+        function endGame(isWin) {
+            state.gameActive = false;
+            disableControls(false);
+            resetCashoutButton();
+            updateUI();
         }
 
         // Управление элементами управления
@@ -1172,6 +1149,7 @@
             elements.bombInc.disabled = disabled;
             elements.betDec.disabled = disabled;
             elements.betInc.disabled = disabled;
+            elements.startBtn.disabled = disabled;
         }
 
         // Сброс кнопки "Забрать"
@@ -1200,9 +1178,11 @@
             if (state.bet > state.balance) {
                 elements.startBtn.classList.remove('btn-primary');
                 elements.startBtn.classList.add('btn-danger');
+                elements.startBtn.disabled = true;
             } else {
                 elements.startBtn.classList.remove('btn-danger');
                 elements.startBtn.classList.add('btn-primary');
+                elements.startBtn.disabled = false;
             }
         }
 
