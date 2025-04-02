@@ -6,7 +6,7 @@
     <title>Cosmic Mines</title>
     <style>
         :root {
-            --tg-bg: #0f0f1a;
+            --tg-bg: #0f0f1a; 
             --tg-text: #ffffff;
             --tg-hint: #a0a8c0;
             --tg-primary: #6a4cff;
@@ -984,6 +984,12 @@
                 updateUI();
             }).catch(error => {
                 console.error("Ошибка при списании средств:", error);
+                // Откатываем списание в случае ошибки
+                state.balance += state.bet;
+                state.gameActive = false;
+                updateUI();
+                showNotification('Ошибка при списании средств', 'error');
+                return;
             });
             
             disableControls(true);
@@ -1053,26 +1059,34 @@
             
             const winAmount = Math.floor(state.bet * state.multiplier);
             
-            // Увеличиваем баланс
-            state.balance += winAmount;
-            state.wins += 1;
-            
-            if (winAmount > state.maxWin) {
-                state.maxWin = winAmount;
-            }
-            
             // Сохраняем результат игры
             saveGameHistory(true, winAmount);
             
-            // Сохраняем обновленные данные
-            saveUserData().then(() => {
-                // Завершаем игру
-                endGame(false);
-                showNotification(`Вы забрали ⭐${winAmount}!`, 'success');
-            }).catch(error => {
-                console.error("Ошибка при сохранении выигрыша:", error);
-                showNotification('Ошибка при сохранении выигрыша', 'error');
-            });
+            // Обновляем данные в базе
+            const updates = {
+                balance: state.balance + winAmount,
+                wins: state.wins + 1,
+                maxWin: Math.max(state.maxWin, winAmount),
+                lastPlayed: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            database.ref('users/' + state.userId).update(updates)
+                .then(() => {
+                    // Только после успешного обновления базы обновляем локальное состояние
+                    state.balance += winAmount;
+                    state.wins += 1;
+                    if (winAmount > state.maxWin) {
+                        state.maxWin = winAmount;
+                    }
+                    
+                    // Завершаем игру
+                    endGame(false);
+                    showNotification(`Вы забрали ⭐${winAmount}!`, 'success');
+                })
+                .catch(error => {
+                    console.error("Ошибка при сохранении выигрыша:", error);
+                    showNotification('Ошибка при сохранении выигрыша', 'error');
+                });
         }
 
         // Завершение игры
