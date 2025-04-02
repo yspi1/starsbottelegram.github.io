@@ -335,11 +335,11 @@
             100% { transform: scale(1); }
         }
 
-        /* Меню */
+        /* Меню в левом верхнем углу */
         .menu-icon {
             position: fixed;
             top: 15px;
-            right: 15px;
+            left: 15px;
             width: 40px;
             height: 40px;
             background-color: var(--tg-primary);
@@ -357,7 +357,7 @@
         .menu {
             position: fixed;
             top: 70px;
-            right: 15px;
+            left: 15px;
             background-color: var(--menu-bg);
             border-radius: 12px;
             padding: 10px 0;
@@ -367,6 +367,7 @@
             width: 200px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
             border: 1px solid var(--menu-border);
+            transition: all 0.3s ease;
         }
 
         .menu-item {
@@ -604,7 +605,8 @@
             currentWin: 0,
             starOffset: 0,
             userId: null,
-            username: "Гость"
+            username: "Гость",
+            cashoutProcessed: false // Флаг для отслеживания обработки вывода
         };
 
         // Элементы DOM
@@ -1053,61 +1055,53 @@
             }
         }
 
- // Забрать выигрыш
-function cashOut() {
-    if (!state.gameActive) return;
-    
-    const winAmount = Math.floor(state.bet * state.multiplier);
-    
-    // Сохраняем результат игры
-    saveGameHistory(true, winAmount);
-    
-    // Блокируем кнопку, чтобы предотвратить повторное нажатие
-    elements.cashoutBtn.disabled = true;
-    
-    // Получаем текущий баланс из базы данных
-    database.ref('users/' + state.userId).once('value')
-        .then((snapshot) => {
-            const userData = snapshot.val();
-            const currentBalance = userData.balance || 0;
-            const currentWins = userData.wins || 0;
-            const currentMaxWin = userData.maxWin || 0;
+        // Забрать выигрыш (исправленная версия)
+        function cashOut() {
+            if (!state.gameActive || state.cashoutProcessed) return;
             
-            // Рассчитываем новые значения
-            const newBalance = currentBalance + winAmount;
-            const newWins = currentWins + 1;
-            const newMaxWin = Math.max(currentMaxWin, winAmount);
+            state.cashoutProcessed = true; // Блокируем повторное нажатие
+            const winAmount = Math.floor(state.bet * state.multiplier);
             
-            // Обновляем данные в базе
-            return database.ref('users/' + state.userId).update({
-                balance: newBalance,
-                wins: newWins,
-                maxWin: newMaxWin,
-                lastPlayed: firebase.database.ServerValue.TIMESTAMP
-            });
-        })
-        .then(() => {
-            // Обновляем локальное состояние ОДИН РАЗ
+            // Сначала обновляем локальное состояние
             state.balance += winAmount;
             state.wins += 1;
             if (winAmount > state.maxWin) {
                 state.maxWin = winAmount;
             }
+            updateUI();
             
-            // Завершаем игру
-            endGame(false);
-            showNotification(`Вы забрали ⭐${winAmount}!`, 'success');
-        })
-        .catch(error => {
-            console.error("Ошибка при сохранении выигрыша:", error);
-            showNotification('Ошибка при сохранении выигрыша', 'error');
-            // Разблокируем кнопку при ошибке
-            elements.cashoutBtn.disabled = false;
-        });
-}
-        // Завершение игры
+            // Затем сохраняем в базу данных
+            const updates = {
+                balance: state.balance,
+                wins: state.wins,
+                maxWin: state.maxWin,
+                lastPlayed: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            database.ref('users/' + state.userId).update(updates)
+                .then(() => {
+                    // Сохраняем историю игры после успешного обновления баланса
+                    saveGameHistory(true, winAmount);
+                    endGame(false);
+                    showNotification(`Вы забрали ⭐${winAmount}!`, 'success');
+                })
+                .catch(error => {
+                    console.error("Ошибка при сохранении выигрыша:", error);
+                    // Откатываем изменения при ошибке
+                    state.balance -= winAmount;
+                    state.wins -= 1;
+                    updateUI();
+                    showNotification('Ошибка при сохранении выигрыша', 'error');
+                })
+                .finally(() => {
+                    state.cashoutProcessed = false; // Разблокируем кнопку
+                });
+        }
+
+        // Завершение игры (добавляем сброс флага)
         function endGame(isWin) {
             state.gameActive = false;
+            state.cashoutProcessed = false;
             disableControls(false);
             resetCashoutButton();
             updateUI();
