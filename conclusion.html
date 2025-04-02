@@ -40,6 +40,24 @@
             max-width: 500px;
             padding: 25px;
             transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .back-button {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: #667eea;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        
+        .back-button:hover {
+            text-decoration: underline;
         }
         
         h2 {
@@ -350,6 +368,7 @@
         
         .detail-value {
             color: #2c3e50;
+            word-break: break-all;
         }
         
         .withdrawal-actions {
@@ -419,6 +438,7 @@
 </head>
 <body class="user-bg">
     <div class="card">
+        <button class="back-button" onclick="window.location.href='index.html'">← Назад</button>
         <h2>Вывод средств</h2>
         
         <!-- Блок с балансом -->
@@ -571,6 +591,7 @@
                         document.body.classList.add('admin-bg');
                         document.getElementById('adminPanel').style.display = 'block';
                         document.getElementById('withdrawalForm').style.display = 'none';
+                        document.getElementById('withdrawalHistory').style.display = 'none';
                         loadWithdrawals();
                         initTabs();
                     } else {
