@@ -2,11 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Космический профиль</title>
-    <meta name="theme-color" content="#6a4cff">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
@@ -26,16 +23,10 @@
             --card-bg: rgba(30, 30, 46, 0.8);
         }
         
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
             color: var(--text-color);
             display: flex;
@@ -43,15 +34,107 @@
             align-items: center;
             min-height: 100vh;
             background: var(--bg-color);
-            overscroll-behavior: none;
-            text-rendering: optimizeLegibility;
-            -webkit-font-smoothing: antialiased;
             background-image: 
                 radial-gradient(circle at 20% 30%, rgba(106, 76, 255, 0.15) 0%, transparent 30%),
                 radial-gradient(circle at 80% 70%, rgba(255, 107, 157, 0.15) 0%, transparent 30%);
         }
 
-        /* Оптимизированный звездный фон с GPU-ускорением */
+        /* Меню */
+        .menu-icon {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            cursor: pointer;
+            font-size: 24px;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(30, 30, 46, 0.8);
+            border-radius: 50%;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            color: var(--neon-color);
+            transition: transform 0.2s;
+        }
+
+        .menu-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .menu {
+            position: fixed;
+            top: 70px;
+            left: 16px;
+            background: var(--menu-bg);
+            border-radius: 14px;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            padding: 12px;
+            z-index: 100;
+            border: 1px solid var(--menu-border);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            width: 220px;
+            transform-origin: top left;
+            animation: menuFadeIn 0.3s ease-out forwards;
+        }
+
+        @keyframes menuFadeIn {
+            from { opacity: 0; transform: scale(0.8) translateY(-10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .menu-item {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            text-align: left;
+            padding: 12px 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .menu-item:hover {
+            background: rgba(106, 76, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .menu-divider {
+            height: 1px;
+            background: rgba(106, 76, 255, 0.3);
+            margin: 4px 0;
+        }
+
+        /* Красная кнопка обменника */
+        .menu-item.exchanger {
+            color: #ff4d6d;
+        }
+
+        .menu-item.exchanger i {
+            color: #ff4d6d;
+        }
+
+        .menu-item.exchanger:hover {
+            background: rgba(255, 77, 109, 0.2);
+        }
+
+        /* Звездный фон */
         .stars {
             position: fixed;
             top: 0;
@@ -60,8 +143,6 @@
             height: 100%;
             z-index: -1;
             overflow: hidden;
-            transform: translateZ(0);
-            will-change: transform;
         }
 
         .star {
@@ -71,8 +152,6 @@
             background: #fff;
             border-radius: 50%;
             animation: fly linear forwards, fadeOut ease-in-out forwards;
-            transform: translateZ(0);
-            will-change: transform, opacity;
         }
 
         @keyframes fly {
@@ -93,138 +172,65 @@
             }
         }
 
-        /* Оптимизированное меню */
-        .menu-icon {
-            position: fixed;
-            top: 12px;
-            left: 12px;
-            cursor: pointer;
-            font-size: 22px;
-            z-index: 100;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(30, 30, 46, 0.8);
-            border-radius: 50%;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(106, 76, 255, 0.3);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            color: var(--neon-color);
-            transition: transform 0.15s ease;
-            transform: translateZ(0);
-            will-change: transform;
-        }
-
-        .menu-icon:active {
-            transform: scale(0.95) translateZ(0);
-        }
-
-        .menu {
-            position: fixed;
-            top: 64px;
-            left: 12px;
-            background: var(--menu-bg);
-            border-radius: 12px;
-            display: none;
-            flex-direction: column;
-            gap: 4px;
-            padding: 8px;
-            z-index: 100;
-            border: 1px solid var(--menu-border);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            width: 220px;
-            transform-origin: top left;
-            animation: menuFadeIn 0.25s ease-out forwards;
-            transform: translateZ(0);
-            will-change: transform, opacity;
-        }
-
-        @keyframes menuFadeIn {
-            from { opacity: 0; transform: scale(0.95) translateY(-8px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        .menu-item {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 15px;
-            cursor: pointer;
-            text-align: left;
-            padding: 12px 16px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.15s ease;
-            transform: translateZ(0);
-            will-change: transform;
-        }
-
-        .menu-item i {
-            font-size: 18px;
-            width: 24px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        .menu-item:active {
-            background: rgba(106, 76, 255, 0.2);
-            transform: translateX(2px) translateZ(0);
-        }
-
-        .menu-divider {
-            height: 1px;
-            background: rgba(106, 76, 255, 0.3);
-            margin: 4px 0;
-        }
-
-        /* Оптимизированные карточки */
+        /* Основной контент */
         .main-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             width: 100%;
-            min-height: 100vh;
-            padding: 16px;
+            height: 100vh;
+            padding: 20px;
             box-sizing: border-box;
-            transform: translateZ(0);
         }
 
+        /* Профиль */
         .profile-card {
             background: var(--card-bg);
-            border-radius: 16px;
-            padding: 24px;
-            width: 100%;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
             max-width: 400px;
             text-align: center;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(106, 76, 255, 0.3);
             backdrop-filter: blur(10px);
-            animation: fadeIn 0.35s ease-out forwards;
+            animation: fadeIn 0.5s ease-out;
             position: relative;
             overflow: hidden;
-            transform: translateZ(0);
-            will-change: transform, opacity;
+        }
+
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(106, 76, 255, 0) 0%,
+                rgba(106, 76, 255, 0.1) 50%,
+                rgba(106, 76, 255, 0) 100%
+            );
+            transform: rotate(30deg);
+            transition: all 0.5s ease;
+            z-index: 0;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(12px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .profile-title {
-            font-size: 26px;
-            margin-bottom: 20px;
+            font-size: 28px;
+            margin-bottom: 25px;
             color: transparent;
             background: linear-gradient(90deg, var(--neon-color), var(--primary-color));
             -webkit-background-clip: text;
             background-clip: text;
-            text-shadow: 0 0 8px rgba(106, 76, 255, 0.3);
+            text-shadow: 0 0 10px rgba(106, 76, 255, 0.3);
             font-weight: 700;
             position: relative;
             z-index: 1;
@@ -232,11 +238,10 @@
 
         .avatar-container {
             position: relative;
-            margin: 0 auto 16px;
-            width: 100px;
-            height: 100px;
+            margin: 0 auto 20px;
+            width: 120px;
+            height: 120px;
             z-index: 1;
-            transform: translateZ(0);
         }
 
         .avatar {
@@ -244,31 +249,30 @@
             height: 100%;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid var(--neon-color);
-            box-shadow: 0 0 16px rgba(0, 224, 255, 0.5);
-            transition: transform 0.2s ease;
-            transform: translateZ(0);
-            will-change: transform;
+            border: 3px solid var(--neon-color);
+            box-shadow: 0 0 20px rgba(0, 224, 255, 0.5);
+            transition: all 0.3s ease;
         }
 
-        .avatar:active {
-            transform: scale(0.98) translateZ(0);
+        .avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 224, 255, 0.8);
         }
 
         .username {
-            font-size: 20px;
-            margin-bottom: 12px;
+            font-size: 22px;
+            margin-bottom: 15px;
             color: var(--neon-color);
-            text-shadow: 0 0 6px rgba(0, 224, 255, 0.5);
+            text-shadow: 0 0 8px rgba(0, 224, 255, 0.5);
             position: relative;
             z-index: 1;
         }
 
         .balance-container {
             background: rgba(20, 20, 36, 0.7);
-            border-radius: 10px;
-            padding: 12px;
-            margin: 16px 0;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
             border: 1px solid rgba(106, 76, 255, 0.3);
             position: relative;
             z-index: 1;
@@ -277,182 +281,92 @@
         .balance-label {
             font-size: 14px;
             color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
 
         .balance-value {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
             color: var(--neon-color);
-            text-shadow: 0 0 8px rgba(0, 224, 255, 0.5);
+            text-shadow: 0 0 10px rgba(0, 224, 255, 0.5);
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 20px;
+            gap: 15px;
+            margin-top: 25px;
         }
 
         .stat-card {
             background: rgba(20, 20, 36, 0.7);
-            border-radius: 10px;
-            padding: 12px;
+            border-radius: 12px;
+            padding: 15px;
             border: 1px solid rgba(106, 76, 255, 0.2);
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
-            transform: translateZ(0);
-            will-change: transform;
         }
 
-        .stat-card:active {
-            transform: translateY(-2px) translateZ(0);
-            box-shadow: 0 4px 12px rgba(106, 76, 255, 0.3);
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(106, 76, 255, 0.3);
+            border-color: rgba(106, 76, 255, 0.5);
         }
 
         .stat-value {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 700;
             color: white;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
 
         .stat-label {
-            font-size: 12px;
+            font-size: 13px;
             color: rgba(255, 255, 255, 0.7);
         }
 
-        /* Оптимизированные формы */
-        .referral-section {
-            margin-top: 16px;
-            width: 100%;
-        }
-
-        .referral-link {
-            display: flex;
-            margin-top: 12px;
-            background: rgba(20, 20, 36, 0.7);
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid rgba(106, 76, 255, 0.2);
-            transform: translateZ(0);
-        }
-
-        .referral-link input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: white;
-            padding: 12px;
-            font-size: 14px;
-            min-width: 0;
-        }
-
-        .referral-link button {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0 14px;
-            cursor: pointer;
-            transition: background 0.2s ease;
-            flex-shrink: 0;
-            transform: translateZ(0);
-            will-change: background;
-        }
-
-        .referral-link button:active {
-            background: var(--neon-color);
-        }
-
-        .promo-section {
-            margin-top: 12px;
-            display: flex;
-            gap: 8px;
-            transform: translateZ(0);
-        }
-
-        .promo-input {
-            flex: 1;
-            background: rgba(20, 20, 36, 0.7);
-            border: 1px solid rgba(106, 76, 255, 0.3);
-            border-radius: 8px;
-            padding: 12px;
-            color: white;
-            font-size: 14px;
-            min-width: 0;
-        }
-
-        .promo-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 0 14px;
-            cursor: pointer;
-            transition: background 0.2s ease;
-            flex-shrink: 0;
-            transform: translateZ(0);
-            will-change: background;
-        }
-
-        .promo-btn:active {
-            background: var(--neon-color);
-        }
-
-        /* Улучшенные уведомления */
+        /* Уведомление */
         .notification {
             position: fixed;
-            top: 16px;
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(30, 30, 46, 0.95);
+            background: rgba(30, 30, 46, 0.9);
             color: white;
-            padding: 12px 18px;
-            border-radius: 8px;
-            border-left: 3px solid var(--neon-color);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            padding: 12px 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--neon-color);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             z-index: 1000;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(106, 76, 255, 0.3);
-            animation: slideIn 0.25s ease-out forwards;
-            max-width: calc(100% - 24px);
-            font-size: 14px;
-            transform: translateZ(0);
-            will-change: transform, opacity;
+            animation: slideIn 0.3s ease-out forwards;
+            max-width: 90%;
         }
 
         @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(-16px) translateZ(0); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0) translateZ(0); }
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
 
         .notification.hide {
-            animation: slideOut 0.25s ease-out forwards;
+            animation: slideOut 0.3s ease-out forwards;
         }
 
         @keyframes slideOut {
-            from { opacity: 1; transform: translateX(-50%) translateY(0) translateZ(0); }
-            to { opacity: 0; transform: translateX(-50%) translateY(-16px) translateZ(0); }
+            from { opacity: 1; transform: translateX(-50%) translateY(0); }
+            to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
         }
 
         .notification-icon {
-            font-size: 18px;
-            flex-shrink: 0;
+            font-size: 20px;
         }
 
-        .notification.success {
-            border-left-color: var(--success);
-        }
-
-        .notification.error {
-            border-left-color: var(--danger);
-        }
-
-        /* Оптимизированный экран входа */
+        /* Экран входа */
         .login-screen {
             position: fixed;
             top: 0;
@@ -466,114 +380,104 @@
             background: rgba(15, 15, 26, 0.95);
             z-index: 1000;
             backdrop-filter: blur(5px);
-            transform: translateZ(0);
         }
 
         .login-title {
-            font-size: 26px;
-            margin-bottom: 24px;
+            font-size: 28px;
+            margin-bottom: 30px;
             color: transparent;
             background: linear-gradient(90deg, var(--neon-color), var(--primary-color));
             -webkit-background-clip: text;
             background-clip: text;
-            text-shadow: 0 0 8px rgba(106, 76, 255, 0.3);
+            text-shadow: 0 0 10px rgba(106, 76, 255, 0.3);
             font-weight: 700;
-            padding: 0 16px;
-            text-align: center;
         }
 
         .login-btn {
-            padding: 14px 28px;
+            padding: 15px 30px;
             background: linear-gradient(90deg, var(--primary-color), #8a2be2);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 10px;
+            font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.15s ease;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(106, 76, 255, 0.4);
-            transform: translateZ(0);
-            will-change: transform;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(106, 76, 255, 0.4);
         }
 
-        .login-btn:active {
-            transform: scale(0.97) translateZ(0);
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(106, 76, 255, 0.6);
         }
 
         /* Адаптивность */
-        @media (max-width: 360px) {
+        @media (max-width: 500px) {
             .profile-card {
                 padding: 20px;
+                width: 95%;
             }
             
             .profile-title {
                 font-size: 24px;
+                margin-bottom: 20px;
             }
             
             .avatar-container {
-                width: 90px;
-                height: 90px;
+                width: 100px;
+                height: 100px;
             }
             
             .balance-value {
-                font-size: 22px;
+                font-size: 24px;
             }
             
             .stat-value {
-                font-size: 18px;
-            }
-            
-            .menu {
-                width: 200px;
-            }
-        }
-
-        /* Отключение анимаций для пользователей с prefers-reduced-motion */
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation: none !important;
-                transition: none !important;
+                font-size: 20px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Упрощенная структура DOM -->
-    <div class="stars" id="stars-container"></div>
-    
+    <!-- Иконка меню -->
     <div class="menu-icon" onclick="toggleMenu()">
         <i class="fas fa-bars"></i>
     </div>
 
+    <!-- Выпадающее меню -->
     <div class="menu" id="menu">
-        <button class="menu-item" onclick="navigate('games.html')">
+        <button class="menu-item" onclick="window.location.href='games.html'">
             <i class="fas fa-gamepad"></i> Игры
         </button>
         <div class="menu-divider"></div>
-        <button class="menu-item" onclick="navigate('replenishment.html')">
+        <button class="menu-item" onclick="window.location.href='replenishment.html'">
             <i class="fas fa-wallet"></i> Пополнение
         </button>
-        <button class="menu-item" onclick="navigate('conclusion.html')">
+        <button class="menu-item" onclick="window.location.href='conclusion.html'">
             <i class="fas fa-money-bill-wave"></i> Вывод
         </button>
-        <button class="menu-item exchanger" onclick="navigate('Exchanger.html')">
+        <button class="menu-item exchanger" onclick="window.location.href='Exchanger.html'">
             <i class="fas fa-exchange-alt"></i> Обменник
         </button>
         <div class="menu-divider"></div>
-        <button class="menu-item" onclick="navigate('support.html')">
+        <button class="menu-item" onclick="window.location.href='support.html'">
             <i class="fas fa-headset"></i> Поддержка
         </button>
     </div>
 
+    <!-- Уведомление -->
     <div class="notification" id="notification" style="display: none;">
         <i class="fas fa-check-circle notification-icon"></i>
-        <span id="notification-message"></span>
+        <span id="notification-message">Сообщение</span>
     </div>
 
+    <!-- Звездный фон -->
+    <div class="stars" id="stars-container"></div>
+
+    <!-- Экран входа -->
     <div class="login-screen" id="loginScreen">
         <h1 class="login-title">Космический профиль</h1>
         <button class="login-btn" id="loginBtn">
@@ -581,12 +485,13 @@
         </button>
     </div>
 
+    <!-- Основной контент -->
     <div class="main-container" id="profileContainer" style="display: none;">
         <div class="profile-card">
             <h1 class="profile-title">КОСМИЧЕСКИЙ ПРОФИЛЬ</h1>
             
             <div class="avatar-container">
-                <img id="avatar" src="" alt="Аватар" class="avatar" loading="lazy">
+                <img id="avatar" src="" alt="Аватар" class="avatar">
             </div>
             
             <h2 class="username" id="username">Загрузка...</h2>
@@ -604,26 +509,6 @@
                 <div class="stat-card">
                     <div class="stat-value" id="wins">0</div>
                     <div class="stat-label">Побед</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="referrals-count">0</div>
-                    <div class="stat-label">Рефералов</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="referral-earnings">0 ⭐</div>
-                    <div class="stat-label">Заработано</div>
-                </div>
-            </div>
-            
-            <div class="referral-section">
-                <div class="referral-link">
-                    <input type="text" id="referral-link" readonly>
-                    <button onclick="copyReferralLink()"><i class="fas fa-copy"></i></button>
-                </div>
-                
-                <div class="promo-section">
-                    <input type="text" id="promo-code" class="promo-input" placeholder="Введите промокод">
-                    <button class="promo-btn" onclick="applyPromoCode()"><i class="fas fa-check"></i></button>
                 </div>
             </div>
         </div>
@@ -649,15 +534,7 @@
             username: document.getElementById('username'),
             balance: document.getElementById('balance'),
             gamesPlayed: document.getElementById('games-played'),
-            wins: document.getElementById('wins'),
-            referralsCount: document.getElementById('referrals-count'),
-            referralEarnings: document.getElementById('referral-earnings'),
-            referralLink: document.getElementById('referral-link'),
-            promoCode: document.getElementById('promo-code'),
-            notification: document.getElementById('notification'),
-            notificationMessage: document.getElementById('notification-message'),
-            menu: document.getElementById('menu'),
-            menuIcon: document.querySelector('.menu-icon')
+            wins: document.getElementById('wins')
         };
 
         // Данные пользователя
@@ -668,156 +545,99 @@
             balance: 0,
             gamesPlayed: 0,
             wins: 0,
-            registrationDate: new Date().toISOString(),
-            referrer: null,
-            referralCode: null,
-            referrals: 0,
-            referralEarnings: 0,
-            referralDebt: 0,
-            usedPromoCodes: [],
-            totalDeposited: 0,
-            totalLost: 0,
-            promoCode: generatePromoCode()
+            registrationDate: new Date().toISOString()
         };
 
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
+            createStars();
+            
             // Проверяем, открыто ли приложение в Telegram WebApp
             if (window.Telegram && Telegram.WebApp) {
-                initializeTelegramWebApp();
+                // Инициализируем WebApp
+                Telegram.WebApp.expand();
+                Telegram.WebApp.enableClosingConfirmation();
+                
+                // Проверяем, есть ли данные пользователя
+                if (Telegram.WebApp.initDataUnsafe?.user) {
+                    // Если есть данные пользователя, сразу авторизуем
+                    handleLogin();
+                } else {
+                    // Если нет данных, показываем кнопку входа
+                    elements.loginScreen.style.display = 'flex';
+                    elements.profileContainer.style.display = 'none';
+                    elements.loginBtn.addEventListener('click', function() {
+                        Telegram.WebApp.openTelegramLink('https://t.me/YourBotUsername');
+                    });
+                }
             } else {
-                // Режим вне Telegram
+                // Если не в Telegram, показываем обычный экран входа
                 elements.loginScreen.style.display = 'flex';
-                elements.loginBtn.onclick = function() {
+                elements.profileContainer.style.display = 'none';
+                elements.loginBtn.addEventListener('click', function() {
                     alert("Пожалуйста, откройте приложение через Telegram");
-                };
+                });
             }
-            
-            // Создаем звездный фон после загрузки
-            requestAnimationFrame(createStars);
         });
 
-        function initializeTelegramWebApp() {
-            // Инициализация WebApp Telegram
-            Telegram.WebApp.ready();
-            Telegram.WebApp.expand();
-            Telegram.WebApp.enableClosingConfirmation();
+        // Обработка входа через Telegram
+        function handleLogin() {
+            const tgWebApp = window.Telegram?.WebApp;
             
-            // Настройка обратной связи для кнопок
-            setupTouchFeedback();
-            
-            // Проверяем авторизацию пользователя
-            checkUserAuth();
-        }
-
-        function checkUserAuth() {
-            // Получаем данные пользователя
-            const initData = Telegram.WebApp.initData || Telegram.WebApp.initDataUnsafe;
-            
-            if (initData?.user) {
-                // Пользователь авторизован
-                handleAuthenticatedUser(initData.user);
-            } else {
-                // Показываем кнопку входа
-                showLoginScreen();
-            }
-        }
-
-        function handleAuthenticatedUser(tgUser) {
-            userData.userId = tgUser.id.toString();
-            userData.referralCode = generateReferralCode(tgUser.id);
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const referralCode = urlParams.get('ref');
-            
-            // Загружаем данные пользователя
-            loadUserData(tgUser, referralCode);
-        }
-
-        function loadUserData(tgUser, referralCode) {
-            database.ref('users/' + userData.userId).once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    // Обработка существующего пользователя
-                    const dbData = snapshot.val();
-                    userData = {
-                        ...userData,
-                        ...dbData,
-                        name: dbData.name || tgUser.username || 
-                             `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
-                             "Космонавт",
-                        avatar: dbData.avatar || tgUser.photo_url || 
-                              `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`,
-                        balance: Math.max(0, dbData.balance || 0),
-                        referralCode: dbData.referralCode || userData.referralCode,
-                        promoCode: dbData.promoCode || generatePromoCode()
-                    };
-                } else {
-                    // Создаем нового пользователя
-                    createNewUser(tgUser, referralCode);
-                }
+            if (tgWebApp?.initDataUnsafe?.user) {
+                const tgUser = tgWebApp.initDataUnsafe.user;
+                userData.userId = tgUser.id.toString();
                 
-                // Показываем профиль пользователя
-                showProfile();
-            });
-        }
-
-        function createNewUser(tgUser, referralCode) {
-            userData.name = tgUser.username || 
-                          `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
-                          "Космонавт";
-            userData.avatar = tgUser.photo_url || 
-                            `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`;
-            
-            // Обработка реферала
-            if (referralCode) {
-                processReferral(referralCode);
-            }
-            
-            // Сохраняем нового пользователя
-            saveNewUser();
-        }
-
-        function processReferral(referralCode) {
-            database.ref('referralCodes/' + referralCode).once('value').then(refSnapshot => {
-                if (refSnapshot.exists()) {
-                    const referrerId = refSnapshot.val();
-                    userData.referrer = referrerId;
+                // Получаем или создаем профиль
+                database.ref('users/' + userData.userId).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        // Загружаем существующие данные
+                        const dbData = snapshot.val();
+                        userData = {
+                            ...userData,
+                            ...dbData,
+                            name: dbData.name || tgUser.username || 
+                                 `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
+                                 "Космонавт",
+                            avatar: dbData.avatar || tgUser.photo_url || 
+                                  `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`,
+                            // Гарантируем, что баланс не может быть отрицательным
+                            balance: Math.max(0, dbData.balance || 0)
+                        };
+                    } else {
+                        // Создаем новый профиль
+                        userData.name = tgUser.username || 
+                                      `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
+                                      "Космонавт";
+                        userData.avatar = tgUser.photo_url || 
+                                        `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`;
+                        userData.balance = 0; // Начальный баланс 0
+                        
+                        // Сохраняем новый профиль
+                        database.ref('users/' + userData.userId).set(userData);
+                    }
                     
-                    // Обновляем данные реферера
-                    database.ref('users/' + referrerId).transaction(referrer => {
-                        if (referrer) {
-                            referrer.referrals = (referrer.referrals || 0) + 1;
-                        }
-                        return referrer;
+                    showProfile();
+                });
+            } else {
+                // Если нет данных пользователя, показываем экран входа
+                elements.loginScreen.style.display = 'flex';
+                elements.profileContainer.style.display = 'none';
+                
+                // Настраиваем кнопку в зависимости от контекста
+                if (window.Telegram && Telegram.WebApp) {
+                    elements.loginBtn.addEventListener('click', function() {
+                        Telegram.WebApp.openTelegramLink('https://t.me/YourBotUsername');
                     });
-                    
-                    showNotification('Реферальная программа активирована!', 'success');
+                } else {
+                    elements.loginBtn.addEventListener('click', function() {
+                        alert("Пожалуйста, откройте приложение через Telegram");
+                    });
                 }
-            });
+            }
         }
 
-        function saveNewUser() {
-            const updates = {};
-            updates['users/' + userData.userId] = userData;
-            updates['referralCodes/' + userData.referralCode] = userData.userId;
-            updates['promoCodes/' + userData.promoCode] = {
-                ownerId: userData.userId,
-                createdAt: new Date().toISOString(),
-                used: false,
-                bonus: 30
-            };
-            
-            database.ref().update(updates);
-        }
-
-        function showLoginScreen() {
-            elements.loginScreen.style.display = 'flex';
-            elements.loginBtn.onclick = function() {
-                const startParam = 'webapp_' + Math.random().toString(36).substr(2, 9);
-                Telegram.WebApp.openTelegramLink(`https://t.me/YourBotUsername?start=${startParam}`);
-            };
-        }
-
+        // Показать профиль
         function showProfile() {
             elements.loginScreen.style.display = 'none';
             elements.profileContainer.style.display = 'flex';
@@ -828,384 +648,168 @@
             elements.balance.textContent = `${userData.balance} ⭐`;
             elements.gamesPlayed.textContent = userData.gamesPlayed;
             elements.wins.textContent = userData.wins;
-            elements.referralsCount.textContent = userData.referrals || 0;
-            elements.referralEarnings.textContent = `${userData.referralEarnings || 0} ⭐`;
-            elements.referralLink.value = 
-                window.location.href.split('?')[0] + '?ref=' + userData.referralCode;
         }
 
         // Обновить данные в Firebase
         function updateUserData() {
             if (userData.userId) {
-                // Используем debounce для частых обновлений
-                if (window.updateDebounce) clearTimeout(window.updateDebounce);
-                
-                window.updateDebounce = setTimeout(() => {
-                    const updates = {
-                        balance: Math.max(0, userData.balance),
-                        gamesPlayed: userData.gamesPlayed,
-                        wins: userData.wins,
-                        referrals: userData.referrals,
-                        referralEarnings: userData.referralEarnings,
-                        referralDebt: userData.referralDebt,
-                        usedPromoCodes: userData.usedPromoCodes,
-                        totalDeposited: userData.totalDeposited,
-                        totalLost: userData.totalLost,
-                        promoCode: userData.promoCode
-                    };
-                    
-                    database.ref('users/' + userData.userId).update(updates)
-                        .then(() => {
-                            // Обновляем локальные данные после успешного сохранения
-                            database.ref('users/' + userData.userId).once('value').then(snapshot => {
-                                if (snapshot.exists()) {
-                                    const dbData = snapshot.val();
-                                    userData.balance = Math.max(0, dbData.balance || 0);
-                                }
-                            });
-                        });
-                }, 300);
-            }
-        }
-
-        // Пополнение баланса с учетом реферальной системы
-        function processDeposit(amount, isCasino = false, promoCode = null) {
-            if (userData.userId) {
-                // Используем requestIdleCallback для фоновых операций
-                requestIdleCallback(() => {
+                database.ref('users/' + userData.userId).update({
+                    balance: Math.max(0, userData.balance), // Гарантируем, что баланс не может быть отрицательным
+                    gamesPlayed: userData.gamesPlayed,
+                    wins: userData.wins
+                }).then(() => {
+                    // После обновления данных в базе, загружаем их снова для синхронизации
                     database.ref('users/' + userData.userId).once('value').then(snapshot => {
                         if (snapshot.exists()) {
                             const dbData = snapshot.val();
-                            const currentBalance = Math.max(0, dbData.balance || 0);
-                            
-                            let bonus = 0;
-                            const updates = {};
-                            
-                            // Проверка промокода
-                            if (promoCode) {
-                                database.ref('promoCodes/' + promoCode).once('value').then(promoSnapshot => {
-                                    if (promoSnapshot.exists()) {
-                                        const promoData = promoSnapshot.val();
-                                        if (!promoData.used) {
-                                            bonus = amount * (promoData.bonus / 100);
-                                            showNotification(`Промокод применен! +${bonus} ⭐ (${promoData.bonus}%)`, 'success');
-                                            
-                                            updates['promoCodes/' + promoCode + '/used'] = true;
-                                            
-                                            if (!userData.usedPromoCodes.includes(promoCode)) {
-                                                userData.usedPromoCodes.push(promoCode);
-                                            }
-                                        } else {
-                                            showNotification('Этот промокод уже использован', 'error');
-                                        }
-                                    } else {
-                                        showNotification('Неверный промокод', 'error');
-                                    }
-                                });
-                            }
-                            
-                            userData.balance = currentBalance + amount + bonus;
-                            userData.totalDeposited += amount;
-                            
-                            // Реферальная система для казино
-                            if (isCasino && userData.referrer) {
-                                updates['users/' + userData.referrer + '/referralDebt'] = 
-                                    firebase.database.ServerValue.increment(amount * 0.3);
-                            }
-                            
-                            // Для пополнения на звезды (не казино)
-                            if (!isCasino && userData.referrer && promoCode) {
-                                const earnings = 0.25 + amount * 0.05;
-                                updates['users/' + userData.referrer + '/referralEarnings'] = 
-                                    firebase.database.ServerValue.increment(earnings);
-                                updates['users/' + userData.referrer + '/balance'] = 
-                                    firebase.database.ServerValue.increment(earnings);
-                            }
-                            
-                            // Обновляем данные одним запросом
-                            updates['users/' + userData.userId + '/balance'] = userData.balance;
-                            updates['users/' + userData.userId + '/totalDeposited'] = userData.totalDeposited;
-                            updates['users/' + userData.userId + '/usedPromoCodes'] = userData.usedPromoCodes;
-                            
-                            database.ref().update(updates);
-                            
-                            showNotification(`Баланс пополнен на ${amount + bonus} ⭐`, 'success');
+                            userData.balance = Math.max(0, dbData.balance || 0);
+                            showProfile(); // Обновляем интерфейс
                         }
                     });
-                }, { timeout: 500 });
+                });
             }
         }
 
-        // Обработка проигрыша в игре "Бомбы"
-        function processBombGameLoss(lostAmount) {
+        // Функции для изменения данных
+        function addBalance(amount) {
             if (userData.userId) {
-                requestIdleCallback(() => {
-                    database.ref('users/' + userData.userId).once('value').then(snapshot => {
-                        if (snapshot.exists()) {
-                            const dbData = snapshot.val();
-                            const currentBalance = Math.max(0, dbData.balance || 0);
-                            
-                            userData.balance = currentBalance - lostAmount;
-                            userData.totalLost += lostAmount;
-                            
-                            const updates = {};
-                            updates['users/' + userData.userId + '/balance'] = userData.balance;
-                            updates['users/' + userData.userId + '/totalLost'] = userData.totalLost;
-                            
-                            // Если есть реферер, начисляем ему 30% от проигранной суммы
-                            if (userData.referrer) {
-                                const referralBonus = lostAmount * 0.3;
-                                
-                                updates['users/' + userData.referrer + '/referralEarnings'] = 
-                                    firebase.database.ServerValue.increment(referralBonus);
-                                updates['users/' + userData.referrer + '/balance'] = 
-                                    firebase.database.ServerValue.increment(referralBonus);
-                                updates['users/' + userData.referrer + '/referralDebt'] = 
-                                    firebase.database.ServerValue.increment(-referralBonus);
-                            }
-                            
-                            database.ref().update(updates);
-                            
-                            showNotification(`Вы проиграли ${lostAmount} ⭐ в игре "Бомбы"`, 'error');
-                        }
-                    });
-                }, { timeout: 500 });
-            }
-        }
-
-        // Обработка вывода средств
-        function processWithdrawal(amount) {
-            if (userData.userId) {
+                // Сначала получаем текущий баланс из базы данных
                 database.ref('users/' + userData.userId).once('value').then(snapshot => {
                     if (snapshot.exists()) {
                         const dbData = snapshot.val();
                         const currentBalance = Math.max(0, dbData.balance || 0);
-                        
-                        if (currentBalance < amount) {
-                            showNotification('Недостаточно средств для вывода', 'error');
-                            return;
-                        }
-                        
-                        userData.balance = currentBalance - amount;
-                        
-                        const updates = {};
-                        updates['users/' + userData.userId + '/balance'] = userData.balance;
-                        
-                        // Если есть реферер, начисляем ему долг на сумму вывода
-                        if (userData.referrer) {
-                            updates['users/' + userData.referrer + '/referralDebt'] = 
-                                firebase.database.ServerValue.increment(amount);
-                        }
-                        
-                        database.ref().update(updates);
-                        
-                        showNotification(`Выведено ${amount} ⭐`, 'success');
+                        userData.balance = currentBalance + amount;
+                        updateUserData();
+                        showNotification(`Баланс изменен на ${amount} ⭐`, 'success');
                     }
                 });
             }
         }
 
-        // Применить промокод
-        function applyPromoCode() {
-            const promoCode = elements.promoCode.value.trim();
-            
-            if (!promoCode) {
-                showNotification('Введите промокод', 'error');
-                return;
-            }
-            
-            if (userData.usedPromoCodes.includes(promoCode)) {
-                showNotification('Вы уже использовали этот промокод', 'error');
-                return;
-            }
-            
-            // Проверяем промокод в базе данных
-            database.ref('promoCodes/' + promoCode).once('value').then(snapshot => {
-                if (snapshot.exists()) {
-                    const promoData = snapshot.val();
-                    if (!promoData.used) {
-                        // Добавляем промокод в использованные
-                        if (!userData.usedPromoCodes.includes(promoCode)) {
-                            userData.usedPromoCodes.push(promoCode);
-                            updateUserData();
-                        }
+        function addGame() {
+            userData.gamesPlayed += 1;
+            updateUserData();
+        }
+
+        function addWin() {
+            if (userData.userId) {
+                // Сначала получаем текущий баланс из базы данных
+                database.ref('users/' + userData.userId).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        const dbData = snapshot.val();
+                        const currentBalance = Math.max(0, dbData.balance || 0);
+                        const winAmount = 100; // Награда за победу
                         
-                        showNotification(`Промокод "${promoCode}" применен! Вы получите ${promoData.bonus}% бонус при следующем пополнении`, 'success');
-                    } else {
-                        showNotification('Этот промокод уже использован', 'error');
-                    }
-                } else {
-                    showNotification('Неверный промокод', 'error');
-                }
-            });
-            
-            elements.promoCode.value = '';
-        }
-
-        // Генерация реферального кода
-        function generateReferralCode(userId) {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = userId.toString().slice(-3);
-            for (let i = 0; i < 5; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return code;
-        }
-
-        // Генерация промокода
-        function generatePromoCode() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = '';
-            for (let i = 0; i < 6; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return code;
-        }
-
-        // Настройка тактильной обратной связи
-        function setupTouchFeedback() {
-            const interactiveElements = [
-                elements.loginBtn,
-                ...document.querySelectorAll('.menu-item'),
-                ...document.querySelectorAll('.stat-card'),
-                document.querySelector('.referral-link button'),
-                document.querySelector('.promo-btn')
-            ];
-            
-            interactiveElements.forEach(el => {
-                if (!el) return;
-                
-                el.style.transition = 'transform 0.1s ease, background 0.1s ease';
-                el.style.willChange = 'transform, background';
-                
-                el.addEventListener('touchstart', function() {
-                    this.style.transform = 'scale(0.97) translateZ(0)';
-                    if (this.classList.contains('menu-item') || 
-                        this.classList.contains('stat-card')) {
-                        this.style.backgroundColor = 'rgba(106, 76, 255, 0.2)';
+                        userData.balance = currentBalance + winAmount;
+                        userData.wins += 1;
+                        userData.gamesPlayed += 1;
+                        
+                        updateUserData();
+                        showNotification(`Поздравляем с победой! +${winAmount} ⭐`, 'success');
                     }
                 });
-                
-                el.addEventListener('touchend', function() {
-                    this.style.transform = '';
-                    if (this.classList.contains('menu-item') || 
-                        this.classList.contains('stat-card')) {
-                        this.style.backgroundColor = '';
-                    }
-                });
-            });
-        }
-
-        // Копировать реферальную ссылку
-        function copyReferralLink() {
-            elements.referralLink.select();
-            document.execCommand('copy');
-            showNotification('Реферальная ссылка скопирована!', 'success');
-        }
-
-        // Показать уведомление
-        function showNotification(message, type = 'info') {
-            const notification = elements.notification;
-            const icon = notification.querySelector('.notification-icon');
-            
-            elements.notificationMessage.textContent = message;
-            notification.className = 'notification';
-            notification.classList.add(type);
-            
-            // Меняем иконку в зависимости от типа уведомления
-            if (type === 'success') {
-                icon.className = 'fas fa-check-circle notification-icon';
-            } else if (type === 'error') {
-                icon.className = 'fas fa-exclamation-circle notification-icon';
-            } else {
-                icon.className = 'fas fa-info-circle notification-icon';
             }
-            
-            notification.style.display = 'flex';
-            
-            // Автоматическое скрытие через 3 секунды
-            setTimeout(() => {
-                notification.classList.add('hide');
-                setTimeout(() => {
-                    notification.style.display = 'none';
-                    notification.classList.remove('hide');
-                }, 250);
-            }, 3000);
         }
 
         // Создание звездного фона
         function createStars() {
             const container = document.getElementById('stars-container');
-            if (!container || container.children.length > 0) return;
-            
-            const starCount = Math.min(50, Math.floor(window.innerWidth / 4));
-            const fragment = document.createDocumentFragment();
+            const starCount = Math.floor(window.innerWidth / 2);
             
             for (let i = 0; i < starCount; i++) {
                 const star = document.createElement('div');
                 star.className = 'star';
                 
-                const size = 1 + Math.random() * 2;
-                const duration = 3 + Math.random() * 7;
+                const size = Math.random() * 3;
+                const duration = 2 + Math.random() * 8;
                 const delay = Math.random() * 5;
                 
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
                 star.style.left = `${Math.random() * 100}%`;
                 star.style.top = `${Math.random() * 100}%`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
                 star.style.animationDuration = `${duration}s`;
                 star.style.animationDelay = `${delay}s`;
-                star.style.opacity = 0.5 + Math.random() * 0.5;
+                star.style.opacity = Math.random();
                 
-                fragment.appendChild(star);
+                container.appendChild(star);
+                
+                star.addEventListener('animationend', () => {
+                    star.remove();
+                    createStar();
+                });
+            }
+        }
+
+        function createStar() {
+            const container = document.getElementById('stars-container');
+            const star = document.createElement('div');
+            star.className = 'star';
+            
+            const size = Math.random() * 3;
+            const duration = 2 + Math.random() * 8;
+            
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `-10px`;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.animationDuration = `${duration}s`;
+            star.style.opacity = Math.random();
+            
+            container.appendChild(star);
+            
+            star.addEventListener('animationend', () => {
+                star.remove();
+            });
+        }
+
+        // Показать уведомление
+        function showNotification(message, type = 'success', duration = 3000) {
+            const notification = document.getElementById('notification');
+            const notificationMsg = document.getElementById('notification-message');
+            const notificationIcon = document.querySelector('.notification-icon');
+            
+            notification.className = 'notification';
+            notification.classList.add(`notification-${type}`);
+            
+            // Устанавливаем иконку в зависимости от типа
+            switch(type) {
+                case 'success':
+                    notificationIcon.className = 'fas fa-check-circle notification-icon';
+                    break;
+                case 'error':
+                    notificationIcon.className = 'fas fa-times-circle notification-icon';
+                    break;
+                case 'warning':
+                    notificationIcon.className = 'fas fa-exclamation-circle notification-icon';
+                    break;
+                default:
+                    notificationIcon.className = 'fas fa-info-circle notification-icon';
             }
             
-            container.appendChild(fragment);
-        }
-
-        // Переключение меню
-        function toggleMenu() {
-            if (elements.menu.style.display === 'flex') {
-                elements.menu.classList.add('hide');
+            notificationMsg.textContent = message;
+            notification.style.display = 'flex';
+            
+            // Скрываем уведомление через указанное время
+            setTimeout(() => {
+                notification.classList.add('hide');
                 setTimeout(() => {
-                    elements.menu.style.display = 'none';
-                    elements.menu.classList.remove('hide');
-                }, 250);
-            } else {
-                elements.menu.style.display = 'flex';
-            }
+                    notification.style.display = 'none';
+                    notification.classList.remove('hide');
+                }, 300);
+            }, duration);
         }
 
-        // Навигация
-        function navigate(url) {
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.openTelegramLink(url);
-            } else {
-                window.location.href = url;
-            }
+        // Функции меню
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
         }
 
-        // Закрытие меню при клике вне его
-        document.addEventListener('click', function(event) {
-            if (elements.menu.style.display === 'flex' && 
-                !elements.menu.contains(event.target) && 
-                !elements.menuIcon.contains(event.target)) {
-                toggleMenu();
-            }
-        });
-
-        // Оптимизация для изменения размера экрана
-        let resizeTimeout;
-        window.addEventListener('resize', function() {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                const starsContainer = document.getElementById('stars-container');
-                if (starsContainer) {
-                    starsContainer.innerHTML = '';
-                    createStars();
-                }
-            }, 200);
-        });
+        // Глобальные функции
+        window.addBalance = addBalance;
+        window.addGame = addGame;
+        window.addWin = addWin;
     </script>
 </body>
 </html>
