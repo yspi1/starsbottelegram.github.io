@@ -682,30 +682,14 @@
 
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
-            // Оптимизация для WebApp Telegram
+            // Проверяем, открыто ли приложение в Telegram WebApp
             if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.expand();
-                Telegram.WebApp.enableClosingConfirmation();
-                
-                // Оптимизация обратной связи
-                setupTouchFeedback(elements.loginBtn);
-                setupTouchFeedback(document.querySelectorAll('.menu-item'));
-                setupTouchFeedback(document.querySelectorAll('.stat-card'));
-                setupTouchFeedback(document.querySelector('.referral-link button'));
-                setupTouchFeedback(document.querySelector('.promo-btn'));
-                
-                if (Telegram.WebApp.initDataUnsafe?.user) {
-                    handleLogin();
-                } else {
-                    elements.loginScreen.style.display = 'flex';
-                    elements.loginBtn.onclick = function() {
-                        Telegram.WebApp.openTelegramLink('https://t.me/YourBotUsername');
-                    };
-                }
+                initializeTelegramWebApp();
             } else {
+                // Режим вне Telegram
                 elements.loginScreen.style.display = 'flex';
                 elements.loginBtn.onclick = function() {
-                    alert("Откройте приложение через Telegram");
+                    alert("Пожалуйста, откройте приложение через Telegram");
                 };
             }
             
@@ -713,144 +697,127 @@
             requestAnimationFrame(createStars);
         });
 
-        // Настройка тактильной обратной связи
-        function setupTouchFeedback(elements) {
-            if (!elements) return;
+        function initializeTelegramWebApp() {
+            // Инициализация WebApp Telegram
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+            Telegram.WebApp.enableClosingConfirmation();
             
-            const elementsList = elements.length ? elements : [elements];
+            // Настройка обратной связи для кнопок
+            setupTouchFeedback();
             
-            elementsList.forEach(el => {
-                if (!el) return;
-                
-                el.style.transition = 'transform 0.1s ease, background 0.1s ease';
-                el.style.willChange = 'transform, background';
-                
-                el.addEventListener('touchstart', function() {
-                    this.style.transform = 'scale(0.97) translateZ(0)';
-                    if (this.classList.contains('menu-item') || 
-                        this.classList.contains('stat-card')) {
-                        this.style.backgroundColor = 'rgba(106, 76, 255, 0.2)';
-                    }
-                });
-                
-                el.addEventListener('touchend', function() {
-                    this.style.transform = '';
-                    if (this.classList.contains('menu-item') || 
-                        this.classList.contains('stat-card')) {
-                        this.style.backgroundColor = '';
-                    }
-                });
-            });
+            // Проверяем авторизацию пользователя
+            checkUserAuth();
         }
 
-        // Оптимизированная навигация
-        function navigate(url) {
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.openTelegramLink(url);
+        function checkUserAuth() {
+            // Получаем данные пользователя
+            const initData = Telegram.WebApp.initData || Telegram.WebApp.initDataUnsafe;
+            
+            if (initData?.user) {
+                // Пользователь авторизован
+                handleAuthenticatedUser(initData.user);
             } else {
-                window.location.href = url;
+                // Показываем кнопку входа
+                showLoginScreen();
             }
         }
 
-        // Обработка входа через Telegram
-        function handleLogin() {
-            const tgWebApp = window.Telegram?.WebApp;
+        function handleAuthenticatedUser(tgUser) {
+            userData.userId = tgUser.id.toString();
+            userData.referralCode = generateReferralCode(tgUser.id);
+            
             const urlParams = new URLSearchParams(window.location.search);
             const referralCode = urlParams.get('ref');
             
-            if (tgWebApp?.initDataUnsafe?.user) {
-                const tgUser = tgWebApp.initDataUnsafe.user;
-                userData.userId = tgUser.id.toString();
-                userData.referralCode = generateReferralCode(tgUser.id);
+            // Загружаем данные пользователя
+            loadUserData(tgUser, referralCode);
+        }
+
+        function loadUserData(tgUser, referralCode) {
+            database.ref('users/' + userData.userId).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    // Обработка существующего пользователя
+                    const dbData = snapshot.val();
+                    userData = {
+                        ...userData,
+                        ...dbData,
+                        name: dbData.name || tgUser.username || 
+                             `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
+                             "Космонавт",
+                        avatar: dbData.avatar || tgUser.photo_url || 
+                              `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`,
+                        balance: Math.max(0, dbData.balance || 0),
+                        referralCode: dbData.referralCode || userData.referralCode,
+                        promoCode: dbData.promoCode || generatePromoCode()
+                    };
+                } else {
+                    // Создаем нового пользователя
+                    createNewUser(tgUser, referralCode);
+                }
                 
-                // Используем requestIdleCallback для фоновых операций
-                requestIdleCallback(() => {
-                    database.ref('users/' + userData.userId).once('value').then(snapshot => {
-                        if (snapshot.exists()) {
-                            // Загружаем существующие данные
-                            const dbData = snapshot.val();
-                            userData = {
-                                ...userData,
-                                ...dbData,
-                                name: dbData.name || tgUser.username || 
-                                     `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
-                                     "Космонавт",
-                                avatar: dbData.avatar || tgUser.photo_url || 
-                                      `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`,
-                                balance: Math.max(0, dbData.balance || 0),
-                                referralCode: dbData.referralCode || userData.referralCode,
-                                promoCode: dbData.promoCode || generatePromoCode()
-                            };
-                        } else {
-                            // Создаем новый профиль
-                            userData.name = tgUser.username || 
-                                          `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
-                                          "Космонавт";
-                            userData.avatar = tgUser.photo_url || 
-                                            `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`;
-                            
-                            // Обработка реферала
-                            if (referralCode) {
-                                database.ref('referralCodes/' + referralCode).once('value').then(refSnapshot => {
-                                    if (refSnapshot.exists()) {
-                                        const referrerId = refSnapshot.val();
-                                        userData.referrer = referrerId;
-                                        
-                                        // Обновляем данные реферера
-                                        database.ref('users/' + referrerId).transaction(referrer => {
-                                            if (referrer) {
-                                                referrer.referrals = (referrer.referrals || 0) + 1;
-                                            }
-                                            return referrer;
-                                        });
-                                        
-                                        showNotification('Реферальная программа активирована!', 'success');
-                                    }
-                                });
-                            }
-                            
-                            // Сохраняем новый профиль
-                            const updates = {};
-                            updates['users/' + userData.userId] = userData;
-                            updates['referralCodes/' + userData.referralCode] = userData.userId;
-                            updates['promoCodes/' + userData.promoCode] = {
-                                ownerId: userData.userId,
-                                createdAt: new Date().toISOString(),
-                                used: false,
-                                bonus: 30
-                            };
-                            
-                            database.ref().update(updates);
+                // Показываем профиль пользователя
+                showProfile();
+            });
+        }
+
+        function createNewUser(tgUser, referralCode) {
+            userData.name = tgUser.username || 
+                          `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
+                          "Космонавт";
+            userData.avatar = tgUser.photo_url || 
+                            `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`;
+            
+            // Обработка реферала
+            if (referralCode) {
+                processReferral(referralCode);
+            }
+            
+            // Сохраняем нового пользователя
+            saveNewUser();
+        }
+
+        function processReferral(referralCode) {
+            database.ref('referralCodes/' + referralCode).once('value').then(refSnapshot => {
+                if (refSnapshot.exists()) {
+                    const referrerId = refSnapshot.val();
+                    userData.referrer = referrerId;
+                    
+                    // Обновляем данные реферера
+                    database.ref('users/' + referrerId).transaction(referrer => {
+                        if (referrer) {
+                            referrer.referrals = (referrer.referrals || 0) + 1;
                         }
-                        
-                        // Показываем профиль в следующем кадре анимации
-                        requestAnimationFrame(showProfile);
+                        return referrer;
                     });
-                }, { timeout: 1000 });
-            }
+                    
+                    showNotification('Реферальная программа активирована!', 'success');
+                }
+            });
         }
 
-        // Генерация реферального кода
-        function generateReferralCode(userId) {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = userId.toString().slice(-3);
-            for (let i = 0; i < 5; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return code;
+        function saveNewUser() {
+            const updates = {};
+            updates['users/' + userData.userId] = userData;
+            updates['referralCodes/' + userData.referralCode] = userData.userId;
+            updates['promoCodes/' + userData.promoCode] = {
+                ownerId: userData.userId,
+                createdAt: new Date().toISOString(),
+                used: false,
+                bonus: 30
+            };
+            
+            database.ref().update(updates);
         }
 
-        // Генерация промокода
-        function generatePromoCode() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = '';
-            for (let i = 0; i < 6; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return code;
+        function showLoginScreen() {
+            elements.loginScreen.style.display = 'flex';
+            elements.loginBtn.onclick = function() {
+                const startParam = 'webapp_' + Math.random().toString(36).substr(2, 9);
+                Telegram.WebApp.openTelegramLink(`https://t.me/YourBotUsername?start=${startParam}`);
+            };
         }
 
-        // Показать профиль
         function showProfile() {
             elements.loginScreen.style.display = 'none';
             elements.profileContainer.style.display = 'flex';
@@ -1075,6 +1042,60 @@
             elements.promoCode.value = '';
         }
 
+        // Генерация реферального кода
+        function generateReferralCode(userId) {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = userId.toString().slice(-3);
+            for (let i = 0; i < 5; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        // Генерация промокода
+        function generatePromoCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        // Настройка тактильной обратной связи
+        function setupTouchFeedback() {
+            const interactiveElements = [
+                elements.loginBtn,
+                ...document.querySelectorAll('.menu-item'),
+                ...document.querySelectorAll('.stat-card'),
+                document.querySelector('.referral-link button'),
+                document.querySelector('.promo-btn')
+            ];
+            
+            interactiveElements.forEach(el => {
+                if (!el) return;
+                
+                el.style.transition = 'transform 0.1s ease, background 0.1s ease';
+                el.style.willChange = 'transform, background';
+                
+                el.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.97) translateZ(0)';
+                    if (this.classList.contains('menu-item') || 
+                        this.classList.contains('stat-card')) {
+                        this.style.backgroundColor = 'rgba(106, 76, 255, 0.2)';
+                    }
+                });
+                
+                el.addEventListener('touchend', function() {
+                    this.style.transform = '';
+                    if (this.classList.contains('menu-item') || 
+                        this.classList.contains('stat-card')) {
+                        this.style.backgroundColor = '';
+                    }
+                });
+            });
+        }
+
         // Копировать реферальную ссылку
         function copyReferralLink() {
             elements.referralLink.select();
@@ -1112,12 +1133,11 @@
             }, 3000);
         }
 
-        // Создание звездного фона с оптимизацией
+        // Создание звездного фона
         function createStars() {
             const container = document.getElementById('stars-container');
             if (!container || container.children.length > 0) return;
             
-            // Оптимизация: меньше звезд на мобильных устройствах
             const starCount = Math.min(50, Math.floor(window.innerWidth / 4));
             const fragment = document.createDocumentFragment();
             
@@ -1153,6 +1173,15 @@
                 }, 250);
             } else {
                 elements.menu.style.display = 'flex';
+            }
+        }
+
+        // Навигация
+        function navigate(url) {
+            if (window.Telegram && Telegram.WebApp) {
+                Telegram.WebApp.openTelegramLink(url);
+            } else {
+                window.location.href = url;
             }
         }
 
