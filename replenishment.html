@@ -1116,7 +1116,7 @@
                 
                 ${t.status === 'pending' ? `
                 <div class="admin-controls">
-                    <button class="admin-btn approve-btn" onclick="updateTransactionStatus('${t.id}', 'completed', ${t.stars + (t.bonusStars || 0)}, '${t.userId}')">
+                    <button class="admin-btn approve-btn" onclick="approveTransaction('${t.id}', '${t.userId}', ${t.stars})">
                         Одобрить
                     </button>
                     <button class="admin-btn reject-btn" onclick="updateTransactionStatus('${t.id}', 'failed')">
@@ -1129,35 +1129,136 @@
             return el;
         }
 
-        // Обновление статуса транзакции
-        async function updateTransactionStatus(id, status, stars, userId) {
+        // Подтверждение транзакции (с начислением реферальных бонусов)
+        async function approveTransaction(transactionId, userId, amount) {
+            showLoading("Обработка транзакции...");
+            
+            try {
+                // 1. Начисляем средства пользователю
+                await updateUserBalance(userId, amount);
+                
+                // 2. Получаем данные пользователя
+                const userSnapshot = await database.ref(`users/${userId}`).once('value');
+                const userData = userSnapshot.val();
+                
+                // 3. Проверяем реферальную программу
+                if (userData.referredBy) {
+                    // 4. Рассчитываем бонус рефереру (5% от суммы)
+                    const referralBonus = Math.floor(amount * (config.referralBonusPercent / 100));
+                    
+                    // 5. Начисляем бонус рефереру
+                    await updateUserBalance(userData.referredBy, referralBonus);
+                    
+                    // 6. Сохраняем информацию о реферальном начислении
+                    await saveReferralPayment(userId, userData.referredBy, amount, referralBonus);
+                }
+                
+                // 7. Обновляем статус транзакции
+                await database.ref(`transactions/${transactionId}`).update({
+                    status: 'completed',
+                    completedAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                hideLoading();
+                showMessage("Транзакция подтверждена. Средства зачислены.");
+                loadAdminTransactions();
+            } catch (error) {
+                hideLoading();
+                console.error("Ошибка подтверждения транзакции:", error);
+                showError("Не удалось подтвердить транзакцию");
+            }
+        }
+
+        // Обновление баланса пользователя
+        async function updateUserBalance(userId, amount) {
+            return database.ref(`users/${userId}/balance`).transaction(balance => {
+                return (balance || 0) + amount;
+            });
+        }
+
+        // Сохранение информации о реферальном начислении
+        async function saveReferralPayment(userId, referrerId, amount, bonus) {
+            const paymentData = {
+                userId: userId,
+                amount: amount,
+                bonus: bonus,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            await database.ref(`referrals/${referrerId}/${userId}`).set(paymentData);
+            
+            // Обновляем статистику реферера
+            await database.ref(`users/${referrerId}/referralStats`).transaction(stats => {
+                if (!stats) {
+                    stats = {
+                        totalReferrals: 0,
+                        activeReferrals: 0,
+                        totalEarned: 0
+                    };
+                }
+                stats.totalEarned = (stats.totalEarned || 0) + bonus;
+                stats.activeReferrals = (stats.activeReferrals || 0) + 1;
+                return stats;
+            });
+        }
+
+        // Обработка проигрыша (списание средств и начисление комиссии рефереру)
+        async function processUserLoss(userId, lossAmount) {
+            showLoading("Обработка проигрыша...");
+            
+            try {
+                // 1. Списываем средства у пользователя
+                await updateUserBalance(userId, -lossAmount);
+                
+                // 2. Получаем данные пользователя
+                const userSnapshot = await database.ref(`users/${userId}`).once('value');
+                const userData = userSnapshot.val();
+                
+                // 3. Проверяем реферальную программу
+                if (userData.referredBy) {
+                    // 4. Рассчитываем комиссию рефереру (30% от проигрыша)
+                    const referralCommission = Math.floor(lossAmount * (config.referralLossPercent / 100));
+                    
+                    // 5. Начисляем комиссию рефереру
+                    await updateUserBalance(userData.referredBy, referralCommission);
+                    
+                    // 6. Сохраняем информацию о комиссии
+                    await saveReferralLossCommission(userId, userData.referredBy, lossAmount, referralCommission);
+                }
+                
+                hideLoading();
+                return true;
+            } catch (error) {
+                hideLoading();
+                console.error("Ошибка обработки проигрыша:", error);
+                return false;
+            }
+        }
+
+        // Сохранение информации о комиссии с проигрыша
+        async function saveReferralLossCommission(userId, referrerId, lossAmount, commission) {
+            const commissionData = {
+                userId: userId,
+                lossAmount: lossAmount,
+                commission: commission,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            await database.ref(`referralCommissions/${referrerId}/${userId}`).set(commissionData);
+            
+            // Обновляем статистику реферера
+            await database.ref(`users/${referrerId}/referralStats`).transaction(stats => {
+                stats.totalEarned = (stats.totalEarned || 0) + commission;
+                return stats;
+            });
+        }
+
+        // Обновление статуса транзакции (без начисления средств)
+        async function updateTransactionStatus(id, status) {
             showLoading("Обновление статуса...");
             
             try {
-                // Обновляем статус транзакции
                 await database.ref(`transactions/${id}`).update({ status });
-                
-                // Если статус "completed", добавляем звёзды пользователю
-                if (status === 'completed' && userId && stars) {
-                    const userRef = database.ref(`users/${userId}`);
-                    
-                    // Используем транзакцию для безопасного обновления баланса
-                    await userRef.transaction(user => {
-                        if (user) {
-                            user.balance = (user.balance || 0) + stars;
-                        }
-                        return user;
-                    });
-                    
-                    // Получаем данные транзакции для обработки реферальных бонусов
-                    const transactionRef = database.ref(`transactions/${id}`);
-                    const snapshot = await transactionRef.once('value');
-                    const transaction = snapshot.val();
-                    
-                    // Начисляем реферальные бонусы
-                    await processReferralBonuses(transaction, userId, stars);
-                }
-                
                 hideLoading();
                 showMessage("Статус транзакции обновлен");
                 loadAdminTransactions();
@@ -1165,181 +1266,6 @@
                 hideLoading();
                 console.error("Ошибка обновления статуса:", error);
                 showError("Не удалось обновить статус транзакции");
-            }
-        }
-
-        // Обработка реферальных бонусов
-        async function processReferralBonuses(transaction, userId, stars) {
-            const userRef = database.ref(`users/${userId}`);
-            const userSnapshot = await userRef.once('value');
-            const userData = userSnapshot.val();
-            
-            // 1. Если был использован промокод - начисляем 5% бонус обоим
-            if (transaction.promoCode) {
-                await processPromoCodeBonus(transaction, userId, stars);
-            }
-            
-            // 2. Если пользователь был приглашен по реферальной ссылке
-            if (userData.referredBy) {
-                await processReferralLinkBonus(transaction, userId, stars, userData.referredBy);
-            }
-            
-            // 3. Если это проигрыш (отрицательные звёзды) - начисляем 30% рефереру
-            if (stars < 0) {
-                await processLossCommission(transaction, userId, stars, userData.referredBy);
-            }
-        }
-
-        // Обработка бонуса за промокод (5% обоим)
-        async function processPromoCodeBonus(transaction, userId, stars) {
-            const promoUsersRef = database.ref('users');
-            const promoSnapshot = await promoUsersRef.orderByChild('referralCode').equalTo(transaction.promoCode).once('value');
-            
-            if (promoSnapshot.exists()) {
-                promoSnapshot.forEach(child => {
-                    const promoOwnerId = child.key;
-                    if (promoOwnerId !== userId) {
-                        const referralBonus = Math.floor(transaction.stars * (config.promoBonusPercent / 100));
-                        
-                        // Обновляем баланс владельца промокода
-                        database.ref(`users/${promoOwnerId}`).transaction(user => {
-                            if (user) {
-                                user.balance = (user.balance || 0) + referralBonus;
-                                
-                                // Сохраняем историю реферальных начислений
-                                const referralHistory = {
-                                    type: 'promo_bonus',
-                                    userId: userId,
-                                    username: transaction.username,
-                                    stars: transaction.stars,
-                                    bonus: referralBonus,
-                                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                                };
-                                
-                                if (!user.referralHistory) {
-                                    user.referralHistory = {};
-                                }
-                                
-                                user.referralHistory[transaction.id] = referralHistory;
-                                
-                                // Обновляем статистику реферера
-                                if (!user.referralStats) {
-                                    user.referralStats = {
-                                        totalReferrals: 0,
-                                        activeReferrals: 0,
-                                        totalEarned: 0
-                                    };
-                                }
-                                user.referralStats.totalEarned = (user.referralStats.totalEarned || 0) + referralBonus;
-                            }
-                            return user;
-                        });
-                    }
-                });
-            }
-        }
-
-        // Обработка бонуса за реферальную ссылку (5% за пополнение)
-        async function processReferralLinkBonus(transaction, userId, stars, referredBy) {
-            // Находим пользователя, который привел
-            const referrerRef = database.ref('users');
-            const referrerSnapshot = await referrerRef.orderByChild('referralCode').equalTo(referredBy).once('value');
-            
-            if (referrerSnapshot.exists()) {
-                referrerSnapshot.forEach(child => {
-                    const referrerId = child.key;
-                    if (referrerId !== userId) {
-                        // Рассчитываем 5% от суммы пополнения
-                        const referralBonus = Math.floor(transaction.stars * (config.referralBonusPercent / 100));
-                        
-                        // Обновляем баланс реферера
-                        database.ref(`users/${referrerId}`).transaction(user => {
-                            if (user) {
-                                user.balance = (user.balance || 0) + referralBonus;
-                                
-                                // Сохраняем историю реферальных начислений
-                                const referralHistory = {
-                                    type: 'deposit_bonus',
-                                    userId: userId,
-                                    username: transaction.username,
-                                    stars: transaction.stars,
-                                    bonus: referralBonus,
-                                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                                };
-                                
-                                if (!user.referralHistory) {
-                                    user.referralHistory = {};
-                                }
-                                
-                                user.referralHistory[transaction.id] = referralHistory;
-                                
-                                // Обновляем статистику пригласившего
-                                if (!user.referralStats) {
-                                    user.referralStats = {
-                                        totalReferrals: 0,
-                                        totalEarned: 0,
-                                        activeReferrals: 0
-                                    };
-                                }
-                                
-                                user.referralStats.totalEarned = (user.referralStats.totalEarned || 0) + referralBonus;
-                            }
-                            return user;
-                        });
-                    }
-                });
-            }
-        }
-
-        // Обработка комиссии с проигрыша (30% рефереру)
-        async function processLossCommission(transaction, userId, stars, referredBy) {
-            // Находим пользователя, который привел
-            const referrerRef = database.ref('users');
-            const referrerSnapshot = await referrerRef.orderByChild('referralCode').equalTo(referredBy).once('value');
-            
-            if (referrerSnapshot.exists()) {
-                referrerSnapshot.forEach(child => {
-                    const referrerId = child.key;
-                    if (referrerId !== userId) {
-                        // Рассчитываем 30% от суммы проигрыша (по модулю)
-                        const referralBonus = Math.floor(Math.abs(stars) * (config.referralLossPercent / 100));
-                        
-                        // Обновляем баланс реферера
-                        database.ref(`users/${referrerId}`).transaction(user => {
-                            if (user) {
-                                user.balance = (user.balance || 0) + referralBonus;
-                                
-                                // Сохраняем историю реферальных начислений
-                                const referralHistory = {
-                                    type: 'loss_commission',
-                                    userId: userId,
-                                    username: transaction.username,
-                                    stars: stars,
-                                    bonus: referralBonus,
-                                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                                };
-                                
-                                if (!user.referralHistory) {
-                                    user.referralHistory = {};
-                                }
-                                
-                                user.referralHistory[transaction.id] = referralHistory;
-                                
-                                // Обновляем статистику пригласившего
-                                if (!user.referralStats) {
-                                    user.referralStats = {
-                                        totalReferrals: 0,
-                                        totalEarned: 0,
-                                        activeReferrals: 0
-                                    };
-                                }
-                                
-                                user.referralStats.totalEarned = (user.referralStats.totalEarned || 0) + referralBonus;
-                            }
-                            return user;
-                        });
-                    }
-                });
             }
         }
 
@@ -1482,7 +1408,9 @@
         }
 
         // Глобальные функции для вызова из HTML
+        window.approveTransaction = approveTransaction;
         window.updateTransactionStatus = updateTransactionStatus;
+        window.processUserLoss = processUserLoss;
     </script>
 </body>
 </html>
