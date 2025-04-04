@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Космический профиль</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
@@ -27,7 +27,7 @@
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
-            overflow: hidden;
+            overflow-x: hidden;
             color: var(--text-color);
             display: flex;
             flex-direction: column;
@@ -37,6 +37,8 @@
             background-image: 
                 radial-gradient(circle at 20% 30%, rgba(106, 76, 255, 0.15) 0%, transparent 30%),
                 radial-gradient(circle at 80% 70%, rgba(255, 107, 157, 0.15) 0%, transparent 30%);
+            touch-action: pan-y;
+            overscroll-behavior-y: contain;
         }
 
         /* Меню */
@@ -179,9 +181,11 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            height: 100vh;
+            min-height: 100vh;
             padding: 20px;
             box-sizing: border-box;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         /* Профиль */
@@ -198,6 +202,7 @@
             animation: fadeIn 0.5s ease-out;
             position: relative;
             overflow: hidden;
+            margin-bottom: 20px;
         }
 
         .profile-card::before {
@@ -438,6 +443,50 @@
             background: rgba(0, 224, 255, 0.7);
         }
 
+        /* Админ-панель */
+        .admin-panel {
+            display: none;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid var(--danger);
+        }
+        
+        .admin-title {
+            color: var(--danger);
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .admin-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .admin-stat {
+            background: rgba(255, 77, 109, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--danger);
+        }
+        
+        .admin-links {
+            margin-top: 15px;
+        }
+        
+        .admin-link {
+            display: block;
+            background: rgba(106, 76, 255, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            word-break: break-all;
+            color: var(--neon-color);
+            text-decoration: none;
+        }
+
         /* Уведомление */
         .notification {
             position: fixed;
@@ -550,6 +599,14 @@
             .stat-value {
                 font-size: 20px;
             }
+            
+            .stats-grid, .referral-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .menu {
+                width: 200px;
+            }
         }
     </style>
 </head>
@@ -657,6 +714,24 @@
                     </button>
                 </div>
             </div>
+            
+            <div class="admin-panel" id="adminPanel">
+                <h3 class="admin-title">АДМИН ПАНЕЛЬ</h3>
+                <div class="admin-stats">
+                    <div class="admin-stat">
+                        <div class="stat-label">Всего рефералов</div>
+                        <div class="stat-value" id="totalReferrals">0</div>
+                    </div>
+                    <div class="admin-stat">
+                        <div class="stat-label">По промокодам</div>
+                        <div class="stat-value" id="totalPromoReferrals">0</div>
+                    </div>
+                </div>
+                <div class="admin-links">
+                    <a href="#" class="admin-link" id="refLink"></a>
+                    <a href="#" class="admin-link" id="promoLink"></a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -685,7 +760,14 @@
             referralCount: document.getElementById('referralCount'),
             referralEarnings: document.getElementById('referralEarnings'),
             referralDebt: document.getElementById('referralDebt'),
-            promoCodeInput: document.getElementById('promoCodeInput')
+            promoCodeInput: document.getElementById('promoCodeInput'),
+            adminPanel: document.getElementById('adminPanel'),
+            totalReferrals: document.getElementById('totalReferrals'),
+            totalPromoReferrals: document.getElementById('totalPromoReferrals'),
+            refLink: document.getElementById('refLink'),
+            promoLink: document.getElementById('promoLink'),
+            notification: document.getElementById('notification'),
+            notificationMessage: document.getElementById('notification-message')
         };
 
         // Данные пользователя
@@ -702,19 +784,59 @@
             referralCount: 0,
             referralEarnings: 0,
             referralDebt: 0,
+            myPromoCode: null,
             usedPromoCodes: [],
-            myPromoCode: null
+            promoReferrals: [],
+            isAdmin: false
         };
 
         // Ссылка на данные пользователя в Firebase
         let userRef;
         let unsubscribeAuth;
 
+        // Переменные для обработки свайпа
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
             createStars();
             initApp();
+            setupSwipeGestures();
         });
+
+        // Настройка жестов свайпа
+        function setupSwipeGestures() {
+            document.addEventListener('touchstart', function(event) {
+                touchStartX = event.changedTouches[0].screenX;
+                touchStartY = event.changedTouches[0].screenY;
+            }, false);
+            
+            document.addEventListener('touchend', function(event) {
+                touchEndX = event.changedTouches[0].screenX;
+                touchEndY = event.changedTouches[0].screenY;
+                handleSwipe();
+            }, false);
+        }
+
+        function handleSwipe() {
+            const dx = touchEndX - touchStartX;
+            const dy = touchEndY - touchStartY;
+            
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 50) {
+                    // Свайп вправо
+                    toggleMenu();
+                } else if (dx < -50) {
+                    // Свайп влево
+                    if (document.getElementById('menu').style.display === 'flex') {
+                        toggleMenu();
+                    }
+                }
+            }
+        }
 
         // Основная функция инициализации
         async function initApp() {
@@ -781,6 +903,10 @@
 
         // Создание нового пользователя
         async function createNewUser() {
+            // Проверяем, является ли пользователь первым (админом)
+            const usersSnapshot = await database.ref('users').once('value');
+            userData.isAdmin = !usersSnapshot.exists();
+            
             userData.referralCode = generateReferralCode();
             userData.myPromoCode = generatePromoCode();
             userData.name = Telegram.WebApp.initDataUnsafe.user.first_name || 
@@ -875,23 +1001,26 @@
                 
                 const [promoUserId, promoUserData] = Object.entries(promoUserSnapshot.val())[0];
                 
+                // Добавляем пользователя в список промо-рефералов
+                await database.ref(`users/${promoUserId}/promoReferrals`)
+                    .transaction((currentRefs) => {
+                        if (!currentRefs) return [userData.userId];
+                        if (!currentRefs.includes(userData.userId)) {
+                            return [...currentRefs, userData.userId];
+                        }
+                        return currentRefs;
+                    });
+                
                 // Добавляем промокод в список использованных
                 await userRef.update({
                     usedPromoCodes: firebase.database.ServerValue.arrayUnion(promoCode)
                 });
                 
                 // Обновляем локальные данные
-                if (!userData.usedPromoCodes) {
-                    userData.usedPromoCodes = [];
-                }
+                if (!userData.usedPromoCodes) userData.usedPromoCodes = [];
                 userData.usedPromoCodes.push(promoCode);
                 
-                // Начисляем бонус владельцу промокода (5% от всех будущих пополнений)
-                await database.ref(`users/${promoUserId}`).update({
-                    promoReferrals: firebase.database.ServerValue.arrayUnion(userData.userId)
-                });
-                
-                showNotification("Промокод успешно активирован! Теперь 5% от ваших пополнений будет начисляться владельцу промокода.", "success");
+                showNotification("Промокод успешно активирован! 5% от ваших пополнений будет идти владельцу промокода.", "success");
                 elements.promoCodeInput.value = "";
             } catch (error) {
                 console.error("Ошибка применения промокода:", error);
@@ -933,6 +1062,23 @@
             elements.referralCount.textContent = userData.referralCount || 0;
             elements.referralEarnings.textContent = `${userData.referralEarnings || 0} ⭐️`;
             elements.referralDebt.textContent = `${userData.referralDebt || 0} ⭐️`;
+            
+            // Обновляем админ-панель
+            if (userData.isAdmin) {
+                elements.adminPanel.style.display = 'block';
+                elements.totalReferrals.textContent = userData.referralCount || 0;
+                elements.totalPromoReferrals.textContent = userData.promoReferrals?.length || 0;
+                
+                // Генерируем ссылки
+                const currentUrl = window.location.href.split('?')[0];
+                elements.refLink.textContent = `${currentUrl}?ref=${userData.referralCode}`;
+                elements.refLink.href = `${currentUrl}?ref=${userData.referralCode}`;
+                
+                elements.promoLink.textContent = `${currentUrl}?promo=${userData.myPromoCode}`;
+                elements.promoLink.href = `${currentUrl}?promo=${userData.myPromoCode}`;
+            } else {
+                elements.adminPanel.style.display = 'none';
+            }
         }
 
         // Показать профиль
@@ -970,30 +1116,27 @@
                     });
                 }
 
-                // Начисление бонуса по промокодам (5% владельцам промокодов)
-                if (userData.usedPromoCodes && userData.usedPromoCodes.length > 0) {
-                    // Получаем всех пользователей, чьи промокоды были использованы
+                // Начисление бонуса владельцам промокодов (5%)
+                if (userData.usedPromoCodes?.length > 0) {
+                    const promoBonus = amount * 0.05;
                     const promoUsersSnapshot = await database.ref('users')
                         .orderByChild('myPromoCode')
                         .once('value');
                     
                     if (promoUsersSnapshot.exists()) {
                         const promoUsers = promoUsersSnapshot.val();
-                        const promoBonus = amount * 0.05;
-                        
                         for (const promoCode of userData.usedPromoCodes) {
-                            for (const [userId, userData] of Object.entries(promoUsers)) {
-                                if (userData.myPromoCode === promoCode) {
-                                    await database.ref(`users/${userId}`).update({
-                                        balance: firebase.database.ServerValue.increment(promoBonus)
-                                    });
+                            for (const [userId, user] of Object.entries(promoUsers)) {
+                                if (user.myPromoCode === promoCode) {
+                                    await database.ref(`users/${userId}/balance`)
+                                        .transaction((bal) => (bal || 0) + promoBonus);
                                     break;
                                 }
                             }
                         }
                     }
                 }
-
+                
                 showNotification(`Баланс пополнен на ${amount} ⭐️ (+5% бонус)`, 'success');
             } catch (error) {
                 console.error("Ошибка пополнения:", error);
@@ -1146,6 +1289,7 @@
         window.withdraw = withdraw;
         window.copyReferralCode = copyReferralCode;
         window.applyPromoCode = applyPromoCode;
+        window.toggleMenu = toggleMenu;
     </script>
 </body>
 </html>
