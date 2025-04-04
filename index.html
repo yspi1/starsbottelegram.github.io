@@ -3,1435 +3,1293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Пополнение баланса</title>
+    <title>Космический профиль</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: background 0.3s ease;
-            z-index: 1000;
-        }
-
-        .back-btn:hover {
-            background: #9932CC;
-        }
-
-        .back-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: white;
-        }
         :root {
-            --primary-color: #8A2BE2;
-            --secondary-color: #BA55D3;
-            --danger-color: #ff4444;
-            --success-color: #4CAF50;
-            --warning-color: #FFA500;
-            --text-color: #333;
-            --dark-bg: #1a0633;
+            --primary-color: #6a4cff;
+            --neon-color: #00e0ff;
+            --text-color: #ffffff;
+            --bg-color: #0f0f1a;
+            --button-bg: rgba(30, 30, 46, 0.7);
+            --button-hover: rgba(106, 76, 255, 0.3);
+            --menu-bg: rgba(15, 15, 26, 0.95);
+            --menu-border: #6a4cff;
+            --danger: #ff4d6d;
+            --success: #00e676;
+            --card-bg: rgba(30, 30, 46, 0.8);
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--primary-color);
+            overflow-x: hidden;
             color: var(--text-color);
-            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(106, 76, 255, 0.15) 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, rgba(255, 107, 157, 0.15) 0%, transparent 30%);
+            touch-action: pan-y;
+            overscroll-behavior-y: contain;
         }
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-            padding: 20px;
+        /* Меню */
+        .menu-icon {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            cursor: pointer;
+            font-size: 24px;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(30, 30, 46, 0.8);
+            border-radius: 50%;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            color: var(--neon-color);
+            transition: transform 0.2s;
         }
 
-        .card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            padding: 24px;
-            margin-bottom: 20px;
+        .menu-icon:hover {
+            transform: scale(1.1);
         }
 
-        h1, h2, h3 {
-            color: var(--primary-color);
-            text-align: center;
+        .menu {
+            position: fixed;
+            top: 70px;
+            left: 16px;
+            background: var(--menu-bg);
+            border-radius: 14px;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            padding: 12px;
+            z-index: 100;
+            border: 1px solid var(--menu-border);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            width: 220px;
+            transform-origin: top left;
+            animation: menuFadeIn 0.3s ease-out forwards;
         }
 
-        h1 { font-size: 24px; margin-bottom: 20px; }
-        h2 { font-size: 20px; margin: 20px 0 15px; }
-        h3 { font-size: 18px; margin: 15px 0 10px; }
-
-        .form-group {
-            margin-bottom: 16px;
+        @keyframes menuFadeIn {
+            from { opacity: 0; transform: scale(0.8) translateY(-10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #555;
-        }
-
-        input, select {
-            width: 100%;
+        .menu-item {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            text-align: left;
             padding: 12px 16px;
-            border: 1px solid #ddd;
             border-radius: 8px;
-            font-size: 16px;
-        }
-
-        input:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
-        }
-
-        .amount-buttons {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .amount-btn {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: white;
-            font-size: 16px;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .amount-btn.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        .method-tabs {
             display: flex;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 16px;
-            border: 1px solid #ddd;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
         }
 
-        .method-tab {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            background: white;
-            cursor: pointer;
-        }
-
-        .method-tab.active {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .payment-details {
-            background: #f9f9f9;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 16px;
-            display: none;
-        }
-
-        .payment-details.active {
-            display: block;
-        }
-
-        .payment-comment {
-            background: rgba(138, 43, 226, 0.1);
-            padding: 12px;
-            border-radius: 8px;
-            margin: 12px 0;
-            font-weight: bold;
-            text-align: center;
-            font-size: 16px;
-            border: 1px dashed var(--primary-color);
-        }
-
-        .comment-hint {
-            font-size: 13px;
-            color: #666;
-            margin-top: 4px;
+        .menu-item i {
+            font-size: 18px;
+            width: 24px;
             text-align: center;
         }
 
-        .btn {
-            width: 100%;
-            padding: 14px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 10px;
+        .menu-item:hover {
+            background: rgba(106, 76, 255, 0.2);
+            transform: translateX(4px);
         }
 
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
+        .menu-divider {
+            height: 1px;
+            background: rgba(106, 76, 255, 0.3);
+            margin: 4px 0;
         }
 
-        .btn-success {
-            background: var(--success-color);
+        /* Красная кнопка обменника */
+        .menu-item.exchanger {
+            color: #ff4d6d;
         }
 
-        .btn-danger {
-            background: var(--danger-color);
+        .menu-item.exchanger i {
+            color: #ff4d6d;
         }
 
-        .btn-secondary {
-            background: var(--secondary-color);
+        .menu-item.exchanger:hover {
+            background: rgba(255, 77, 109, 0.2);
         }
 
-        .transaction-item {
-            background: white;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .transaction-status {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-right: 8px;
-        }
-
-        .status-pending {
-            background: var(--warning-color);
-            color: white;
-        }
-
-        .status-completed {
-            background: var(--success-color);
-            color: white;
-        }
-
-        .status-failed {
-            background: var(--danger-color);
-            color: white;
-        }
-
-        .admin-panel {
-            background: #f0f0f0;
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .admin-controls {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .admin-btn {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .approve-btn {
-            background: var(--success-color);
-            color: white;
-        }
-
-        .reject-btn {
-            background: var(--danger-color);
-            color: white;
-        }
-
-        .loading-overlay {
+        /* Звездный фон */
+        .stars {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            color: white;
-            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
         }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #fff;
             border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-bottom: 16px;
+            animation: fly linear forwards, fadeOut ease-in-out forwards;
+        }
+
+        @keyframes fly {
+            0% {
+                transform: translateX(-100%) translateY(-100%);
+            }
+            100% {
+                transform: translateX(100vw) translateY(100vh);
+            }
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* Основной контент */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Профиль */
+        .profile-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(106, 76, 255, 0) 0%,
+                rgba(106, 76, 255, 0.1) 50%,
+                rgba(106, 76, 255, 0) 100%
+            );
+            transform: rotate(30deg);
+            transition: all 0.5s ease;
+            z-index: 0;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .profile-title {
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: transparent;
+            background: linear-gradient(90deg, var(--neon-color), var(--primary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-shadow: 0 0 10px rgba(106, 76, 255, 0.3);
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
+        .avatar-container {
+            position: relative;
+            margin: 0 auto 20px;
+            width: 120px;
+            height: 120px;
+            z-index: 1;
         }
 
-        .stars-info {
-            text-align: center;
-            margin: 10px 0;
-            font-weight: bold;
+        .avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--neon-color);
+            box-shadow: 0 0 20px rgba(0, 224, 255, 0.5);
+            transition: all 0.3s ease;
         }
 
-        .rate-info {
+        .avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 224, 255, 0.8);
+        }
+
+        .username {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: var(--neon-color);
+            text-shadow: 0 0 8px rgba(0, 224, 255, 0.5);
+            position: relative;
+            z-index: 1;
+        }
+
+        .balance-container {
+            background: rgba(20, 20, 36, 0.7);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .balance-label {
             font-size: 14px;
-            color: #666;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 5px;
+        }
+
+        .balance-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--neon-color);
+            text-shadow: 0 0 10px rgba(0, 224, 255, 0.5);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .stat-card {
+            background: rgba(20, 20, 36, 0.7);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(106, 76, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(106, 76, 255, 0.3);
+            border-color: rgba(106, 76, 255, 0.5);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Реферальная секция */
+        .referral-section {
+            background: rgba(20, 20, 36, 0.7);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .referral-title {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: var(--neon-color);
             text-align: center;
+        }
+
+        .referral-input-container {
+            display: flex;
             margin-bottom: 15px;
         }
 
-        .promo-container {
-            margin: 15px 0;
-            padding: 15px;
-            background: #f5f5f5;
-            border-radius: 10px;
-            border: 1px solid #e0e0e0;
+        .referral-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            border-radius: 8px 0 0 8px;
+            background: rgba(10, 10, 20, 0.5);
+            color: white;
+            outline: none;
         }
 
-        .promo-input-group {
+        .referral-copy-btn {
+            padding: 10px 15px;
+            background: rgba(106, 76, 255, 0.5);
+            color: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .referral-copy-btn:hover {
+            background: rgba(106, 76, 255, 0.7);
+        }
+
+        .referral-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+
+        .referral-stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--neon-color);
+        }
+
+        .referral-stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Секция промокодов */
+        .promo-section {
+            background: rgba(20, 20, 36, 0.7);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid rgba(0, 224, 255, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .promo-title {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: var(--neon-color);
+            text-align: center;
+        }
+
+        .promo-input-container {
             display: flex;
-            gap: 8px;
-            margin-top: 10px;
+            margin-bottom: 10px;
         }
 
         .promo-input {
             flex: 1;
-        }
-
-        .promo-btn {
-            width: auto;
-            padding: 0 15px;
-        }
-
-        .promo-success {
-            color: var(--success-color);
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        .promo-error {
-            color: var(--danger-color);
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        .referral-info {
-            margin-top: 15px;
             padding: 10px;
-            background: rgba(138, 43, 226, 0.1);
-            border-radius: 8px;
-            text-align: center;
+            border: 1px solid rgba(0, 224, 255, 0.3);
+            border-radius: 8px 0 0 8px;
+            background: rgba(10, 10, 20, 0.5);
+            color: white;
+            outline: none;
         }
 
-        .referral-link {
-            font-weight: bold;
-            word-break: break-all;
-            margin: 5px 0;
-            color: var(--primary-color);
-        }
-
-        .bonus-info {
-            font-size: 13px;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .copy-btn {
-            background: var(--primary-color);
+        .promo-apply-btn {
+            padding: 10px 15px;
+            background: rgba(0, 224, 255, 0.5);
             color: white;
             border: none;
-            border-radius: 6px;
-            padding: 6px 12px;
-            font-size: 14px;
+            border-radius: 0 8px 8px 0;
             cursor: pointer;
-            margin-top: 5px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+            transition: background 0.3s;
         }
 
-        .copy-btn:hover {
-            background: var(--secondary-color);
+        .promo-apply-btn:hover {
+            background: rgba(0, 224, 255, 0.7);
         }
 
-        .copy-btn svg {
-            width: 14px;
-            height: 14px;
-            fill: white;
+        /* Админ-панель */
+        .admin-panel {
+            display: none;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid var(--danger);
         }
-
-        .promo-bonus-info {
-            font-size: 14px;
-            color: var(--success-color);
-            font-weight: bold;
-            margin-top: 5px;
+        
+        .admin-title {
+            color: var(--danger);
             text-align: center;
+            margin-bottom: 15px;
         }
-
-        .referral-stats {
-            margin-top: 15px;
+        
+        .admin-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .admin-stat {
+            background: rgba(255, 77, 109, 0.1);
             padding: 10px;
-            background: rgba(138, 43, 226, 0.05);
+            border-radius: 10px;
+            border: 1px solid var(--danger);
+        }
+        
+        .admin-links {
+            margin-top: 15px;
+        }
+        
+        .admin-link {
+            display: block;
+            background: rgba(106, 76, 255, 0.2);
+            padding: 10px;
             border-radius: 8px;
-            border: 1px solid #eee;
-        }
-
-        .referral-stats h4 {
             margin-bottom: 8px;
-            color: var(--primary-color);
+            word-break: break-all;
+            color: var(--neon-color);
+            text-decoration: none;
         }
 
-        .referral-stats-item {
+        /* Уведомление */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 30, 46, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--neon-color);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(106, 76, 255, 0.3);
+            animation: slideIn 0.3s ease-out forwards;
+            max-width: 90%;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .notification.hide {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+
+        @keyframes slideOut {
+            from { opacity: 1; transform: translateX(-50%) translateY(0); }
+            to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
+
+        .notification-icon {
+            font-size: 20px;
+        }
+
+        /* Экран входа */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(15, 15, 26, 0.95);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .login-title {
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: transparent;
+            background: linear-gradient(90deg, var(--neon-color), var(--primary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-shadow: 0 0 10px rgba(106, 76, 255, 0.3);
+            font-weight: 700;
+        }
+
+        .login-btn {
+            padding: 15px 30px;
+            background: linear-gradient(90deg, var(--primary-color), #8a2be2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(106, 76, 255, 0.4);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(106, 76, 255, 0.6);
+        }
+
+        /* Адаптивность */
+        @media (max-width: 500px) {
+            .profile-card {
+                padding: 20px;
+                width: 95%;
+            }
+            
+            .profile-title {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            
+            .avatar-container {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .balance-value {
+                font-size: 24px;
+            }
+            
+            .stat-value {
+                font-size: 20px;
+            }
+            
+            .stats-grid, .referral-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .menu {
+                width: 200px;
+            }
         }
     </style>
 </head>
 <body>
-     <a href="javascript:history.back()" class="back-btn">
-        <svg viewBox="0 0 24 24">
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-        </svg>
-        Назад
-    </a>
-    
-    <div class="container">
-        <div class="card">
-            <h1>Пополнение баланса</h1>
+    <!-- Иконка меню -->
+    <div class="menu-icon" onclick="toggleMenu()">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Выпадающее меню -->
+    <div class="menu" id="menu">
+        <button class="menu-item" onclick="window.location.href='games.html'">
+            <i class="fas fa-gamepad"></i> Игры
+        </button>
+        <div class="menu-divider"></div>
+        <button class="menu-item" onclick="window.location.href='replenishment.html'">
+            <i class="fas fa-wallet"></i> Пополнение
+        </button>
+        <button class="menu-item" onclick="window.location.href='conclusion.html'">
+            <i class="fas fa-money-bill-wave"></i> Вывод
+        </button>
+        <button class="menu-item exchanger" onclick="window.location.href='Exchanger.html'">
+            <i class="fas fa-exchange-alt"></i> Обменник
+        </button>
+        <div class="menu-divider"></div>
+        <button class="menu-item" onclick="window.location.href='support.html'">
+            <i class="fas fa-headset"></i> Поддержка
+        </button>
+    </div>
+
+    <!-- Уведомление -->
+    <div class="notification" id="notification" style="display: none;">
+        <i class="fas fa-check-circle notification-icon"></i>
+        <span id="notification-message">Сообщение</span>
+    </div>
+
+    <!-- Звездный фон -->
+    <div class="stars" id="stars-container"></div>
+
+    <!-- Экран входа -->
+    <div class="login-screen" id="loginScreen">
+        <h1 class="login-title">Космический профиль</h1>
+        <button class="login-btn" id="loginBtn">
+            <i class="fab fa-telegram"></i> Войти через Telegram
+        </button>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="main-container" id="profileContainer" style="display: none;">
+        <div class="profile-card">
+            <h1 class="profile-title">КОСМИЧЕСКИЙ ПРОФИЛЬ</h1>
             
-            <form id="depositForm">
-                <div class="form-group">
-                    <label for="username">Ваш Telegram</label>
-                    <input type="text" id="username" placeholder="@username" required>
+            <div class="avatar-container">
+                <img id="avatar" src="" alt="Аватар" class="avatar">
+            </div>
+            
+            <h2 class="username" id="username">Загрузка...</h2>
+            
+            <div class="balance-container">
+                <div class="balance-label">Ваш баланс</div>
+                <div class="balance-value" id="balance">0 ⭐️</div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="games-played">0</div>
+                    <div class="stat-label">Игр сыграно</div>
                 </div>
-                
-                <div class="form-group">
-                    <label>Сумма пополнения (звёзды)</label>
-                    <div class="amount-buttons">
-                        <button type="button" class="amount-btn" data-amount="50">50</button>
-                        <button type="button" class="amount-btn" data-amount="100">100</button>
-                        <button type="button" class="amount-btn" data-amount="200">200</button>
-                        <button type="button" class="amount-btn" data-amount="500">500</button>
-                        <button type="button" class="amount-btn" data-amount="1000">1000</button>
-                        <input type="number" id="customAmount" class="amount-btn" placeholder="Другая сумма" min="50">
-                    </div>
-                    <div class="rate-info">1 звезда = 1.45₽ (мин. 50 звёзд)</div>
-                    <div class="stars-info" id="amountInRub">0 звёзд = 0₽</div>
-                    <div id="promoBonusInfo" class="promo-bonus-info" style="display: none;">+5% бонус по промокоду: <span id="activePromoCode"></span></div>
+                <div class="stat-card">
+                    <div class="stat-value" id="wins">0</div>
+                    <div class="stat-label">Побед</div>
                 </div>
-
-                <!-- Промокод секция -->
-                <div class="promo-container">
-                    <h3>Промокод</h3>
-                    <div id="promoForm">
-                        <div class="promo-input-group">
-                            <input type="text" id="promoCode" class="promo-input" placeholder="Введите промокод">
-                            <button type="button" class="btn btn-secondary promo-btn" id="applyPromoBtn">Применить</button>
-                        </div>
-                        <div id="promoMessage"></div>
-                    </div>
-                    <div id="activePromoSection" style="display: none;">
-                        <div class="promo-success">Активный промокод: <span id="currentPromoCode"></span></div>
-                        <button type="button" class="btn btn-secondary promo-btn" id="removePromoBtn" style="margin-top: 10px;">Удалить</button>
-                    </div>
-                </div>
-
-                <!-- Реферальная информация -->
-                <div class="referral-info" id="referralSection" style="display: none;">
-                    <h3>Ваша реферальная ссылка</h3>
-                    <div class="referral-link" id="userReferralLink"></div>
-                    <button class="copy-btn" id="copyReferralBtn">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                        </svg>
-                        Копировать
+            </div>
+            
+            <div class="referral-section">
+                <h3 class="referral-title">Реферальная программа</h3>
+                <div class="referral-input-container">
+                    <input type="text" id="referralCodeInput" class="referral-input" readonly>
+                    <button class="referral-copy-btn" onclick="copyReferralCode()">
+                        <i class="fas fa-copy"></i>
                     </button>
-                    <div class="bonus-info">Дайте эту ссылку другу. Когда он пополнит баланс, вы оба получите +5% к сумме пополнения!</div>
-                    
-                    <!-- Статистика рефералов -->
-                    <div class="referral-stats" id="referralStats" style="display: none;">
-                        <h4>Ваша реферальная статистика</h4>
-                        <div class="referral-stats-item">
-                            <span>Всего приглашено:</span>
-                            <span id="totalReferrals">0</span>
-                        </div>
-                        <div class="referral-stats-item">
-                            <span>Активных рефералов:</span>
-                            <span id="activeReferrals">0</span>
-                        </div>
-                        <div class="referral-stats-item">
-                            <span>Заработано:</span>
-                            <span id="totalEarned">0 звёзд</span>
-                        </div>
+                </div>
+                <div class="referral-stats">
+                    <div class="referral-stat">
+                        <div class="referral-stat-value" id="referralCount">0</div>
+                        <div class="referral-stat-label">Приглашено</div>
+                    </div>
+                    <div class="referral-stat">
+                        <div class="referral-stat-value" id="referralEarnings">0 ⭐️</div>
+                        <div class="referral-stat-label">Заработано</div>
+                    </div>
+                    <div class="referral-stat">
+                        <div class="referral-stat-value" id="referralDebt">0 ⭐️</div>
+                        <div class="referral-stat-label">Долг</div>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label>Способ оплаты</label>
-                    <div class="method-tabs">
-                        <div class="method-tab active" data-method="phone">По номеру</div>
-                        <div class="method-tab" data-method="card">По карте</div>
-                        <div class="method-tab" data-method="crypto">USDT</div>
+            </div>
+            
+            <div class="promo-section">
+                <h3 class="promo-title">Промокод</h3>
+                <div class="promo-input-container">
+                    <input type="text" id="promoCodeInput" class="promo-input" placeholder="Введите промокод">
+                    <button class="promo-apply-btn" onclick="applyPromoCode()">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="admin-panel" id="adminPanel">
+                <h3 class="admin-title">АДМИН ПАНЕЛЬ</h3>
+                <div class="admin-stats">
+                    <div class="admin-stat">
+                        <div class="stat-label">Всего рефералов</div>
+                        <div class="stat-value" id="totalReferrals">0</div>
                     </div>
-                    
-                    <div class="payment-details active" id="phoneDetails">
-                        <p><strong>Номер телефона:</strong> +79282067832</p>
-                        <div class="payment-comment">
-                            <div>Комментарий к платежу:</div>
-                            <div style="margin: 8px 0; font-size: 18px;" id="paymentComment"></div>
-                            <div class="comment-hint">Обязательно укажите этот комментарий при переводе</div>
-                        </div>
-                    </div>
-                    
-                    <div class="payment-details" id="cardDetails">
-                        <p><strong>Номер карты:</strong>2204320381304726</p>
-                        <p><strong>Получатель:</strong> Даниил Валерьевич С.</p>
-                        <div class="payment-comment">
-                            <div>Комментарий к платежу:</div>
-                            <div style="margin: 8px 0; font-size: 18px;" id="paymentCommentCard"></div>
-                            <div class="comment-hint">Обязательно укажите этот комментарий при переводе</div>
-                        </div>
-                    </div>
-                    
-                    <div class="payment-details" id="cryptoDetails">
-                        <p><strong>Адрес USDT (TRC20):</strong> TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB</p>
-                        <div class="payment-comment">
-                            <div>Комментарий к платежу:</div>
-                            <div style="margin: 8px 0; font-size: 18px;" id="paymentCommentCrypto"></div>
-                            <div class="comment-hint">Обязательно укажите этот комментарий при переводе</div>
-                        </div>
+                    <div class="admin-stat">
+                        <div class="stat-label">По промокодам</div>
+                        <div class="stat-value" id="totalPromoReferrals">0</div>
                     </div>
                 </div>
-                
-                <button type="submit" class="btn" id="submitBtn">
-                    <span id="btnText">Пополнить</span>
-                </button>
-            </form>
-        </div>
-
-        <div class="card" id="transactionsCard">
-            <h2>Мои транзакции</h2>
-            <div id="transactionsList"></div>
-        </div>
-
-        <div class="admin-panel" id="adminPanel">
-            <h2>Админ-панель</h2>
-            <div id="adminTransactions"></div>
+                <div class="admin-links">
+                    <a href="#" class="admin-link" id="refLink"></a>
+                    <a href="#" class="admin-link" id="promoLink"></a>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
     <script>
-        // Инициализация Firebase
+        // Конфигурация Firebase
         const firebaseConfig = {
-            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com/",
-            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8"
+            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
+            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
         };
-        
+
+        // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        
-        // Инициализация Telegram WebApp
-        const tg = window.Telegram.WebApp;
-        if (tg) {
-            tg.expand();
-        }
-        
-        // Конфигурация
-        const config = {
-            telegramSupport: "@support",
-            minStars: 50,
-            maxStars: 10000,
-            starRate: 1.45,
-            adminIds: ["1062148525", "1290724329"],
-            promoBonusPercent: 5, // 5% бонус за промокод
-            referralLossPercent: 30, // 30% от проигрыша рефереру
-            baseUrl: window.location.href.split('?')[0]
-        };
-        
-        // Основные переменные
-        let currentUser = null;
-        let selectedStars = 0;
-        let selectedMethod = "phone";
-        let paymentComment = 'ID' + Math.floor(100000 + Math.random() * 900000);
-        let isAdmin = false;
-        let activePromoCode = null;
-        let userReferralCode = null;
-        let userReferralLink = null;
 
-        // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', async () => {
-            showLoading("Инициализация...");
-            
-            try {
-                // Установка комментария
-                document.getElementById('paymentComment').textContent = paymentComment;
-                document.getElementById('paymentCommentCard').textContent = paymentComment;
-                document.getElementById('paymentCommentCrypto').textContent = paymentComment;
-                
-                // Получаем данные пользователя Telegram
-                const tgUser = tg?.initDataUnsafe?.user;
-                if (tgUser) {
-                    document.getElementById('username').value = tgUser.username ? `@${tgUser.username}` : '';
-                    currentUser = await updateTelegramUser(tgUser);
-                    
-                    // Проверяем, является ли пользователь администратором
-                    isAdmin = config.adminIds.includes(tgUser.id.toString());
-                    if (isAdmin) {
-                        document.getElementById('adminPanel').style.display = 'block';
-                        loadAdminTransactions();
-                    }
-                    
-                    // Загружаем реферальные данные пользователя
-                    await loadUserReferralData(tgUser.id.toString());
-                    
-                    // Проверяем реферальный код в URL
-                    checkReferralCode();
-                    
-                    loadUserTransactions(tgUser.id.toString());
-                } else {
-                    loadUserTransactions('anonymous');
-                }
-                
-                initForm();
-                hideLoading();
-            } catch (error) {
-                console.error("Ошибка инициализации:", error);
-                hideLoading();
-                showError("Произошла ошибка при загрузке. Пожалуйста, попробуйте позже.");
-            }
+        // Основные элементы
+        const elements = {
+            loginScreen: document.getElementById('loginScreen'),
+            loginBtn: document.getElementById('loginBtn'),
+            profileContainer: document.getElementById('profileContainer'),
+            avatar: document.getElementById('avatar'),
+            username: document.getElementById('username'),
+            balance: document.getElementById('balance'),
+            gamesPlayed: document.getElementById('games-played'),
+            wins: document.getElementById('wins'),
+            referralCodeInput: document.getElementById('referralCodeInput'),
+            referralCount: document.getElementById('referralCount'),
+            referralEarnings: document.getElementById('referralEarnings'),
+            referralDebt: document.getElementById('referralDebt'),
+            promoCodeInput: document.getElementById('promoCodeInput'),
+            adminPanel: document.getElementById('adminPanel'),
+            totalReferrals: document.getElementById('totalReferrals'),
+            totalPromoReferrals: document.getElementById('totalPromoReferrals'),
+            refLink: document.getElementById('refLink'),
+            promoLink: document.getElementById('promoLink'),
+            notification: document.getElementById('notification'),
+            notificationMessage: document.getElementById('notification-message')
+        };
+
+        // Данные пользователя
+        let userData = {
+            userId: null,
+            name: "Гость",
+            avatar: "https://via.placeholder.com/150/6a5acd/ffffff?text=USER",
+            balance: 0,
+            gamesPlayed: 0,
+            wins: 0,
+            registrationDate: new Date().toISOString(),
+            referralCode: null,
+            referredBy: null,
+            referralCount: 0,
+            referralEarnings: 0,
+            referralDebt: 0,
+            myPromoCode: null,
+            usedPromoCodes: [],
+            promoReferrals: [],
+            isAdmin: false
+        };
+
+        // Ссылка на данные пользователя в Firebase
+        let userRef;
+        let unsubscribeAuth;
+
+        // Переменные для обработки свайпа
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars();
+            initApp();
+            setupSwipeGestures();
         });
 
-        // Проверка реферального кода в URL
-        function checkReferralCode() {
-            if (!currentUser) return;
+        // Настройка жестов свайпа
+        function setupSwipeGestures() {
+            document.addEventListener('touchstart', function(event) {
+                touchStartX = event.changedTouches[0].screenX;
+                touchStartY = event.changedTouches[0].screenY;
+            }, false);
             
-            const urlParams = new URLSearchParams(window.location.search);
-            const refCode = urlParams.get('ref');
+            document.addEventListener('touchend', function(event) {
+                touchEndX = event.changedTouches[0].screenX;
+                touchEndY = event.changedTouches[0].screenY;
+                handleSwipe();
+            }, false);
+        }
+
+        function handleSwipe() {
+            const dx = touchEndX - touchStartX;
+            const dy = touchEndY - touchStartY;
             
-            if (refCode && refCode !== userReferralCode) {
-                // Сохраняем реферала в базу данных
-                database.ref(`users/${currentUser.key}`).update({
-                    referredBy: refCode,
-                    referralActivated: firebase.database.ServerValue.TIMESTAMP
-                });
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 50) {
+                    // Свайп вправо
+                    toggleMenu();
+                } else if (dx < -50) {
+                    // Свайп влево
+                    if (document.getElementById('menu').style.display === 'flex') {
+                        toggleMenu();
+                    }
+                }
             }
         }
 
-        // Загрузка реферальных данных пользователя
-        async function loadUserReferralData(userId) {
-            const userRef = database.ref(`users/${userId}`);
-            const snapshot = await userRef.once('value');
-            
-            if (snapshot.exists()) {
-                const userData = snapshot.val();
+        // Основная функция инициализации
+        async function initApp() {
+            if (window.Telegram && Telegram.WebApp) {
+                Telegram.WebApp.expand();
+                Telegram.WebApp.enableClosingConfirmation();
                 
-                // Проверяем активный промокод
-                if (userData.activePromoCode) {
-                    activePromoCode = userData.activePromoCode;
-                    showActivePromoCode(activePromoCode);
-                }
-                
-                // Генерируем или получаем реферальный код пользователя
-                if (userData.referralCode) {
-                    userReferralCode = userData.referralCode;
+                if (Telegram.WebApp.initDataUnsafe?.user) {
+                    await handleLogin();
                 } else {
-                    // Генерируем уникальный реферальный код
-                    userReferralCode = 'REF' + Math.floor(1000 + Math.random() * 9000);
-                    await userRef.update({ referralCode: userReferralCode });
+                    showLoginScreen();
                 }
-                
-                // Создаем реферальную ссылку
-                userReferralLink = `${config.baseUrl}?ref=${userReferralCode}`;
-                
-                // Показываем реферальную секцию
-                document.getElementById('referralSection').style.display = 'block';
-                document.getElementById('userReferralLink').textContent = userReferralLink;
-                
-                // Загружаем статистику рефералов
-                if (userData.referralStats) {
-                    document.getElementById('referralStats').style.display = 'block';
-                    document.getElementById('totalReferrals').textContent = userData.referralStats.totalReferrals || 0;
-                    document.getElementById('activeReferrals').textContent = userData.referralStats.activeReferrals || 0;
-                    document.getElementById('totalEarned').textContent = (userData.referralStats.totalEarned || 0) + ' звёзд';
-                }
-            }
-        }
-
-        // Показать активный промокод
-        function showActivePromoCode(promoCode) {
-            document.getElementById('promoForm').style.display = 'none';
-            document.getElementById('activePromoSection').style.display = 'block';
-            document.getElementById('currentPromoCode').textContent = promoCode;
-            document.getElementById('promoBonusInfo').style.display = 'block';
-            document.getElementById('activePromoCode').textContent = promoCode;
-            
-            // Обновляем отображение суммы с учетом бонуса
-            updateAmountInRub();
-        }
-
-        // Скрыть активный промокод
-        function hideActivePromoCode() {
-            document.getElementById('promoForm').style.display = 'block';
-            document.getElementById('activePromoSection').style.display = 'none';
-            document.getElementById('promoBonusInfo').style.display = 'none';
-            activePromoCode = null;
-            
-            // Обновляем отображение суммы без бонуса
-            updateAmountInRub();
-        }
-
-        // Обновление данных пользователя
-        async function updateTelegramUser(tgUser) {
-            if (!tgUser?.id) return;
-            
-            const userId = tgUser.id.toString();
-            const userRef = database.ref(`users/${userId}`);
-            const snapshot = await userRef.once('value');
-            
-            const userData = {
-                id: userId,
-                username: tgUser.username || '',
-                first_name: tgUser.first_name || '',
-                last_name: tgUser.last_name || '',
-                last_active: firebase.database.ServerValue.TIMESTAMP
-            };
-            
-            if (!snapshot.exists()) {
-                userData.created_at = firebase.database.ServerValue.TIMESTAMP;
-                userData.balance = 0;
-                await userRef.set(userData);
             } else {
-                await userRef.update(userData);
+                showLoginScreen();
             }
-            
-            return { key: userId, ref: userRef };
         }
 
-        // Инициализация формы
-        function initForm() {
-            // Обработчики кнопок суммы
-            document.querySelectorAll('.amount-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const stars = parseInt(this.dataset.amount) || parseInt(this.value) || 0;
-                    selectStars(stars);
-                });
-            });
-            
-            // Обработчик ввода произвольной суммы
-            document.getElementById('customAmount').addEventListener('input', function() {
-                const stars = parseInt(this.value) || 0;
-                selectStars(stars);
-            });
-
-            // Обработчики вкладок методов оплаты
-            document.querySelectorAll('.method-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    selectedMethod = this.dataset.method;
-                    
-                    document.querySelectorAll('.payment-details').forEach(d => d.classList.remove('active'));
-                    document.getElementById(`${selectedMethod}Details`).classList.add('active');
-                });
-            });
-            
-            // Обработчик кнопки применения промокода
-            document.getElementById('applyPromoBtn').addEventListener('click', applyPromoCode);
-            
-            // Обработчик кнопки удаления промокода
-            document.getElementById('removePromoBtn').addEventListener('click', removePromoCode);
-            
-            // Обработчик кнопки копирования реферальной ссылки
-            document.getElementById('copyReferralBtn').addEventListener('click', copyReferralLink);
+        function showLoginScreen() {
+            elements.loginScreen.style.display = 'flex';
+            elements.profileContainer.style.display = 'none';
+            elements.loginBtn.onclick = () => {
+                if (window.Telegram && Telegram.WebApp) {
+                    Telegram.WebApp.openTelegramLink('https://t.me/YourBotUsername');
+                } else {
+                    alert("Пожалуйста, откройте приложение через Telegram");
+                }
+            };
         }
-        
-        // Копирование реферальной ссылки
-        function copyReferralLink() {
-            navigator.clipboard.writeText(userReferralLink)
-                .then(() => {
-                    const btn = document.getElementById('copyReferralBtn');
-                    btn.innerHTML = `
-                        <svg viewBox="0 0 24 24">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                        </svg>
-                        Скопировано!
-                    `;
-                    setTimeout(() => {
-                        btn.innerHTML = `
-                            <svg viewBox="0 0 24 24">
-                                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                            </svg>
-                            Копировать
-                        `;
-                    }, 2000);
-                })
-                .catch(err => {
-                    console.error('Ошибка копирования: ', err);
-                    alert('Не удалось скопировать ссылку');
-                });
+
+        // Обработка входа через Telegram
+        async function handleLogin() {
+            try {
+                const tgUser = Telegram.WebApp.initDataUnsafe.user;
+                userData.userId = tgUser.id.toString();
+                
+                // Инициализация ссылки на данные пользователя
+                userRef = database.ref('users/' + userData.userId);
+                
+                // Проверяем существование пользователя
+                const snapshot = await userRef.once('value');
+                
+                if (!snapshot.exists()) {
+                    await createNewUser();
+                } else {
+                    userData = {...userData, ...snapshot.val()};
+                }
+                
+                // Настраиваем слушатель изменений в реальном времени
+                setupRealtimeUpdates();
+                
+                // Обрабатываем реферальную ссылку
+                await processReferralLink();
+                
+                // Обрабатываем промокод из URL
+                await processPromoCode();
+                
+                showProfile();
+            } catch (error) {
+                console.error("Ошибка входа:", error);
+                showNotification("Ошибка входа. Попробуйте снова.", "error");
+                showLoginScreen();
+            }
+        }
+
+        // Создание нового пользователя
+        async function createNewUser() {
+            // Проверяем, является ли пользователь первым (админом)
+            const usersSnapshot = await database.ref('users').once('value');
+            userData.isAdmin = !usersSnapshot.exists();
+            
+            userData.referralCode = generateReferralCode();
+            userData.myPromoCode = generatePromoCode();
+            userData.name = Telegram.WebApp.initDataUnsafe.user.first_name || 
+                           Telegram.WebApp.initDataUnsafe.user.username || 
+                           "Космонавт";
+            userData.avatar = Telegram.WebApp.initDataUnsafe.user.photo_url || 
+                            `https://via.placeholder.com/150/6a5acd/ffffff?text=${userData.name.charAt(0)}`;
+            
+            await userRef.set(userData);
+            showNotification("Новый профиль создан!", "success");
+        }
+
+        // Генерация реферального кода
+        function generateReferralCode() {
+            return 'REF-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+        }
+
+        // Генерация промокода
+        function generatePromoCode() {
+            return 'PROMO-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+        }
+
+        // Обработка реферальной ссылки
+        async function processReferralLink() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const referralCode = urlParams.get('ref');
+            
+            if (referralCode && !userData.referredBy) {
+                const referrerSnapshot = await database.ref('users')
+                    .orderByChild('referralCode')
+                    .equalTo(referralCode)
+                    .once('value');
+                
+                if (referrerSnapshot.exists()) {
+                    const [referrerId, referrerData] = Object.entries(referrerSnapshot.val())[0];
+                    userData.referredBy = referrerId;
+                    
+                    await database.ref(`users/${referrerId}`).update({
+                        referralCount: firebase.database.ServerValue.increment(1)
+                    });
+                    
+                    await userRef.update({
+                        referredBy: referrerId
+                    });
+                    
+                    showNotification("Вы успешно зарегистрировались по реферальной ссылке!", "success");
+                }
+            }
+        }
+
+        // Обработка промокода из URL
+        async function processPromoCode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const promoCode = urlParams.get('promo');
+            
+            if (promoCode && !userData.usedPromoCodes?.includes(promoCode)) {
+                await applyPromoCode(promoCode);
+            }
         }
 
         // Применение промокода
-        async function applyPromoCode() {
-            const promoCodeInput = document.getElementById('promoCode');
-            const promoCode = promoCodeInput.value.trim().toUpperCase();
-            const promoMessage = document.getElementById('promoMessage');
-            
-            if (!promoCode) {
-                promoMessage.className = 'promo-error';
-                promoMessage.textContent = 'Введите промокод';
-                return;
-            }
-            
-            showLoading("Проверка промокода...");
-            
+        async function applyPromoCode(code = null) {
             try {
-                // Проверяем, существует ли такой промокод
-                const usersRef = database.ref('users');
-                const snapshot = await usersRef.orderByChild('referralCode').equalTo(promoCode).once('value');
+                const promoCode = code || elements.promoCodeInput.value.trim();
                 
-                if (!snapshot.exists()) {
-                    hideLoading();
-                    promoMessage.className = 'promo-error';
-                    promoMessage.textContent = 'Промокод не найден';
+                if (!promoCode) {
+                    showNotification("Введите промокод", "warning");
                     return;
                 }
                 
-                // Получаем данные пользователя, которому принадлежит промокод
-                let promoOwner = null;
-                snapshot.forEach(child => {
-                    promoOwner = {
-                        id: child.key,
-                        ...child.val()
-                    };
-                });
-                
-                // Проверяем, что пользователь не применяет свой же промокод
-                if (currentUser && promoOwner.id === currentUser.key) {
-                    hideLoading();
-                    promoMessage.className = 'promo-error';
-                    promoMessage.textContent = 'Нельзя использовать свой промокод';
+                if (userData.usedPromoCodes?.includes(promoCode)) {
+                    showNotification("Вы уже использовали этот промокод", "warning");
                     return;
                 }
                 
-                // Сохраняем промокод для текущего пользователя
-                await database.ref(`users/${currentUser.key}`).update({
-                    activePromoCode: promoCode,
-                    promoUsed: firebase.database.ServerValue.TIMESTAMP
+                // Проверяем, не пытается ли пользователь использовать свой промокод
+                if (promoCode === userData.myPromoCode) {
+                    showNotification("Нельзя использовать собственный промокод", "warning");
+                    return;
+                }
+                
+                // Ищем пользователя с таким промокодом
+                const promoUserSnapshot = await database.ref('users')
+                    .orderByChild('myPromoCode')
+                    .equalTo(promoCode)
+                    .once('value');
+                
+                if (!promoUserSnapshot.exists()) {
+                    showNotification("Промокод не найден", "error");
+                    return;
+                }
+                
+                const [promoUserId, promoUserData] = Object.entries(promoUserSnapshot.val())[0];
+                
+                // Добавляем пользователя в список промо-рефералов
+                await database.ref(`users/${promoUserId}/promoReferrals`)
+                    .transaction((currentRefs) => {
+                        if (!currentRefs) return [userData.userId];
+                        if (!currentRefs.includes(userData.userId)) {
+                            return [...currentRefs, userData.userId];
+                        }
+                        return currentRefs;
+                    });
+                
+                // Добавляем промокод в список использованных
+                await userRef.update({
+                    usedPromoCodes: firebase.database.ServerValue.arrayUnion(promoCode)
                 });
                 
-                // Сохраняем информацию о том, кто использовал промокод
-                const referralData = {
-                    userId: currentUser.key,
-                    username: document.getElementById('username').value.trim(),
-                    promoCode: promoCode,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                };
+                // Обновляем локальные данные
+                if (!userData.usedPromoCodes) userData.usedPromoCodes = [];
+                userData.usedPromoCodes.push(promoCode);
                 
-                await database.ref(`referrals/${promoOwner.id}/${currentUser.key}`).set(referralData);
-                
-                // Обновляем статистику реферера
-                await database.ref(`users/${promoOwner.id}/referralStats`).transaction(stats => {
-                    if (!stats) {
-                        stats = {
-                            totalReferrals: 0,
-                            activeReferrals: 0,
-                            totalEarned: 0
-                        };
-                    }
-                    stats.totalReferrals = (stats.totalReferrals || 0) + 1;
-                    stats.activeReferrals = (stats.activeReferrals || 0) + 1;
-                    return stats;
-                });
-                
-                // Обновляем UI
-                activePromoCode = promoCode;
-                showActivePromoCode(promoCode);
-                promoCodeInput.value = '';
-                promoMessage.textContent = '';
-                
-                hideLoading();
-                showMessage("Промокод успешно применен! Вы получите +5% к сумме пополнения.");
+                showNotification("Промокод успешно активирован! 5% от ваших пополнений будет идти владельцу промокода.", "success");
+                elements.promoCodeInput.value = "";
             } catch (error) {
-                hideLoading();
                 console.error("Ошибка применения промокода:", error);
-                promoMessage.className = 'promo-error';
-                promoMessage.textContent = 'Ошибка применения промокода';
+                showNotification("Ошибка при применении промокода", "error");
             }
         }
-        
-        // Удаление промокода
-        async function removePromoCode() {
-            showLoading("Удаление промокода...");
-            
-            try {
-                await database.ref(`users/${currentUser.key}`).update({
-                    activePromoCode: null
-                });
-                
-                hideActivePromoCode();
-                hideLoading();
-                showMessage("Промокод удален");
-            } catch (error) {
-                hideLoading();
-                console.error("Ошибка удаления промокода:", error);
-                showError("Не удалось удалить промокод");
+
+        // Настройка синхронизации в реальном времени
+        function setupRealtimeUpdates() {
+            if (unsubscribeAuth) {
+                unsubscribeAuth(); // Отписываемся от предыдущего слушателя
             }
-        }
-        
-        // Выбор суммы в звездах
-        function selectStars(stars) {
-            selectedStars = stars;
             
-            // Обновляем активные кнопки
-            document.querySelectorAll('.amount-btn').forEach(btn => {
-                const btnStars = parseInt(btn.dataset.amount) || 0;
-                btn.classList.toggle('active', btnStars === stars && stars > 0);
+            unsubscribeAuth = userRef.on('value', (snapshot) => {
+                const dbData = snapshot.val();
+                if (dbData) {
+                    // Обновляем только измененные поля
+                    Object.keys(dbData).forEach(key => {
+                        if (userData[key] !== dbData[key]) {
+                            userData[key] = dbData[key];
+                        }
+                    });
+                    updateUI();
+                }
+            }, (error) => {
+                console.error("Ошибка синхронизации:", error);
+                showNotification("Ошибка соединения с сервером", "error");
             });
-            
-            // Обновляем поле произвольной суммы
-            if (stars > 0 && !document.querySelector(`.amount-btn[data-amount="${stars}"]`)) {
-                document.getElementById('customAmount').value = stars;
-            } else if (stars === 0) {
-                document.getElementById('customAmount').value = '';
-            }
-            
-            // Обновляем отображение суммы в рублях
-            updateAmountInRub();
         }
-        
-        // Обновление отображения суммы в рублях
-        function updateAmountInRub() {
-            let stars = selectedStars;
-            let bonusStars = 0;
+
+        // Обновление интерфейса
+        function updateUI() {
+            elements.avatar.src = userData.avatar;
+            elements.username.textContent = userData.name;
+            elements.balance.textContent = `${userData.balance} ⭐️`;
+            elements.gamesPlayed.textContent = userData.gamesPlayed;
+            elements.wins.textContent = userData.wins;
+            elements.referralCodeInput.value = userData.referralCode || "";
+            elements.referralCount.textContent = userData.referralCount || 0;
+            elements.referralEarnings.textContent = `${userData.referralEarnings || 0} ⭐️`;
+            elements.referralDebt.textContent = `${userData.referralDebt || 0} ⭐️`;
             
-            if (activePromoCode && stars > 0) {
-                bonusStars = Math.floor(stars * (config.promoBonusPercent / 100));
-            }
-            
-            const totalStars = stars + bonusStars;
-            const rub = (stars * config.starRate).toFixed(2);
-            
-            if (bonusStars > 0) {
-                document.getElementById('amountInRub').innerHTML = 
-                    `${stars} звёзд + ${bonusStars} бонус = ${totalStars} звёзд (${rub}₽)`;
+            // Обновляем админ-панель
+            if (userData.isAdmin) {
+                elements.adminPanel.style.display = 'block';
+                elements.totalReferrals.textContent = userData.referralCount || 0;
+                elements.totalPromoReferrals.textContent = userData.promoReferrals?.length || 0;
+                
+                // Генерируем ссылки
+                const currentUrl = window.location.href.split('?')[0];
+                elements.refLink.textContent = `${currentUrl}?ref=${userData.referralCode}`;
+                elements.refLink.href = `${currentUrl}?ref=${userData.referralCode}`;
+                
+                elements.promoLink.textContent = `${currentUrl}?promo=${userData.myPromoCode}`;
+                elements.promoLink.href = `${currentUrl}?promo=${userData.myPromoCode}`;
             } else {
-                document.getElementById('amountInRub').textContent = 
-                    `${stars} звёзд = ${rub}₽`;
+                elements.adminPanel.style.display = 'none';
             }
         }
 
-        // Загрузка транзакций пользователя
-        function loadUserTransactions(userId) {
-            const container = document.getElementById('transactionsList');
-            container.innerHTML = '<p>Загрузка истории...</p>';
-            
-            database.ref('transactions')
-                .orderByChild('userId')
-                .equalTo(userId)
-                .limitToLast(10)
-                .once('value', snapshot => {
-                    container.innerHTML = '';
-                    
-                    if (!snapshot.exists()) {
-                        container.innerHTML = '<p>Нет транзакций</p>';
-                        return;
-                    }
-                    
-                    const transactions = [];
-                    snapshot.forEach(child => {
-                        transactions.push({
-                            id: child.key,
-                            ...child.val()
-                        });
-                    });
-                    
-                    transactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                    
-                    transactions.forEach(t => {
-                        container.appendChild(createTransactionElement(t));
-                    });
-                });
-        }
-        
-        // Создание элемента транзакции
-        function createTransactionElement(t) {
-            const el = document.createElement('div');
-            el.className = 'transaction-item';
-            
-            const methods = { 
-                'phone': 'По номеру', 
-                'card': 'По карте', 
-                'crypto': 'USDT' 
-            };
-            
-            const statuses = {
-                'pending': { class: 'status-pending', text: 'Ожидает' },
-                'completed': { class: 'status-completed', text: 'Одобрено' },
-                'failed': { class: 'status-failed', text: 'Отклонено' }
-            };
-            
-            const status = statuses[t.status] || { class: '', text: t.status };
-            const date = t.timestamp ? new Date(t.timestamp).toLocaleString('ru-RU') : '';
-            const rub = (t.stars * config.starRate).toFixed(2);
-            
-            let bonusInfo = '';
-            if (t.bonusStars) {
-                bonusInfo = `<div>Бонус: +${t.bonusStars} звёзд (промокод: ${t.promoCode || 'нет'})</div>`;
-            }
-            
-            el.innerHTML = `
-                <div>
-                    <span class="transaction-status ${status.class}">${status.text}</span>
-                    <strong>${t.stars} звёзд (${rub}₽)</strong>
-                </div>
-                ${bonusInfo}
-                <div>Метод: ${methods[t.method] || t.method}</div>
-                <div>Комментарий: ${t.comment || 'нет'}</div>
-                <small>${date}</small>
-            `;
-            
-            return el;
+        // Показать профиль
+        function showProfile() {
+            elements.loginScreen.style.display = 'none';
+            elements.profileContainer.style.display = 'flex';
+            updateUI();
         }
 
-        // Загрузка транзакций для админ-панели
-        function loadAdminTransactions() {
-            const container = document.getElementById('adminTransactions');
-            container.innerHTML = '<p>Загрузка транзакций...</p>';
-            
-            database.ref('transactions')
-                .orderByChild('timestamp')
-                .limitToLast(50)
-                .once('value', snapshot => {
-                    container.innerHTML = '';
-                    
-                    if (!snapshot.exists()) {
-                        container.innerHTML = '<p>Нет транзакций</p>';
-                        return;
-                    }
-                    
-                    const transactions = [];
-                    snapshot.forEach(child => {
-                        transactions.push({
-                            id: child.key,
-                            ...child.val()
-                        });
-                    });
-                    
-                    transactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                    
-                    transactions.forEach(t => {
-                        container.appendChild(createAdminTransactionElement(t));
-                    });
-                });
-        }
-        
-        // Создание элемента транзакции для админ-панели
-        function createAdminTransactionElement(t) {
-            const el = document.createElement('div');
-            el.className = 'transaction-item';
-            
-            const methods = { 
-                'phone': 'По номеру', 
-                'card': 'По карте', 
-                'crypto': 'USDT' 
-            };
-            
-            const statuses = {
-                'pending': { class: 'status-pending', text: 'Ожидает' },
-                'completed': { class: 'status-completed', text: 'Одобрено' },
-                'failed': { class: 'status-failed', text: 'Отклонено' }
-            };
-            
-            const status = statuses[t.status] || { class: '', text: t.status };
-            const date = t.timestamp ? new Date(t.timestamp).toLocaleString('ru-RU') : '';
-            const rub = (t.stars * config.starRate).toFixed(2);
-            
-            let bonusInfo = '';
-            if (t.bonusStars) {
-                bonusInfo = `<div>Бонус: +${t.bonusStars} звёзд (промокод: ${t.promoCode || 'нет'})</div>`;
-            }
-            
-            el.innerHTML = `
-                <div>
-                    <span class="transaction-status ${status.class}">${status.text}</span>
-                    <strong>${t.username || 'Аноним'}</strong>
-                </div>
-                <div>${t.stars} звёзд (${rub}₽) - ${methods[t.method] || t.method}</div>
-                ${bonusInfo}
-                <div>Комментарий: ${t.comment || 'нет'}</div>
-                <small>${date}</small>
-                
-                ${t.status === 'pending' ? `
-                <div class="admin-controls">
-                    <button class="admin-btn approve-btn" onclick="updateTransactionStatus('${t.id}', 'completed', ${t.stars + (t.bonusStars || 0)}, '${t.userId}')">
-                        Одобрить
-                    </button>
-                    <button class="admin-btn reject-btn" onclick="updateTransactionStatus('${t.id}', 'failed')">
-                        Отклонить
-                    </button>
-                </div>
-                ` : ''}
-            `;
-            
-            return el;
+        // Копирование реферального кода
+        function copyReferralCode() {
+            const input = document.getElementById('referralCodeInput');
+            input.select();
+            document.execCommand('copy');
+            showNotification('Реферальный код скопирован!', 'success');
         }
 
-        // Обновление статуса транзакции
-        async function updateTransactionStatus(id, status, stars, userId) {
-            showLoading("Обновление статуса...");
-            
+        // Пополнение баланса с реферальными бонусами и промокодами
+        async function addBalance(amount) {
             try {
-                // Получаем данные транзакции
-                const transactionRef = database.ref(`transactions/${id}`);
-                const snapshot = await transactionRef.once('value');
-                const transaction = snapshot.val();
-                
-                // Обновляем статус транзакции
-                await transactionRef.update({ status });
-                
-                // Если статус "completed", добавляем звёзды пользователю
-                if (status === 'completed' && userId && stars) {
-                    const userRef = database.ref(`users/${userId}`);
-                    const userSnapshot = await userRef.once('value');
+                if (!userData.userId || amount <= 0) return;
+
+                // Транзакция для безопасного обновления баланса
+                await database.ref(`users/${userData.userId}/balance`)
+                    .transaction(currentBalance => {
+                        return (currentBalance || 0) + amount + (amount * 0.05); // Основная сумма + 5% бонус
+                    });
+
+                // Начисление реферального бонуса (30%)
+                if (userData.referredBy) {
+                    const referralBonus = amount * 0.3;
+                    await database.ref(`users/${userData.referredBy}`).update({
+                        balance: firebase.database.ServerValue.increment(referralBonus),
+                        referralEarnings: firebase.database.ServerValue.increment(referralBonus)
+                    });
+                }
+
+                // Начисление бонуса владельцам промокодов (5%)
+                if (userData.usedPromoCodes?.length > 0) {
+                    const promoBonus = amount * 0.05;
+                    const promoUsersSnapshot = await database.ref('users')
+                        .orderByChild('myPromoCode')
+                        .once('value');
                     
-                    if (userSnapshot.exists()) {
-                        const currentBalance = userSnapshot.val().balance || 0;
-                        await userRef.update({ 
-                            balance: currentBalance + stars 
-                        });
-                        
-                        // Начисляем реферальные бонусы
-                        await processReferralBonuses(transaction, userId, stars);
+                    if (promoUsersSnapshot.exists()) {
+                        const promoUsers = promoUsersSnapshot.val();
+                        for (const promoCode of userData.usedPromoCodes) {
+                            for (const [userId, user] of Object.entries(promoUsers)) {
+                                if (user.myPromoCode === promoCode) {
+                                    await database.ref(`users/${userId}/balance`)
+                                        .transaction((bal) => (bal || 0) + promoBonus);
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
                 
-                hideLoading();
-                showSuccess("Статус транзакции обновлен");
-                loadAdminTransactions();
+                showNotification(`Баланс пополнен на ${amount} ⭐️ (+5% бонус)`, 'success');
             } catch (error) {
-                hideLoading();
-                console.error("Ошибка обновления статуса:", error);
-                showError("Не удалось обновить статус транзакции");
+                console.error("Ошибка пополнения:", error);
+                showNotification("Ошибка при пополнении баланса", "error");
             }
         }
 
-        // Обработка реферальных бонусов
-        async function processReferralBonuses(transaction, userId, stars) {
-            const userRef = database.ref(`users/${userId}`);
-            const userSnapshot = await userRef.once('value');
-            const userData = userSnapshot.val();
-            
-            // 1. Если был использован промокод - начисляем 5% бонус обоим
-            if (transaction.promoCode) {
-                await processPromoCodeBonus(transaction, userId, stars);
+        // Вывод средств с обработкой долга
+        async function withdraw(amount) {
+            try {
+                if (!userData.userId || amount <= 0) return;
+
+                const transaction = await database.ref(`users/${userData.userId}/balance`)
+                    .transaction(currentBalance => {
+                        if (currentBalance >= amount) {
+                            return currentBalance - amount;
+                        }
+                        return currentBalance; // Отмена транзакции
+                    });
+
+                if (transaction.committed) {
+                    showNotification(`Успешно выведено ${amount} ⭐️`, 'success');
+                } else {
+                    await handleWithdrawError(amount);
+                }
+            } catch (error) {
+                console.error("Ошибка вывода:", error);
+                showNotification("Ошибка при выводе средств", "error");
             }
-            
-            // 2. Если пользователь был приглашен по реферальной ссылке
+        }
+
+        // Обработка недостатка средств при выводе
+        async function handleWithdrawError(amount) {
+            const snapshot = await database.ref(`users/${userData.userId}`).once('value');
+            const currentBalance = snapshot.val().balance || 0;
+            const debt = amount - currentBalance;
+
+            // Обнуляем баланс пользователя
+            await database.ref(`users/${userData.userId}`).update({
+                balance: 0
+            });
+
+            // Если есть реферер, добавляем ему долг
             if (userData.referredBy) {
-                await processReferralLinkBonus(transaction, userId, stars, userData.referredBy);
+                await database.ref(`users/${userData.referredBy}`).update({
+                    referralDebt: firebase.database.ServerValue.increment(debt)
+                });
             }
+
+            showNotification(`Создан долг: ${debt} ⭐️`, 'warning');
         }
 
-        // Обработка бонуса за промокод (5% обоим)
-        async function processPromoCodeBonus(transaction, userId, stars) {
-            const promoUsersRef = database.ref('users');
-            const promoSnapshot = await promoUsersRef.orderByChild('referralCode').equalTo(transaction.promoCode).once('value');
+        // Создание звездного фона
+        function createStars() {
+            const container = document.getElementById('stars-container');
+            const starCount = Math.floor(window.innerWidth / 2);
             
-            if (promoSnapshot.exists()) {
-                promoSnapshot.forEach(child => {
-                    const promoOwnerId = child.key;
-                    if (promoOwnerId !== userId) {
-                        const referralBonus = Math.floor(transaction.stars * (config.promoBonusPercent / 100));
-                        
-                        // Обновляем баланс владельца промокода
-                        database.ref(`users/${promoOwnerId}`).transaction(user => {
-                            if (user) {
-                                user.balance = (user.balance || 0) + referralBonus;
-                                
-                                // Сохраняем историю реферальных начислений
-                                const referralHistory = {
-                                    type: 'promo_bonus',
-                                    userId: userId,
-                                    username: transaction.username,
-                                    stars: transaction.stars,
-                                    bonus: referralBonus,
-                                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                                };
-                                
-                                if (!user.referralHistory) {
-                                    user.referralHistory = {};
-                                }
-                                
-                                user.referralHistory[transactionRef.key] = referralHistory;
-                                
-                                // Обновляем статистику реферера
-                                if (!user.referralStats) {
-                                    user.referralStats = {
-                                        totalReferrals: 0,
-                                        activeReferrals: 0,
-                                        totalEarned: 0
-                                    };
-                                }
-                                user.referralStats.totalEarned = (user.referralStats.totalEarned || 0) + referralBonus;
-                            }
-                            return user;
-                        });
-                    }
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const size = Math.random() * 3;
+                const duration = 2 + Math.random() * 8;
+                const delay = Math.random() * 5;
+                
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.animationDuration = `${duration}s`;
+                star.style.animationDelay = `${delay}s`;
+                star.style.opacity = Math.random();
+                
+                container.appendChild(star);
+                
+                star.addEventListener('animationend', () => {
+                    star.remove();
+                    createStar();
                 });
             }
         }
 
-        // Обработка бонуса за реферальную ссылку (30% от проигрыша)
-        async function processReferralLinkBonus(transaction, userId, stars, referredBy) {
-            // Находим пользователя, который привел
-            const referrerRef = database.ref('users');
-            const referrerSnapshot = await referrerRef.orderByChild('referralCode').equalTo(referredBy).once('value');
+        function createStar() {
+            const container = document.getElementById('stars-container');
+            const star = document.createElement('div');
+            star.className = 'star';
             
-            if (referrerSnapshot.exists()) {
-                referrerSnapshot.forEach(child => {
-                    const referrerId = child.key;
-                    if (referrerId !== userId) {
-                        // Рассчитываем 30% от суммы проигрыша
-                        const referralBonus = Math.floor(transaction.stars * (config.referralLossPercent / 100));
-                        
-                        // Обновляем баланс реферера
-                        database.ref(`users/${referrerId}`).transaction(user => {
-                            if (user) {
-                                user.balance = (user.balance || 0) + referralBonus;
-                                
-                                // Сохраняем историю реферальных начислений
-                                const referralHistory = {
-                                    type: 'loss_commission',
-                                    userId: userId,
-                                    username: transaction.username,
-                                    stars: transaction.stars,
-                                    bonus: referralBonus,
-                                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                                };
-                                
-                                if (!user.referralHistory) {
-                                    user.referralHistory = {};
-                                }
-                                
-                                user.referralHistory[transactionRef.key] = referralHistory;
-                                
-                                // Обновляем статистику пригласившего
-                                if (!user.referralStats) {
-                                    user.referralStats = {
-                                        totalReferrals: 0,
-                                        totalEarned: 0,
-                                        activeReferrals: 0
-                                    };
-                                }
-                                
-                                user.referralStats.totalEarned = (user.referralStats.totalEarned || 0) + referralBonus;
-                            }
-                            return user;
-                        });
-                    }
-                });
-            }
+            const size = Math.random() * 3;
+            const duration = 2 + Math.random() * 8;
+            
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = '-10px';
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.animationDuration = `${duration}s`;
+            star.style.opacity = Math.random();
+            
+            container.appendChild(star);
+            
+            star.addEventListener('animationend', () => {
+                star.remove();
+            });
         }
 
-        // Обработка формы
-        document.getElementById('depositForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        // Показать уведомление
+        function showNotification(message, type = 'success', duration = 3000) {
+            const notification = document.getElementById('notification');
+            const notificationMsg = document.getElementById('notification-message');
+            const notificationIcon = document.querySelector('.notification-icon');
             
-            const btn = document.getElementById('submitBtn');
-            const btnText = document.getElementById('btnText');
-            const username = document.getElementById('username').value.trim();
+            notification.className = 'notification';
+            notification.classList.add(`notification-${type}`);
             
-            // Валидация
-            if (!username.startsWith('@') || username.length < 5) {
-                showError("Username должен начинаться с @ и содержать не менее 5 символов");
-                return;
+            // Устанавливаем иконку в зависимости от типа
+            switch(type) {
+                case 'success':
+                    notificationIcon.className = 'fas fa-check-circle notification-icon';
+                    break;
+                case 'error':
+                    notificationIcon.className = 'fas fa-times-circle notification-icon';
+                    break;
+                case 'warning':
+                    notificationIcon.className = 'fas fa-exclamation-circle notification-icon';
+                    break;
+                default:
+                    notificationIcon.className = 'fas fa-info-circle notification-icon';
             }
             
-            if (selectedStars < config.minStars) {
-                showError(`Минимальная сумма пополнения - ${config.minStars} звёзд`);
-                return;
-            }
+            notificationMsg.textContent = message;
+            notification.style.display = 'flex';
             
-            if (selectedStars > config.maxStars) {
-                showError(`Максимальная сумма пополнения - ${config.maxStars} звёзд`);
-                return;
-            }
-
-            btn.disabled = true;
-            btnText.textContent = 'Обработка...';
-            
-            try {
-                showLoading("Создание транзакции...");
-                
-                const userId = currentUser?.key || 'anonymous';
-                const rub = (selectedStars * config.starRate).toFixed(2);
-                
-                // Рассчитываем бонусные звезды
-                let bonusStars = 0;
-                if (activePromoCode) {
-                    bonusStars = Math.floor(selectedStars * (config.promoBonusPercent / 100));
-                }
-                
-                const transactionData = {
-                    userId: userId,
-                    username: username,
-                    stars: selectedStars,
-                    bonusStars: bonusStars,
-                    rub: rub,
-                    method: selectedMethod,
-                    status: 'pending',
-                    comment: paymentComment,
-                    promoCode: activePromoCode || null,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                };
-                
-                const transactionRef = database.ref('transactions').push();
-                await transactionRef.set(transactionData);
-                
-                if (userId !== 'anonymous') {
-                    await database.ref(`users/${userId}/transactions/${transactionRef.key}`).set(true);
-                }
-                
-                showSuccess(btn, btnText, "Заявка на пополнение создана! Ожидайте подтверждения.");
-                loadUserTransactions(userId);
-                
-                // Генерируем новый комментарий для следующего платежа
-                paymentComment = 'ID' + Math.floor(100000 + Math.random() * 900000);
-                document.getElementById('paymentComment').textContent = paymentComment;
-                document.getElementById('paymentCommentCard').textContent = paymentComment;
-                document.getElementById('paymentCommentCrypto').textContent = paymentComment;
-                
-                hideLoading();
-            } catch (error) {
-                hideLoading();
-                console.error('Ошибка:', error);
-                showError(btn, btnText, 'Произошла ошибка при создании транзакции');
-            }
-        });
-
-        // Показать загрузку
-        function showLoading(message) {
-            let overlay = document.querySelector('.loading-overlay');
-            
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.className = 'loading-overlay';
-                overlay.innerHTML = `
-                    <div class="spinner"></div>
-                    <div>${message || 'Загрузка...'}</div>
-                `;
-                document.body.appendChild(overlay);
-            } else {
-                overlay.querySelector('div:last-child').textContent = message || 'Загрузка...';
-            }
-        }
-
-        // Скрыть загрузку
-        function hideLoading() {
-            const overlay = document.querySelector('.loading-overlay');
-            if (overlay) {
-                overlay.remove();
-            }
-        }
-
-        // Показать сообщение
-        function showMessage(message) {
-            alert(message);
-        }
-
-        // Показать успех
-        function showSuccess(btn, btnText, message) {
-            if (btn && btnText) {
-                btn.classList.add('btn-success');
-                btnText.textContent = 'Успешно!';
-                
+            // Скрываем уведомление через указанное время
+            setTimeout(() => {
+                notification.classList.add('hide');
                 setTimeout(() => {
-                    btn.classList.remove('btn-success');
-                    btn.disabled = false;
-                    btnText.textContent = 'Пополнить';
-                }, 2000);
-            }
-            
-            alert(message);
+                    notification.style.display = 'none';
+                    notification.classList.remove('hide');
+                }, 300);
+            }, duration);
         }
 
-        // Показать ошибку
-        function showError(btn, btnText, message) {
-            if (btn && btnText) {
-                btn.classList.add('btn-danger');
-                btnText.textContent = 'Ошибка';
-                
-                setTimeout(() => {
-                    btn.classList.remove('btn-danger');
-                    btn.disabled = false;
-                    btnText.textContent = 'Пополнить';
-                }, 2000);
-            }
-            
-            alert(message);
+        // Функции меню
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
         }
 
-        // Глобальные функции для вызова из HTML
-        window.updateTransactionStatus = updateTransactionStatus;
+        // Глобальные функции
+        window.addBalance = addBalance;
+        window.withdraw = withdraw;
+        window.copyReferralCode = copyReferralCode;
+        window.applyPromoCode = applyPromoCode;
+        window.toggleMenu = toggleMenu;
     </script>
 </body>
 </html>
