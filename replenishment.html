@@ -5,34 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Пополнение баланса</title>
     <style>
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: background 0.3s ease;
-            z-index: 1000;
-        }
-
-        .back-btn:hover {
-            background: #9932CC;
-        }
-
-        .back-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: white;
-        }
         :root {
             --primary-color: #8A2BE2;
             --secondary-color: #BA55D3;
@@ -304,19 +276,8 @@
             margin-bottom: 16px;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
         @keyframes spin {
             to { transform: rotate(360deg); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
         }
 
         .stars-info {
@@ -438,10 +399,39 @@
             justify-content: space-between;
             margin-bottom: 5px;
         }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.3s ease;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            background: #9932CC;
+        }
+
+        .back-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
     </style>
 </head>
 <body>
-     <a href="javascript:history.back()" class="back-btn">
+    <a href="javascript:history.back()" class="back-btn">
         <svg viewBox="0 0 24 24">
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
         </svg>
@@ -601,6 +591,7 @@
             starRate: 1.45,
             adminIds: ["1062148525", "1290724329"],
             promoBonusPercent: 5, // 5% бонус за промокод
+            referralBonusPercent: 5, // 5% бонус за пополнение по реферальной ссылке
             referralLossPercent: 30, // 30% от проигрыша рефереру
             baseUrl: window.location.href.split('?')[0]
         };
@@ -801,6 +792,9 @@
             
             // Обработчик кнопки копирования реферальной ссылки
             document.getElementById('copyReferralBtn').addEventListener('click', copyReferralLink);
+            
+            // Обработчик формы пополнения
+            document.getElementById('depositForm').addEventListener('submit', submitDepositForm);
         }
         
         // Копирование реферальной ссылки
@@ -1135,7 +1129,7 @@
             return el;
         }
 
-        // Обновление статуса транзакции (ИСПРАВЛЕННАЯ ФУНКЦИЯ)
+        // Обновление статуса транзакции
         async function updateTransactionStatus(id, status, stars, userId) {
             showLoading("Обновление статуса...");
             
@@ -1189,6 +1183,11 @@
             if (userData.referredBy) {
                 await processReferralLinkBonus(transaction, userId, stars, userData.referredBy);
             }
+            
+            // 3. Если это проигрыш (отрицательные звёзды) - начисляем 30% рефереру
+            if (stars < 0) {
+                await processLossCommission(transaction, userId, stars, userData.referredBy);
+            }
         }
 
         // Обработка бонуса за промокод (5% обоим)
@@ -1240,7 +1239,7 @@
             }
         }
 
-        // Обработка бонуса за реферальную ссылку (30% от проигрыша)
+        // Обработка бонуса за реферальную ссылку (5% за пополнение)
         async function processReferralLinkBonus(transaction, userId, stars, referredBy) {
             // Находим пользователя, который привел
             const referrerRef = database.ref('users');
@@ -1250,8 +1249,8 @@
                 referrerSnapshot.forEach(child => {
                     const referrerId = child.key;
                     if (referrerId !== userId) {
-                        // Рассчитываем 30% от суммы проигрыша
-                        const referralBonus = Math.floor(transaction.stars * (config.referralLossPercent / 100));
+                        // Рассчитываем 5% от суммы пополнения
+                        const referralBonus = Math.floor(transaction.stars * (config.referralBonusPercent / 100));
                         
                         // Обновляем баланс реферера
                         database.ref(`users/${referrerId}`).transaction(user => {
@@ -1260,7 +1259,7 @@
                                 
                                 // Сохраняем историю реферальных начислений
                                 const referralHistory = {
-                                    type: 'loss_commission',
+                                    type: 'deposit_bonus',
                                     userId: userId,
                                     username: transaction.username,
                                     stars: transaction.stars,
@@ -1292,8 +1291,60 @@
             }
         }
 
-        // Обработка формы
-        document.getElementById('depositForm').addEventListener('submit', async function(e) {
+        // Обработка комиссии с проигрыша (30% рефереру)
+        async function processLossCommission(transaction, userId, stars, referredBy) {
+            // Находим пользователя, который привел
+            const referrerRef = database.ref('users');
+            const referrerSnapshot = await referrerRef.orderByChild('referralCode').equalTo(referredBy).once('value');
+            
+            if (referrerSnapshot.exists()) {
+                referrerSnapshot.forEach(child => {
+                    const referrerId = child.key;
+                    if (referrerId !== userId) {
+                        // Рассчитываем 30% от суммы проигрыша (по модулю)
+                        const referralBonus = Math.floor(Math.abs(stars) * (config.referralLossPercent / 100));
+                        
+                        // Обновляем баланс реферера
+                        database.ref(`users/${referrerId}`).transaction(user => {
+                            if (user) {
+                                user.balance = (user.balance || 0) + referralBonus;
+                                
+                                // Сохраняем историю реферальных начислений
+                                const referralHistory = {
+                                    type: 'loss_commission',
+                                    userId: userId,
+                                    username: transaction.username,
+                                    stars: stars,
+                                    bonus: referralBonus,
+                                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                                };
+                                
+                                if (!user.referralHistory) {
+                                    user.referralHistory = {};
+                                }
+                                
+                                user.referralHistory[transaction.id] = referralHistory;
+                                
+                                // Обновляем статистику пригласившего
+                                if (!user.referralStats) {
+                                    user.referralStats = {
+                                        totalReferrals: 0,
+                                        totalEarned: 0,
+                                        activeReferrals: 0
+                                    };
+                                }
+                                
+                                user.referralStats.totalEarned = (user.referralStats.totalEarned || 0) + referralBonus;
+                            }
+                            return user;
+                        });
+                    }
+                });
+            }
+        }
+
+        // Обработка формы пополнения
+        async function submitDepositForm(e) {
             e.preventDefault();
             
             const btn = document.getElementById('submitBtn');
@@ -1366,7 +1417,7 @@
                 console.error('Ошибка:', error);
                 showError(btn, btnText, 'Произошла ошибка при создании транзакции');
             }
-        });
+        }
 
         // Показать загрузку
         function showLoading(message) {
