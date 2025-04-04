@@ -211,6 +211,10 @@
             background: var(--danger-color);
         }
 
+        .btn-secondary {
+            background: var(--secondary-color);
+        }
+
         .transaction-item {
             background: white;
             border-radius: 8px;
@@ -327,6 +331,62 @@
             text-align: center;
             margin-bottom: 15px;
         }
+
+        .promo-container {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .promo-input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .promo-input {
+            flex: 1;
+        }
+
+        .promo-btn {
+            width: auto;
+            padding: 0 15px;
+        }
+
+        .promo-success {
+            color: var(--success-color);
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .promo-error {
+            color: var(--danger-color);
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .referral-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(138, 43, 226, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .referral-link {
+            font-weight: bold;
+            word-break: break-all;
+            margin: 5px 0;
+            color: var(--primary-color);
+        }
+
+        .bonus-info {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -359,6 +419,31 @@
                     </div>
                     <div class="rate-info">1 звезда = 1.45₽ (мин. 50 звёзд)</div>
                     <div class="stars-info" id="amountInRub">0 звёзд = 0₽</div>
+                    <div id="promoBonusInfo" class="bonus-info" style="display: none;">+5% бонус по промокоду: <span id="activePromoCode"></span></div>
+                </div>
+
+                <!-- Промокод секция -->
+                <div class="promo-container">
+                    <h3>Промокод</h3>
+                    <div id="promoForm">
+                        <div class="promo-input-group">
+                            <input type="text" id="promoCode" class="promo-input" placeholder="Введите промокод">
+                            <button type="button" class="btn btn-secondary promo-btn" id="applyPromoBtn">Применить</button>
+                        </div>
+                        <div id="promoMessage"></div>
+                    </div>
+                    <div id="activePromoSection" style="display: none;">
+                        <div class="promo-success">Активный промокод: <span id="currentPromoCode"></span></div>
+                        <button type="button" class="btn btn-secondary promo-btn" id="removePromoBtn" style="margin-top: 10px;">Удалить</button>
+                    </div>
+                </div>
+
+                <!-- Реферальная информация -->
+                <div class="referral-info" id="referralSection" style="display: none;">
+                    <h3>Реферальная система</h3>
+                    <div>Ваш промокод:</div>
+                    <div class="referral-link" id="userPromoCode"></div>
+                    <div class="bonus-info">Дайте этот промокод другу. Когда он пополнит баланс, вы оба получите +5% к сумме пополнения!</div>
                 </div>
                 
                 <div class="form-group">
@@ -441,7 +526,9 @@
             minStars: 50,
             maxStars: 10000,
             starRate: 1.45,
-            adminIds: ["1062148525", "1290724329"]
+            adminIds: ["1062148525", "1290724329"],
+            promoBonusPercent: 5, // 5% бонус за промокод
+            referralBonusPercent: 5 // 5% реферальный бонус
         };
         
         // Основные переменные
@@ -450,6 +537,8 @@
         let selectedMethod = "phone";
         let paymentComment = 'ID' + Math.floor(100000 + Math.random() * 900000);
         let isAdmin = false;
+        let activePromoCode = null;
+        let userPromoCode = null;
 
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
@@ -474,6 +563,15 @@
                         loadAdminTransactions();
                     }
                     
+                    // Загружаем активный промокод пользователя
+                    await loadUserPromoCode(tgUser.id.toString());
+                    
+                    // Показываем реферальную секцию если у пользователя есть промокод
+                    if (userPromoCode) {
+                        document.getElementById('referralSection').style.display = 'block';
+                        document.getElementById('userPromoCode').textContent = userPromoCode;
+                    }
+                    
                     loadUserTransactions(tgUser.id.toString());
                 } else {
                     loadUserTransactions('anonymous');
@@ -487,6 +585,54 @@
                 showError("Произошла ошибка при загрузке. Пожалуйста, попробуйте позже.");
             }
         });
+
+        // Загрузка промокода пользователя
+        async function loadUserPromoCode(userId) {
+            const userRef = database.ref(`users/${userId}`);
+            const snapshot = await userRef.once('value');
+            
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                
+                // Проверяем активный промокод
+                if (userData.activePromoCode) {
+                    activePromoCode = userData.activePromoCode;
+                    showActivePromoCode(activePromoCode);
+                }
+                
+                // Проверяем промокод пользователя
+                if (userData.promoCode) {
+                    userPromoCode = userData.promoCode;
+                } else {
+                    // Генерируем промокод если его нет
+                    userPromoCode = 'PROMO' + Math.floor(1000 + Math.random() * 9000);
+                    await userRef.update({ promoCode: userPromoCode });
+                }
+            }
+        }
+
+        // Показать активный промокод
+        function showActivePromoCode(promoCode) {
+            document.getElementById('promoForm').style.display = 'none';
+            document.getElementById('activePromoSection').style.display = 'block';
+            document.getElementById('currentPromoCode').textContent = promoCode;
+            document.getElementById('promoBonusInfo').style.display = 'block';
+            document.getElementById('activePromoCode').textContent = promoCode;
+            
+            // Обновляем отображение суммы с учетом бонуса
+            updateAmountInRub();
+        }
+
+        // Скрыть активный промокод
+        function hideActivePromoCode() {
+            document.getElementById('promoForm').style.display = 'block';
+            document.getElementById('activePromoSection').style.display = 'none';
+            document.getElementById('promoBonusInfo').style.display = 'none';
+            activePromoCode = null;
+            
+            // Обновляем отображение суммы без бонуса
+            updateAmountInRub();
+        }
 
         // Обновление данных пользователя
         async function updateTelegramUser(tgUser) {
@@ -507,6 +653,14 @@
             if (!snapshot.exists()) {
                 userData.created_at = firebase.database.ServerValue.TIMESTAMP;
                 userData.balance = 0;
+                
+                // Если есть реферальный код в URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const refCode = urlParams.get('ref');
+                if (refCode) {
+                    userData.referredBy = refCode;
+                }
+                
                 await userRef.set(userData);
             } else {
                 await userRef.update(userData);
@@ -543,6 +697,106 @@
                     document.getElementById(`${selectedMethod}Details`).classList.add('active');
                 });
             });
+            
+            // Обработчик кнопки применения промокода
+            document.getElementById('applyPromoBtn').addEventListener('click', applyPromoCode);
+            
+            // Обработчик кнопки удаления промокода
+            document.getElementById('removePromoBtn').addEventListener('click', removePromoCode);
+        }
+        
+        // Применение промокода
+        async function applyPromoCode() {
+            const promoCodeInput = document.getElementById('promoCode');
+            const promoCode = promoCodeInput.value.trim().toUpperCase();
+            const promoMessage = document.getElementById('promoMessage');
+            
+            if (!promoCode) {
+                promoMessage.className = 'promo-error';
+                promoMessage.textContent = 'Введите промокод';
+                return;
+            }
+            
+            showLoading("Проверка промокода...");
+            
+            try {
+                // Проверяем, существует ли такой промокод
+                const usersRef = database.ref('users');
+                const snapshot = await usersRef.orderByChild('promoCode').equalTo(promoCode).once('value');
+                
+                if (!snapshot.exists()) {
+                    hideLoading();
+                    promoMessage.className = 'promo-error';
+                    promoMessage.textContent = 'Промокод не найден';
+                    return;
+                }
+                
+                // Получаем данные пользователя, которому принадлежит промокод
+                let promoOwner = null;
+                snapshot.forEach(child => {
+                    promoOwner = {
+                        id: child.key,
+                        ...child.val()
+                    };
+                });
+                
+                // Проверяем, что пользователь не применяет свой же промокод
+                if (currentUser && promoOwner.id === currentUser.key) {
+                    hideLoading();
+                    promoMessage.className = 'promo-error';
+                    promoMessage.textContent = 'Нельзя использовать свой промокод';
+                    return;
+                }
+                
+                // Сохраняем промокод для текущего пользователя
+                await database.ref(`users/${currentUser.key}`).update({
+                    activePromoCode: promoCode,
+                    promoUsed: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                // Сохраняем информацию о том, кто использовал промокод
+                const referralData = {
+                    userId: currentUser.key,
+                    username: document.getElementById('username').value.trim(),
+                    promoCode: promoCode,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
+                
+                await database.ref(`referrals/${promoOwner.id}/${currentUser.key}`).set(referralData);
+                
+                // Обновляем UI
+                activePromoCode = promoCode;
+                showActivePromoCode(promoCode);
+                promoCodeInput.value = '';
+                promoMessage.textContent = '';
+                
+                hideLoading();
+                showMessage("Промокод успешно применен! Вы получите +5% к сумме пополнения.");
+            } catch (error) {
+                hideLoading();
+                console.error("Ошибка применения промокода:", error);
+                promoMessage.className = 'promo-error';
+                promoMessage.textContent = 'Ошибка применения промокода';
+            }
+        }
+        
+        // Удаление промокода
+        async function removePromoCode() {
+            showLoading("Удаление промокода...");
+            
+            try {
+                await database.ref(`users/${currentUser.key}`).update({
+                    activePromoCode: null
+                });
+                
+                hideActivePromoCode();
+                hideLoading();
+                showMessage("Промокод удален");
+            } catch (error) {
+                hideLoading();
+                console.error("Ошибка удаления промокода:", error);
+                showError("Не удалось удалить промокод");
+            }
         }
         
         // Выбор суммы в звездах
@@ -568,9 +822,23 @@
         
         // Обновление отображения суммы в рублях
         function updateAmountInRub() {
-            const rub = (selectedStars * config.starRate).toFixed(2);
-            document.getElementById('amountInRub').textContent = 
-                `${selectedStars} звёзд = ${rub}₽`;
+            let stars = selectedStars;
+            let bonusStars = 0;
+            
+            if (activePromoCode && stars > 0) {
+                bonusStars = Math.floor(stars * (config.promoBonusPercent / 100));
+            }
+            
+            const totalStars = stars + bonusStars;
+            const rub = (stars * config.starRate).toFixed(2);
+            
+            if (bonusStars > 0) {
+                document.getElementById('amountInRub').innerHTML = 
+                    `${stars} звёзд + ${bonusStars} бонус = ${totalStars} звёзд (${rub}₽)`;
+            } else {
+                document.getElementById('amountInRub').textContent = 
+                    `${stars} звёзд = ${rub}₽`;
+            }
         }
 
         // Загрузка транзакций пользователя
@@ -627,11 +895,17 @@
             const date = t.timestamp ? new Date(t.timestamp).toLocaleString('ru-RU') : '';
             const rub = (t.stars * config.starRate).toFixed(2);
             
+            let bonusInfo = '';
+            if (t.bonusStars) {
+                bonusInfo = `<div>Бонус: +${t.bonusStars} звёзд (промокод: ${t.promoCode || 'нет'})</div>`;
+            }
+            
             el.innerHTML = `
                 <div>
                     <span class="transaction-status ${status.class}">${status.text}</span>
                     <strong>${t.stars} звёзд (${rub}₽)</strong>
                 </div>
+                ${bonusInfo}
                 <div>Метод: ${methods[t.method] || t.method}</div>
                 <div>Комментарий: ${t.comment || 'нет'}</div>
                 <small>${date}</small>
@@ -693,18 +967,24 @@
             const date = t.timestamp ? new Date(t.timestamp).toLocaleString('ru-RU') : '';
             const rub = (t.stars * config.starRate).toFixed(2);
             
+            let bonusInfo = '';
+            if (t.bonusStars) {
+                bonusInfo = `<div>Бонус: +${t.bonusStars} звёзд (промокод: ${t.promoCode || 'нет'})</div>`;
+            }
+            
             el.innerHTML = `
                 <div>
                     <span class="transaction-status ${status.class}">${status.text}</span>
                     <strong>${t.username || 'Аноним'}</strong>
                 </div>
                 <div>${t.stars} звёзд (${rub}₽) - ${methods[t.method] || t.method}</div>
+                ${bonusInfo}
                 <div>Комментарий: ${t.comment || 'нет'}</div>
                 <small>${date}</small>
                 
                 ${t.status === 'pending' ? `
                 <div class="admin-controls">
-                    <button class="admin-btn approve-btn" onclick="updateTransactionStatus('${t.id}', 'completed', ${t.stars}, '${t.userId}')">
+                    <button class="admin-btn approve-btn" onclick="updateTransactionStatus('${t.id}', 'completed', ${t.stars + (t.bonusStars || 0)}, '${t.userId}')">
                         Одобрить
                     </button>
                     <button class="admin-btn reject-btn" onclick="updateTransactionStatus('${t.id}', 'failed')">
@@ -722,19 +1002,62 @@
             showLoading("Обновление статуса...");
             
             try {
+                // Получаем данные транзакции
+                const transactionRef = database.ref(`transactions/${id}`);
+                const snapshot = await transactionRef.once('value');
+                const transaction = snapshot.val();
+                
                 // Обновляем статус транзакции
-                await database.ref(`transactions/${id}`).update({ status });
+                await transactionRef.update({ status });
                 
                 // Если статус "completed", добавляем звёзды пользователю
                 if (status === 'completed' && userId && stars) {
                     const userRef = database.ref(`users/${userId}`);
-                    const snapshot = await userRef.once('value');
+                    const userSnapshot = await userRef.once('value');
                     
-                    if (snapshot.exists()) {
-                        const currentBalance = snapshot.val().balance || 0;
+                    if (userSnapshot.exists()) {
+                        const currentBalance = userSnapshot.val().balance || 0;
                         await userRef.update({ 
                             balance: currentBalance + stars 
                         });
+                        
+                        // Если был использован промокод, начисляем бонус владельцу промокода
+                        if (transaction.promoCode) {
+                            const promoUsersRef = database.ref('users');
+                            const promoSnapshot = await promoUsersRef.orderByChild('promoCode').equalTo(transaction.promoCode).once('value');
+                            
+                            if (promoSnapshot.exists()) {
+                                promoSnapshot.forEach(child => {
+                                    const promoOwnerId = child.key;
+                                    if (promoOwnerId !== userId) {
+                                        const referralBonus = Math.floor(transaction.stars * (config.referralBonusPercent / 100));
+                                        
+                                        // Обновляем баланс владельца промокода
+                                        database.ref(`users/${promoOwnerId}`).transaction(user => {
+                                            if (user) {
+                                                user.balance = (user.balance || 0) + referralBonus;
+                                                
+                                                // Сохраняем историю реферальных начислений
+                                                const referralHistory = {
+                                                    userId: userId,
+                                                    username: transaction.username,
+                                                    stars: transaction.stars,
+                                                    bonus: referralBonus,
+                                                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                                                };
+                                                
+                                                if (!user.referralHistory) {
+                                                    user.referralHistory = {};
+                                                }
+                                                
+                                                user.referralHistory[id] = referralHistory;
+                                            }
+                                            return user;
+                                        });
+                                    }
+                                });
+                            }
+                        }
                     }
                 }
                 
@@ -781,14 +1104,22 @@
                 const userId = currentUser?.key || 'anonymous';
                 const rub = (selectedStars * config.starRate).toFixed(2);
                 
+                // Рассчитываем бонусные звезды
+                let bonusStars = 0;
+                if (activePromoCode) {
+                    bonusStars = Math.floor(selectedStars * (config.promoBonusPercent / 100));
+                }
+                
                 const transactionData = {
                     userId: userId,
                     username: username,
                     stars: selectedStars,
+                    bonusStars: bonusStars,
                     rub: rub,
                     method: selectedMethod,
                     status: 'pending',
                     comment: paymentComment,
+                    promoCode: activePromoCode || null,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 };
                 
@@ -839,6 +1170,11 @@
             if (overlay) {
                 overlay.remove();
             }
+        }
+
+        // Показать сообщение
+        function showMessage(message) {
+            alert(message);
         }
 
         // Показать успех
