@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Пополнение баланса</title>
     <style>
-         .back-btn {
+        .back-btn {
             position: absolute;
             top: 20px;
             left: 20px;
@@ -387,6 +387,38 @@
             color: #666;
             margin-top: 5px;
         }
+
+        .copy-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .copy-btn:hover {
+            background: var(--secondary-color);
+        }
+
+        .copy-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: white;
+        }
+
+        .promo-bonus-info {
+            font-size: 14px;
+            color: var(--success-color);
+            font-weight: bold;
+            margin-top: 5px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -419,7 +451,7 @@
                     </div>
                     <div class="rate-info">1 звезда = 1.45₽ (мин. 50 звёзд)</div>
                     <div class="stars-info" id="amountInRub">0 звёзд = 0₽</div>
-                    <div id="promoBonusInfo" class="bonus-info" style="display: none;">+5% бонус по промокоду: <span id="activePromoCode"></span></div>
+                    <div id="promoBonusInfo" class="promo-bonus-info" style="display: none;">+5% бонус по промокоду: <span id="activePromoCode"></span></div>
                 </div>
 
                 <!-- Промокод секция -->
@@ -440,10 +472,15 @@
 
                 <!-- Реферальная информация -->
                 <div class="referral-info" id="referralSection" style="display: none;">
-                    <h3>Реферальная система</h3>
-                    <div>Ваш промокод:</div>
-                    <div class="referral-link" id="userPromoCode"></div>
-                    <div class="bonus-info">Дайте этот промокод другу. Когда он пополнит баланс, вы оба получите +5% к сумме пополнения!</div>
+                    <h3>Ваша реферальная ссылка</h3>
+                    <div class="referral-link" id="userReferralLink"></div>
+                    <button class="copy-btn" id="copyReferralBtn">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                        </svg>
+                        Копировать
+                    </button>
+                    <div class="bonus-info">Дайте эту ссылку другу. Когда он пополнит баланс, вы оба получите +5% к сумме пополнения!</div>
                 </div>
                 
                 <div class="form-group">
@@ -528,7 +565,8 @@
             starRate: 1.45,
             adminIds: ["1062148525", "1290724329"],
             promoBonusPercent: 5, // 5% бонус за промокод
-            referralBonusPercent: 5 // 5% реферальный бонус
+            referralBonusPercent: 5, // 5% реферальный бонус
+            baseUrl: window.location.href.split('?')[0] // Базовый URL для реферальных ссылок
         };
         
         // Основные переменные
@@ -538,7 +576,8 @@
         let paymentComment = 'ID' + Math.floor(100000 + Math.random() * 900000);
         let isAdmin = false;
         let activePromoCode = null;
-        let userPromoCode = null;
+        let userReferralCode = null;
+        let userReferralLink = null;
 
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', async () => {
@@ -563,14 +602,11 @@
                         loadAdminTransactions();
                     }
                     
-                    // Загружаем активный промокод пользователя
-                    await loadUserPromoCode(tgUser.id.toString());
+                    // Загружаем реферальные данные пользователя
+                    await loadUserReferralData(tgUser.id.toString());
                     
-                    // Показываем реферальную секцию если у пользователя есть промокод
-                    if (userPromoCode) {
-                        document.getElementById('referralSection').style.display = 'block';
-                        document.getElementById('userPromoCode').textContent = userPromoCode;
-                    }
+                    // Проверяем реферальный код в URL
+                    checkReferralCode();
                     
                     loadUserTransactions(tgUser.id.toString());
                 } else {
@@ -586,8 +622,23 @@
             }
         });
 
-        // Загрузка промокода пользователя
-        async function loadUserPromoCode(userId) {
+        // Проверка реферального кода в URL
+        function checkReferralCode() {
+            if (!currentUser) return;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCode = urlParams.get('ref');
+            
+            if (refCode && refCode !== userReferralCode) {
+                // Сохраняем реферала в базу данных
+                database.ref(`users/${currentUser.key}`).update({
+                    referredBy: refCode
+                });
+            }
+        }
+
+        // Загрузка реферальных данных пользователя
+        async function loadUserReferralData(userId) {
             const userRef = database.ref(`users/${userId}`);
             const snapshot = await userRef.once('value');
             
@@ -600,14 +651,21 @@
                     showActivePromoCode(activePromoCode);
                 }
                 
-                // Проверяем промокод пользователя
-                if (userData.promoCode) {
-                    userPromoCode = userData.promoCode;
+                // Генерируем или получаем реферальный код пользователя
+                if (userData.referralCode) {
+                    userReferralCode = userData.referralCode;
                 } else {
-                    // Генерируем промокод если его нет
-                    userPromoCode = 'PROMO' + Math.floor(1000 + Math.random() * 9000);
-                    await userRef.update({ promoCode: userPromoCode });
+                    // Генерируем уникальный реферальный код
+                    userReferralCode = 'REF' + Math.floor(1000 + Math.random() * 9000);
+                    await userRef.update({ referralCode: userReferralCode });
                 }
+                
+                // Создаем реферальную ссылку
+                userReferralLink = `${config.baseUrl}?ref=${userReferralCode}`;
+                
+                // Показываем реферальную секцию
+                document.getElementById('referralSection').style.display = 'block';
+                document.getElementById('userReferralLink').textContent = userReferralLink;
             }
         }
 
@@ -653,14 +711,6 @@
             if (!snapshot.exists()) {
                 userData.created_at = firebase.database.ServerValue.TIMESTAMP;
                 userData.balance = 0;
-                
-                // Если есть реферальный код в URL
-                const urlParams = new URLSearchParams(window.location.search);
-                const refCode = urlParams.get('ref');
-                if (refCode) {
-                    userData.referredBy = refCode;
-                }
-                
                 await userRef.set(userData);
             } else {
                 await userRef.update(userData);
@@ -703,8 +753,37 @@
             
             // Обработчик кнопки удаления промокода
             document.getElementById('removePromoBtn').addEventListener('click', removePromoCode);
+            
+            // Обработчик кнопки копирования реферальной ссылки
+            document.getElementById('copyReferralBtn').addEventListener('click', copyReferralLink);
         }
         
+        // Копирование реферальной ссылки
+        function copyReferralLink() {
+            navigator.clipboard.writeText(userReferralLink)
+                .then(() => {
+                    const btn = document.getElementById('copyReferralBtn');
+                    btn.innerHTML = `
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                        </svg>
+                        Скопировано!
+                    `;
+                    setTimeout(() => {
+                        btn.innerHTML = `
+                            <svg viewBox="0 0 24 24">
+                                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                            </svg>
+                            Копировать
+                        `;
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Ошибка копирования: ', err);
+                    alert('Не удалось скопировать ссылку');
+                });
+        }
+
         // Применение промокода
         async function applyPromoCode() {
             const promoCodeInput = document.getElementById('promoCode');
@@ -722,7 +801,7 @@
             try {
                 // Проверяем, существует ли такой промокод
                 const usersRef = database.ref('users');
-                const snapshot = await usersRef.orderByChild('promoCode').equalTo(promoCode).once('value');
+                const snapshot = await usersRef.orderByChild('referralCode').equalTo(promoCode).once('value');
                 
                 if (!snapshot.exists()) {
                     hideLoading();
@@ -1024,7 +1103,7 @@
                         // Если был использован промокод, начисляем бонус владельцу промокода
                         if (transaction.promoCode) {
                             const promoUsersRef = database.ref('users');
-                            const promoSnapshot = await promoUsersRef.orderByChild('promoCode').equalTo(transaction.promoCode).once('value');
+                            const promoSnapshot = await promoUsersRef.orderByChild('referralCode').equalTo(transaction.promoCode).once('value');
                             
                             if (promoSnapshot.exists()) {
                                 promoSnapshot.forEach(child => {
