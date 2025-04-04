@@ -365,53 +365,6 @@
         .notification-icon {
             font-size: 20px;
         }
-         /* Добавляем новые стили для реферальной системы */
-        .referral-section {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 20px;
-            margin: 20px 0;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .referral-link {
-            background: rgba(30, 30, 46, 0.8);
-            border-radius: 12px;
-            padding: 12px;
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            align-items: center;
-        }
-
-        .referral-link input {
-            flex: 1;
-            background: none;
-            border: none;
-            color: var(--neon-color);
-            font-size: 14px;
-        }
-
-        .copy-btn {
-            background: var(--primary-color);
-            border: none;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .referral-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .stat-card.referral {
-            padding: 10px;
-        }
 
         /* Экран входа */
         .login-screen {
@@ -533,33 +486,12 @@
     </div>
 
     <!-- Основной контент -->
-<div class="main-container" id="profileContainer" style="display: none;">
+    <div class="main-container" id="profileContainer" style="display: none;">
         <div class="profile-card">
-            <!-- Существующий контент профиля -->
-              <!-- Добавляем реферальную секцию -->
-            <div class="referral-section">
-                <div class="balance-container">
-                    <div class="balance-label">Ваш реферальный код</div>
-                    <div class="referral-link">
-                        <input type="text" id="referralCodeInput" readonly>
-                        <button class="copy-btn" onclick="copyReferralCode()">Копировать</button>
-                    </div>
-                </div>
-
-                <div class="stats-grid referral-stats">
-                    <div class="stat-card referral">
-                        <div class="stat-value" id="referralCount">0</div>
-                        <div class="stat-label">Рефералов</div>
-                    </div>
-                    <div class="stat-card referral">
-                        <div class="stat-value" id="referralEarnings">0 ⭐</div>
-                        <div class="stat-label">Заработано</div>
-                    </div>
-                    <div class="stat-card referral">
-                        <div class="stat-value" id="referralDebt">0 ⭐</div>
-                        <div class="stat-label">Долг</div>
-                    </div>
-                </div>
+            <h1 class="profile-title">КОСМИЧЕСКИЙ ПРОФИЛЬ</h1>
+            
+            <div class="avatar-container">
+                <img id="avatar" src="" alt="Аватар" class="avatar">
             </div>
             
             <h2 class="username" id="username">Загрузка...</h2>
@@ -581,7 +513,6 @@
             </div>
         </div>
     </div>
-                
 
     <script>
         // Конфигурация Firebase
@@ -607,54 +538,6 @@
         };
 
         // Данные пользователя
-       let userData = {
-            userId: null,
-            name: "Гость",
-            avatar: "https://via.placeholder.com/150/6a5acd/ffffff?text=USER",
-            balance: 0,
-            gamesPlayed: 0,
-            wins: 0,
-            registrationDate: new Date().toISOString(),
-            referralCode: null,
-            referredBy: null,
-            referralCount: 0,
-            referralEarnings: 0,
-            referralDebt: 0
-        };
- <div class="main-container" id="profileContainer" style="display: none;">
-        <div class="profile-card">
-            <!-- Существующий контент профиля -->
-            
-            <!-- Добавляем реферальную секцию -->
-            <div class="referral-section">
-                <div class="balance-container">
-                    <div class="balance-label">Ваш реферальный код</div>
-                    <div class="referral-link">
-                        <input type="text" id="referralCodeInput" readonly>
-                        <button class="copy-btn" onclick="copyReferralCode()">Копировать</button>
-                    </div>
-                </div>
-
-                <div class="stats-grid referral-stats">
-                    <div class="stat-card referral">
-                        <div class="stat-value" id="referralCount">0</div>
-                        <div class="stat-label">Рефералов</div>
-                    </div>
-                    <div class="stat-card referral">
-                        <div class="stat-value" id="referralEarnings">0 ⭐</div>
-                        <div class="stat-label">Заработано</div>
-                    </div>
-                    <div class="stat-card referral">
-                        <div class="stat-value" id="referralDebt">0 ⭐</div>
-                        <div class="stat-label">Долг</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Обновляем конфигурацию пользователя
         let userData = {
             userId: null,
             name: "Гость",
@@ -662,192 +545,146 @@
             balance: 0,
             gamesPlayed: 0,
             wins: 0,
-            registrationDate: new Date().toISOString(),
-            referralCode: null,
-            referredBy: null,
-            referralCount: 0,
-            referralEarnings: 0,
-            referralDebt: 0
+            registrationDate: new Date().toISOString()
         };
 
-        // Модифицируем функцию обработки входа
-        async function handleLogin() {
-            const tgWebApp = window.Telegram?.WebApp;
-            const urlParams = new URLSearchParams(window.location.search);
-            const referralCode = urlParams.get('ref');
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars();
+            
+            // Проверяем, открыто ли приложение в Telegram WebApp
+            if (window.Telegram && Telegram.WebApp) {
+                // Инициализируем WebApp
+                Telegram.WebApp.expand();
+                Telegram.WebApp.enableClosingConfirmation();
+                
+                // Проверяем, есть ли данные пользователя
+                if (Telegram.WebApp.initDataUnsafe?.user) {
+                    // Если есть данные пользователя, сразу авторизуем
+                    handleLogin();
+                } else {
+                    // Если нет данных, показываем кнопку входа
+                    elements.loginScreen.style.display = 'flex';
+                    elements.profileContainer.style.display = 'none';
+                    elements.loginBtn.addEventListener('click', function() {
+                        Telegram.WebApp.openTelegramLink('https://t.me/YourBotUsername');
+                    });
+                }
+            } else {
+                // Если не в Telegram, показываем обычный экран входа
+                elements.loginScreen.style.display = 'flex';
+                elements.profileContainer.style.display = 'none';
+                elements.loginBtn.addEventListener('click', function() {
+                    alert("Пожалуйста, откройте приложение через Telegram");
+                });
+            }
+        });
 
+        // Обработка входа через Telegram
+        function handleLogin() {
+            const tgWebApp = window.Telegram?.WebApp;
+            
             if (tgWebApp?.initDataUnsafe?.user) {
                 const tgUser = tgWebApp.initDataUnsafe.user;
                 userData.userId = tgUser.id.toString();
-
-                const userRef = database.ref('users/' + userData.userId);
-                const snapshot = await userRef.once('value');
-
-                if (!snapshot.exists()) {
-                    // Генерируем уникальный промокод
-                    userData.referralCode = generateReferralCode();
-                    
-                    // Обработка реферала
-                    if (referralCode) {
-                        const referrerSnapshot = await database.ref('users')
-                            .orderByChild('referralCode')
-                            .equalTo(referralCode)
-                            .once('value');
+                
+                // Получаем или создаем профиль
+                database.ref('users/' + userData.userId).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        // Загружаем существующие данные
+                        const dbData = snapshot.val();
+                        userData = {
+                            ...userData,
+                            ...dbData,
+                            name: dbData.name || tgUser.username || 
+                                 `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
+                                 "Космонавт",
+                            avatar: dbData.avatar || tgUser.photo_url || 
+                                  `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`,
+                            // Гарантируем, что баланс не может быть отрицательным
+                            balance: Math.max(0, dbData.balance || 0)
+                        };
+                    } else {
+                        // Создаем новый профиль
+                        userData.name = tgUser.username || 
+                                      `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || 
+                                      "Космонавт";
+                        userData.avatar = tgUser.photo_url || 
+                                        `https://via.placeholder.com/150/6a5acd/ffffff?text=${tgUser.username?.charAt(0) || 'U'}`;
+                        userData.balance = 0; // Начальный баланс 0
                         
-                        if (referrerSnapshot.exists()) {
-                            const referrerData = Object.values(referrerSnapshot.val())[0];
-                            userData.referredBy = referrerData.userId;
-                            
-                            // Обновляем данные реферера
-                            database.ref('users/' + referrerData.userId).update({
-                                referralCount: referrerData.referralCount + 1
-                            });
-                        }
+                        // Сохраняем новый профиль
+                        database.ref('users/' + userData.userId).set(userData);
                     }
                     
-                    // Сохраняем новый профиль
-                    await userRef.set(userData);
+                    showProfile();
+                });
+            } else {
+                // Если нет данных пользователя, показываем экран входа
+                elements.loginScreen.style.display = 'flex';
+                elements.profileContainer.style.display = 'none';
+                
+                // Настраиваем кнопку в зависимости от контекста
+                if (window.Telegram && Telegram.WebApp) {
+                    elements.loginBtn.addEventListener('click', function() {
+                        Telegram.WebApp.openTelegramLink('https://t.me/YourBotUsername');
+                    });
                 } else {
-                    // Загружаем существующие данные
-                    const dbData = snapshot.val();
-                    userData = {...userData, ...dbData};
+                    elements.loginBtn.addEventListener('click', function() {
+                        alert("Пожалуйста, откройте приложение через Telegram");
+                    });
                 }
-
-                // Показываем профиль
-                showProfile();
             }
         }
 
-        // Новая функция генерации промокода
-        function generateReferralCode() {
-            return 'REF-' + Math.random().toString(36).substr(2, 6).toUpperCase();
-        }
-
-        // Функция копирования промокода
-        function copyReferralCode() {
-            const input = document.getElementById('referralCodeInput');
-            input.select();
-            document.execCommand('copy');
-            showNotification('Промокод скопирован!', 'success');
-        }
-
-        // Модифицируем функцию показа профиля
+        // Показать профиль
         function showProfile() {
             elements.loginScreen.style.display = 'none';
             elements.profileContainer.style.display = 'flex';
             
+            // Обновляем интерфейс
             elements.avatar.src = userData.avatar;
             elements.username.textContent = userData.name;
             elements.balance.textContent = `${userData.balance} ⭐`;
             elements.gamesPlayed.textContent = userData.gamesPlayed;
             elements.wins.textContent = userData.wins;
-            
-            // Обновляем реферальные данные
-            document.getElementById('referralCodeInput').value = userData.referralCode;
-            document.getElementById('referralCount').textContent = userData.referralCount;
-            document.getElementById('referralEarnings').textContent = `${userData.referralEarnings} ⭐`;
-            document.getElementById('referralDebt').textContent = `${userData.referralDebt} ⭐`;
         }
 
-        // Модифицируем функцию пополнения баланса
-        async function addBalance(amount) {
-            if (userData.userId && amount > 0) {
-                const userRef = database.ref('users/' + userData.userId);
-                const snapshot = await userRef.once('value');
-                const dbData = snapshot.val();
-                
-                // Начисление 5% бонуса
-                const bonus = amount * 0.05;
-                const newBalance = dbData.balance + amount + bonus;
-                
-                // Обновляем баланс пользователя
-                await userRef.update({
-                    balance: newBalance
-                });
-                
-                // Начисление реферального бонуса
-                if (dbData.referredBy) {
-                    const referrerRef = database.ref('users/' + dbData.referredBy);
-                    const referrerSnapshot = await referrerRef.once('value');
-                    
-                    if (referrerSnapshot.exists()) {
-                        const referrerData = referrerSnapshot.val();
-                        const referralBonus = amount * 0.3;
-                        
-                        // Обновляем данные реферера
-                        await referrerRef.update({
-                            balance: referrerData.balance + referralBonus,
-                            referralEarnings: referrerData.referralEarnings + referralBonus
-                        });
-                    }
-                }
-                
-                showNotification(`Баланс пополнен на ${amount} ⭐ (+${bonus} бонус)`, 'success');
-                handleLogin(); // Обновляем данные
-            }
-        }
-
-        // Новая функция обработки вывода средств
-        async function withdraw(amount) {
-            if (userData.userId && amount > 0) {
-                const userRef = database.ref('users/' + userData.userId);
-                const snapshot = await userRef.once('value');
-                const dbData = snapshot.val();
-                
-                if (dbData.balance >= amount) {
-                    await userRef.update({
-                        balance: dbData.balance - amount
-                    });
-                    showNotification(`Успешно выведено ${amount} ⭐`, 'success');
-                } else {
-                    // Обработка реферального долга
-                    const debt = amount - dbData.balance;
-                    if (dbData.referredBy) {
-                        const referrerRef = database.ref('users/' + dbData.referredBy);
-                        const referrerSnapshot = await referrerRef.once('value');
-                        
-                        if (referrerSnapshot.exists()) {
-                            const referrerData = referrerSnapshot.val();
-                            await referrerRef.update({
-                                referralDebt: referrerData.referralDebt + debt
-                            });
+        // Обновить данные в Firebase
+        function updateUserData() {
+            if (userData.userId) {
+                database.ref('users/' + userData.userId).update({
+                    balance: Math.max(0, userData.balance), // Гарантируем, что баланс не может быть отрицательным
+                    gamesPlayed: userData.gamesPlayed,
+                    wins: userData.wins
+                }).then(() => {
+                    // После обновления данных в базе, загружаем их снова для синхронизации
+                    database.ref('users/' + userData.userId).once('value').then(snapshot => {
+                        if (snapshot.exists()) {
+                            const dbData = snapshot.val();
+                            userData.balance = Math.max(0, dbData.balance || 0);
+                            showProfile(); // Обновляем интерфейс
                         }
-                    }
-                    await userRef.update({
-                        balance: 0
                     });
-                    showNotification(`Вывод превышает баланс! Долг записан`, 'warning');
-                }
-                handleLogin(); // Обновляем данные
+                });
             }
         }
 
-        // Обновляем обработчик входа для поддержки реферальных ссылок
-        document.addEventListener('DOMContentLoaded', function() {
-            createStars();
-            
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.expand();
-                Telegram.WebApp.enableClosingConfirmation();
-                
-                Telegram.WebApp.onEvent('themeChanged', handleLogin);
-                Telegram.WebApp.onEvent('viewportChanged', handleLogin);
-                
-                if (Telegram.WebApp.initDataUnsafe?.user) {
-                    handleLogin();
-                } else {
-                    elements.loginScreen.style.display = 'flex';
-                    elements.loginBtn.onclick = () => {
-                        Telegram.WebApp.openTelegramLink('https://t.me/YourBotUsername?start=' + generateReferralCode());
-                    };
-                }
-            } else {
-                elements.loginScreen.style.display = 'flex';
-                elements.loginBtn.onclick = () => {
-                    alert("Откройте через Telegram!");
-                };
+        // Функции для изменения данных
+        function addBalance(amount) {
+            if (userData.userId) {
+                // Сначала получаем текущий баланс из базы данных
+                database.ref('users/' + userData.userId).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        const dbData = snapshot.val();
+                        const currentBalance = Math.max(0, dbData.balance || 0);
+                        userData.balance = currentBalance + amount;
+                        updateUserData();
+                        showNotification(`Баланс изменен на ${amount} ⭐`, 'success');
+                    }
+                });
             }
-        });
+        }
 
         function addGame() {
             userData.gamesPlayed += 1;
@@ -976,4 +813,3 @@
     </script>
 </body>
 </html>
-
