@@ -1135,37 +1135,37 @@
             return el;
         }
 
-        // Обновление статуса транзакции
+        // Обновление статуса транзакции (ИСПРАВЛЕННАЯ ФУНКЦИЯ)
         async function updateTransactionStatus(id, status, stars, userId) {
             showLoading("Обновление статуса...");
             
             try {
-                // Получаем данные транзакции
-                const transactionRef = database.ref(`transactions/${id}`);
-                const snapshot = await transactionRef.once('value');
-                const transaction = snapshot.val();
-                
                 // Обновляем статус транзакции
-                await transactionRef.update({ status });
+                await database.ref(`transactions/${id}`).update({ status });
                 
                 // Если статус "completed", добавляем звёзды пользователю
                 if (status === 'completed' && userId && stars) {
                     const userRef = database.ref(`users/${userId}`);
-                    const userSnapshot = await userRef.once('value');
                     
-                    if (userSnapshot.exists()) {
-                        const currentBalance = userSnapshot.val().balance || 0;
-                        await userRef.update({ 
-                            balance: currentBalance + stars 
-                        });
-                        
-                        // Начисляем реферальные бонусы
-                        await processReferralBonuses(transaction, userId, stars);
-                    }
+                    // Используем транзакцию для безопасного обновления баланса
+                    await userRef.transaction(user => {
+                        if (user) {
+                            user.balance = (user.balance || 0) + stars;
+                        }
+                        return user;
+                    });
+                    
+                    // Получаем данные транзакции для обработки реферальных бонусов
+                    const transactionRef = database.ref(`transactions/${id}`);
+                    const snapshot = await transactionRef.once('value');
+                    const transaction = snapshot.val();
+                    
+                    // Начисляем реферальные бонусы
+                    await processReferralBonuses(transaction, userId, stars);
                 }
                 
                 hideLoading();
-                showSuccess("Статус транзакции обновлен");
+                showMessage("Статус транзакции обновлен");
                 loadAdminTransactions();
             } catch (error) {
                 hideLoading();
@@ -1221,7 +1221,7 @@
                                     user.referralHistory = {};
                                 }
                                 
-                                user.referralHistory[transactionRef.key] = referralHistory;
+                                user.referralHistory[transaction.id] = referralHistory;
                                 
                                 // Обновляем статистику реферера
                                 if (!user.referralStats) {
@@ -1272,7 +1272,7 @@
                                     user.referralHistory = {};
                                 }
                                 
-                                user.referralHistory[transactionRef.key] = referralHistory;
+                                user.referralHistory[transaction.id] = referralHistory;
                                 
                                 // Обновляем статистику пригласившего
                                 if (!user.referralStats) {
