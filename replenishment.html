@@ -514,6 +514,39 @@
             border-radius: 4px;
             cursor: pointer;
         }
+         /* Все предыдущие стили остаются */
+        .referral-tree {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            overflow: auto;
+        }
+
+        .node circle {
+            fill: #8A2BE2;
+            stroke: #BA55D3;
+            stroke-width: 2px;
+        }
+
+        .node text {
+            font: 12px sans-serif;
+            fill: #333;
+        }
+
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 1.5px;
+        }
+
+        .tree-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
@@ -525,7 +558,10 @@
     </a>
     
     <div class="container">
-        <div class="card">
+            <div class="card" id="referralTreeCard" style="display: none;">
+            <h2>Реферальная структура</h2>
+            <div class="tree-container">
+                <div id="referralTree" class="referral-tree"></div>
             <h1>Пополнение баланса</h1>
             
             <form id="depositForm">
@@ -694,7 +730,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+
     <script>
         // Инициализация Firebase
         const firebaseConfig = {
@@ -712,17 +749,18 @@
         }
         
         // Конфигурация
-        const config = {
+         const config = {
             telegramSupport: "@support",
             minStars: 50,
             maxStars: 10000,
             starRate: 1.45,
             adminIds: ["1062148525", "1290724329"],
-            promoBonusPercent: 5, // 5% бонус за промокод
+            promoBonusPercent: 5,
+            promoExpireDays: 30,
             referralSettings: {
-                depositPercent: 5, // 5% от пополнений
-                lossPercent: 30, // 30% от проигрышей
-                maxLevels: 3, // Максимальное количество уровней
+                depositPercent: 5,
+                lossPercent: 30,
+                maxLevels: 3,
                 levels: [
                     { level: 1, depositPercent: 5, lossPercent: 30 },
                     { level: 2, depositPercent: 3, lossPercent: 20 },
@@ -731,7 +769,6 @@
             },
             baseUrl: window.location.href.split('?')[0]
         };
-        
         // Основные переменные
         let currentUser = null;
         let selectedStars = 0;
@@ -1085,7 +1122,7 @@
                 });
         }
 
-        // Применение промокода
+       // Обновленная функция проверки промокода
         async function applyPromoCode() {
             const promoCodeInput = document.getElementById('promoCode');
             const promoCode = promoCodeInput.value.trim().toUpperCase();
@@ -1096,11 +1133,16 @@
                 promoMessage.textContent = 'Введите промокод';
                 return;
             }
-            
+
+            if (activePromoCode) {
+                promoMessage.className = 'promo-error';
+                promoMessage.textContent = 'У вас уже активирован промокод';
+                return;
+            }
+
             showLoading("Проверка промокода...");
             
             try {
-                // Проверяем, существует ли такой промокод
                 const usersRef = database.ref('users');
                 const snapshot = await usersRef.orderByChild('referralCode').equalTo(promoCode).once('value');
                 
@@ -1110,6 +1152,15 @@
                     promoMessage.textContent = 'Промокод не найден';
                     return;
                 }
+
+                const promoData = await database.ref(`promoCodes/${promoCode}`).once('value');
+                if (promoData.exists() && promoData.val().expires < Date.now()) {
+                    hideLoading();
+                    promoMessage.className = 'promo-error';
+                    promoMessage.textContent = 'Промокод истек';
+                    return;
+                }
+
                 
                 // Получаем данные пользователя, которому принадлежит промокод
                 let promoOwner = null;
@@ -1141,6 +1192,15 @@
                     promoCode: promoCode,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 };
+                       
+            } catch (error) {
+                hideLoading();
+                console.error("Ошибка применения промокода:", error);
+                promoMessage.className = 'promo-error';
+                promoMessage.textContent = 'Ошибка применения промокода';
+            }
+        }
+
                 
                 await database.ref(`referrals/${promoOwner.id}/${currentUser.key}`).set(referralData);
                 
@@ -1427,41 +1487,46 @@
             }
         }
 
-        // Обработка реферальных бонусов (RevShare)
+       // Обновленная функция обработки реферальных бонусов
         async function processReferralBonuses(userId, referrerId, amount, type) {
             try {
-                // Получаем данные реферера
-                const referrerSnapshot = await database.ref(`users/${referrerId}`).once('value');
-                const referrerData = referrerSnapshot.val();
-                
-                // Рассчитываем бонусы для каждого уровня
                 const referralChain = await getReferralChain(referrerId);
                 
                 for (let i = 0; i < referralChain.length; i++) {
                     const currentReferrerId = referralChain[i];
                     const level = i + 1;
                     
-                    // Получаем настройки для текущего уровня
                     const levelSettings = config.referralSettings.levels.find(l => l.level === level);
-                    if (!levelSettings) break; // Если для этого уровня нет настроек
-                    
+                    if (!levelSettings) break;
+
                     let bonus = 0;
                     if (type === 'deposit') {
-                        // Бонус от пополнения
                         bonus = Math.floor(amount * (levelSettings.depositPercent / 100));
                     } else if (type === 'loss') {
-                        // Бонус от проигрыша
                         bonus = Math.floor(amount * (levelSettings.lossPercent / 100));
                     }
-                    
+
                     if (bonus > 0) {
-                        // Начисляем бонус рефереру
                         await updateUserBalance(currentReferrerId, bonus);
                         
-                        // Сохраняем информацию о реферальном начислении
-                        await saveReferralPayment(userId, currentReferrerId, amount, bonus, type, level);
+                        const historyData = {
+                            userId,
+                            referrerId: currentReferrerId,
+                            amount,
+                            bonus,
+                            type,
+                            level,
+                            timestamp: firebase.database.ServerValue.TIMESTAMP
+                        };
+                        
+                        await database.ref(`referralHistory/${currentReferrerId}`).push(historyData);
+                        await updateReferralStats(currentReferrerId, bonus, type);
                     }
                 }
+            } catch (error) {
+                console.error("Ошибка начисления бонусов:", error);
+            }
+        }
                 
                 return true;
             } catch (error) {
@@ -1469,6 +1534,74 @@
                 return false;
             }
         }
+        / Новая функция для визуализации дерева
+        function renderReferralTree(userId) {
+            const container = document.getElementById('referralTree');
+            container.innerHTML = '';
+            
+            database.ref(`referrals/${userId}`).on('value', async snapshot => {
+                if (!snapshot.exists()) return;
+                
+                const referrals = [];
+                snapshot.forEach(child => referrals.push(child.val()));
+                
+                const treeData = await buildTreeData(userId, referrals);
+                renderTreeVisualization(treeData);
+            });
+        }
+        async function buildTreeData(rootId, referrals) {
+            const rootUser = await getUserData(rootId);
+            return {
+                name: rootUser.username,
+                children: await Promise.all(referrals.map(async ref => ({
+                    name: ref.username,
+                    children: await buildTreeData(ref.userId, [])
+                })))
+            };
+        }
+
+        function renderTreeVisualization(data) {
+            const width = 800;
+            const height = 600;
+
+            const svg = d3.select("#referralTree")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            const treeLayout = d3.tree().size([width, height]);
+            const root = d3.hierarchy(data);
+            treeLayout(root);
+
+            svg.selectAll(".link")
+                .data(root.links())
+                .enter()
+                .append("path")
+                .attr("class", "link")
+                .attr("d", d3.linkHorizontal()
+                    .x(d => d.y)
+                    .y(d => d.x));
+
+            const nodes = svg.selectAll(".node")
+                .data(root.descendants())
+                .enter()
+                .append("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.y},${d.x})`);
+
+            nodes.append("circle")
+                .attr("r", 20)
+                .attr("fill", "#8A2BE2");
+
+            nodes.append("text")
+                .text(d => d.data.name)
+                .attr("dx", 25)
+                .attr("dy", 5)
+                .attr("fill", "#333");
+        }
+         
+        // Добавляем вызов визуализации при загрузке данных пользователя
+        async function loadUserReferralData(userId) {
         
         // Получение цепочки рефералов (все уровни)
         async function getReferralChain(referrerId) {
