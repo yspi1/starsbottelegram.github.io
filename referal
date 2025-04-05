@@ -3,103 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Реферальная программа</title>
+    <title>Космический профиль</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #8A2BE2;
-            --secondary-color: #BA55D3;
-            --danger-color: #ff4444;
-            --success-color: #4CAF50;
-            --warning-color: #FFA500;
-            --text-color: #333;
-            --dark-bg: #1a0633;
+            --primary-color: #6a4cff;
+            --neon-color: #00e0ff;
+            --text-color: #ffffff;
+            --bg-color: #0f0f1a;
+            --button-bg: rgba(30, 30, 46, 0.7);
+            --button-hover: rgba(106, 76, 255, 0.3);
+            --menu-bg: rgba(15, 15, 26, 0.95);
+            --menu-border: #6a4cff;
+            --danger: #ff4d6d;
+            --success: #00e676;
+            --card-bg: rgba(30, 30, 46, 0.8);
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--primary-color);
+            overflow-x: hidden;
             color: var(--text-color);
-            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(106, 76, 255, 0.15) 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, rgba(255, 107, 157, 0.15) 0%, transparent 30%);
+            touch-action: pan-y;
+            overscroll-behavior-y: contain;
         }
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-            padding: 20px;
-        }
+        /* Меню и другие стили остаются без изменений */
+        /* ... (остальные стили из вашего профиля) ... */
 
-        .card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            padding: 24px;
-            margin-bottom: 20px;
-        }
-
-        h1, h2, h3 {
-            color: var(--primary-color);
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .referral-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .referral-header h2 {
-            color: var(--primary-color);
-            margin-bottom: 10px;
-        }
-
-        .referral-header p {
-            color: #666;
-        }
-
+        /* Новые стили для реферальной системы */
         .referral-stats {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            background: #f9f9f9;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .stat-card .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--primary-color);
-            margin: 5px 0;
-        }
-
-        .stat-card .stat-label {
-            font-size: 14px;
-            color: #666;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 15px 0;
         }
 
         .referral-link-container {
-            background: rgba(138, 43, 226, 0.1);
-            border-radius: 10px;
+            background: rgba(106, 76, 255, 0.1);
+            border-radius: 12px;
             padding: 15px;
-            margin-bottom: 20px;
+            margin: 15px 0;
             text-align: center;
         }
 
@@ -107,369 +64,502 @@
             font-weight: bold;
             word-break: break-all;
             margin: 10px 0;
-            color: var(--primary-color);
-            font-size: 16px;
+            color: var(--neon-color);
         }
 
         .copy-btn {
             background: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 6px;
-            padding: 10px 20px;
-            font-size: 16px;
+            border-radius: 8px;
+            padding: 8px 15px;
             cursor: pointer;
-            margin-top: 10px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
             transition: background 0.3s;
         }
 
         .copy-btn:hover {
-            background: var(--secondary-color);
-        }
-
-        .copy-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: white;
-        }
-
-        .bonus-info {
-            font-size: 14px;
-            color: #666;
-            margin-top: 10px;
-        }
-
-        .referral-structure {
-            margin-top: 20px;
-        }
-
-        .structure-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .structure-item {
-            background: white;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        .user-name {
-            font-weight: 500;
-        }
-
-        .user-status {
-            font-size: 12px;
-            padding: 3px 8px;
-            border-radius: 4px;
-        }
-
-        .status-active {
-            background: var(--success-color);
-            color: white;
-        }
-
-        .status-inactive {
-            background: #ddd;
-            color: #666;
-        }
-
-        .user-earnings {
-            font-weight: bold;
-            color: var(--success-color);
+            background: var(--neon-color);
         }
 
         .tabs {
             display: flex;
             border-radius: 8px;
             overflow: hidden;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
+            margin: 15px 0;
         }
 
         .tab {
             flex: 1;
-            padding: 12px;
+            padding: 10px;
             text-align: center;
-            background: white;
+            background: var(--button-bg);
             cursor: pointer;
+            transition: all 0.3s;
         }
 
         .tab.active {
             background: var(--primary-color);
-            color: white;
         }
 
-        .tab-content {
-            display: none;
+        .structure-title {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-weight: bold;
         }
 
-        .tab-content.active {
-            display: block;
-        }
-
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background: var(--secondary-color);
-            color: white;
-            border: none;
+        .structure-item {
+            background: var(--card-bg);
             border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            text-decoration: none;
+            padding: 12px;
+            margin: 8px 0;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 5px;
-            transition: background 0.3s ease;
-            z-index: 1000;
         }
 
-        .back-btn:hover {
-            background: #9932CC;
-        }
-
-        .back-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: white;
-        }
-
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            color: white;
-            flex-direction: column;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
+        .user-avatar {
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-bottom: 16px;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .user-earnings {
+            color: var(--success);
+            font-weight: bold;
         }
 
-        .empty-list {
-            text-align: center;
-            color: #666;
-            padding: 20px;
+        .bonus-info {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <a href="javascript:history.back()" class="back-btn">
-        <svg viewBox="0 0 24 24">
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-        </svg>
-        Назад
-    </a>
-    
-    <div class="container">
-        <div class="card">
-            <div class="referral-header">
-                <h2>Реферальная программа</h2>
-                <p>Приглашайте друзей и получайте бонусы за их активность</p>
-            </div>
+    <!-- Иконка меню -->
+    <div class="menu-icon" onclick="toggleMenu()">
+        <i class="fas fa-bars"></i>
+    </div>
 
-            <div class="referral-stats">
-                <div class="stat-card">
-                    <div class="stat-value" id="totalReferrals">0</div>
-                    <div class="stat-label">Всего рефералов</div>
+    <!-- Выпадающее меню -->
+    <div class="menu" id="menu">
+        <button class="menu-item" onclick="window.location.href='games.html'">
+            <i class="fas fa-gamepad"></i> Игры
+        </button>
+        <div class="menu-divider"></div>
+        <button class="menu-item" onclick="window.location.href='replenishment.html'">
+            <i class="fas fa-wallet"></i> Пополнение
+        </button>
+        <button class="menu-item" onclick="window.location.href='conclusion.html'">
+            <i class="fas fa-money-bill-wave"></i> Вывод
+        </button>
+        <button class="menu-item exchanger" onclick="window.location.href='Exchanger.html'">
+            <i class="fas fa-exchange-alt"></i> Обменник
+        </button>
+        <div class="menu-divider"></div>
+        <button class="menu-item" onclick="window.location.href='support.html'">
+            <i class="fas fa-headset"></i> Поддержка
+        </button>
+    </div>
+
+    <!-- Уведомление -->
+    <div class="notification" id="notification" style="display: none;">
+        <i class="fas fa-check-circle notification-icon"></i>
+        <span id="notification-message">Сообщение</span>
+    </div>
+
+    <!-- Звездный фон -->
+    <div class="stars" id="stars-container"></div>
+
+    <!-- Основной контент -->
+    <div class="main-container" id="profileContainer">
+        <div class="profile-card">
+            <h1 class="profile-title">КОСМИЧЕСКИЙ ПРОФИЛЬ</h1>
+            
+            <div class="avatar-container">
+                <img id="avatar" src="" alt="Аватар" class="avatar">
+            </div>
+            
+            <h2 class="username" id="username">Загрузка...</h2>
+            
+            <div class="balance-container">
+                <div class="balance-label">Ваш баланс</div>
+                <div class="balance-value" id="balance">0 ⭐️</div>
+            </div>
+            
+            <!-- Реферальная система -->
+            <div class="referral-section">
+                <h2 class="profile-title">РЕФЕРАЛЬНАЯ СИСТЕМА</h2>
+                
+                <div class="referral-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalReferrals">0</div>
+                        <div class="stat-label">Всего рефералов</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="activeReferrals">0</div>
+                        <div class="stat-label">Активных</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalEarned">0 ⭐️</div>
+                        <div class="stat-label">Заработано</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="availableBalance">0 ⭐️</div>
+                        <div class="stat-label">Доступно</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="activeReferrals">0</div>
-                    <div class="stat-label">Активных</div>
+
+                <div class="referral-link-container">
+                    <h3>Ваша реферальная ссылка</h3>
+                    <div class="referral-link" id="userReferralLink"></div>
+                    <button class="copy-btn" onclick="copyReferralLink()">
+                        <i class="fas fa-copy"></i> Копировать
+                    </button>
+                    <div class="bonus-info">
+                        Вы получаете 5% от суммы каждого пополнения вашего реферала
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="totalEarned">0</div>
-                    <div class="stat-label">Заработано</div>
+
+                <div class="tabs">
+                    <div class="tab active" data-tab="structure">Моя структура</div>
+                    <div class="tab" data-tab="history">История начислений</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="availableBalance">0</div>
-                    <div class="stat-label">Доступно</div>
+
+                <div class="tab-content active" id="structure-tab">
+                    <div class="structure-title">
+                        <span>Рефералы</span>
+                        <span>Заработано</span>
+                    </div>
+                    <div id="referralList"></div>
+                </div>
+
+                <div class="tab-content" id="history-tab">
+                    <div class="structure-title">
+                        <span>Начисления</span>
+                        <span>Сумма</span>
+                    </div>
+                    <div id="earningsHistory"></div>
                 </div>
             </div>
-
-            <div class="referral-link-container">
-                <h3>Ваша реферальная ссылка</h3>
-                <div class="referral-link" id="userReferralLink"></div>
-                <button class="copy-btn" id="copyReferralBtn">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                    </svg>
-                    Копировать
-                </button>
+            
+            <!-- Промокод -->
+            <div class="promo-section">
+                <h3 class="promo-title">Промокод</h3>
+                <div class="promo-input-container">
+                    <input type="text" id="promoCodeInput" class="promo-input" placeholder="Введите промокод">
+                    <button class="promo-apply-btn" onclick="applyPromoCode()">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
                 <div class="bonus-info">
-                    Вы получаете 5% от суммы каждого пополнения вашего реферала
+                    Ваш промокод: <span id="userPromoCode"></span> - дает 5% от пополнений
                 </div>
-            </div>
-
-            <div class="tabs">
-                <div class="tab active" data-tab="structure">Моя структура</div>
-                <div class="tab" data-tab="history">История начислений</div>
-            </div>
-
-            <div class="tab-content active" id="structure-tab">
-                <div class="structure-title">
-                    <span>Рефералы</span>
-                    <span>Заработано</span>
-                </div>
-                <div id="referralList"></div>
-            </div>
-
-            <div class="tab-content" id="history-tab">
-                <div class="structure-title">
-                    <span>Начисления</span>
-                    <span>Сумма</span>
-                </div>
-                <div id="earningsHistory"></div>
             </div>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
     <script>
-        // Инициализация Firebase
+        // Конфигурация Firebase
         const firebaseConfig = {
-            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com/",
-            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8"
+            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
+            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
         };
-        
+
+        // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        
-        // Инициализация Telegram WebApp
-        const tg = window.Telegram.WebApp;
-        if (tg) {
-            tg.expand();
-        }
-        
-        // Конфигурация
-        const config = {
-            referralBonusPercent: 5, // 5% от пополнений рефералов
-            referralLossPercent: 30, // 30% от проигрышей рефералов
-            minWithdrawal: 100, // Минимальная сумма для вывода
-            baseUrl: window.location.href.split('?')[0]
-        };
-        
-        // Основные переменные
-        let currentUser = null;
-        let userReferralCode = null;
-        let userReferralLink = null;
 
-        // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', async () => {
-            showLoading("Загрузка данных...");
-            
-            try {
-                // Получаем данные пользователя Telegram
-                const tgUser = tg?.initDataUnsafe?.user;
-                if (tgUser) {
-                    currentUser = await updateTelegramUser(tgUser);
-                    await loadUserReferralData(tgUser.id.toString());
-                    loadReferralStructure(tgUser.id.toString());
-                    loadEarningsHistory(tgUser.id.toString());
-                }
-                
-                initTabs();
-                hideLoading();
-            } catch (error) {
-                console.error("Ошибка инициализации:", error);
-                hideLoading();
-                alert("Произошла ошибка при загрузке. Пожалуйста, попробуйте позже.");
+        // Основные элементы
+        const elements = {
+            avatar: document.getElementById('avatar'),
+            username: document.getElementById('username'),
+            balance: document.getElementById('balance'),
+            totalReferrals: document.getElementById('totalReferrals'),
+            activeReferrals: document.getElementById('activeReferrals'),
+            totalEarned: document.getElementById('totalEarned'),
+            availableBalance: document.getElementById('availableBalance'),
+            userReferralLink: document.getElementById('userReferralLink'),
+            referralList: document.getElementById('referralList'),
+            earningsHistory: document.getElementById('earningsHistory'),
+            promoCodeInput: document.getElementById('promoCodeInput'),
+            userPromoCode: document.getElementById('userPromoCode'),
+            notification: document.getElementById('notification'),
+            notificationMessage: document.getElementById('notification-message')
+        };
+
+        // Данные пользователя
+        let userData = {
+            userId: null,
+            name: "Гость",
+            avatar: "https://via.placeholder.com/150/6a5acd/ffffff?text=USER",
+            balance: 0,
+            registrationDate: new Date().toISOString(),
+            referralCode: null,
+            referredBy: null,
+            myPromoCode: null,
+            usedPromoCodes: [],
+            referralStats: {
+                totalReferrals: 0,
+                activeReferrals: 0,
+                totalEarned: 0,
+                available: 0
             }
+        };
+
+        // Ссылка на данные пользователя в Firebase
+        let userRef;
+        let unsubscribeAuth;
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars();
+            initApp();
         });
 
-        // Загрузка реферальных данных пользователя
-        async function loadUserReferralData(userId) {
-            const userRef = database.ref(`users/${userId}`);
-            const snapshot = await userRef.once('value');
-            
-            if (snapshot.exists()) {
-                const userData = snapshot.val();
+        // Основная функция инициализации
+        async function initApp() {
+            if (window.Telegram && Telegram.WebApp) {
+                Telegram.WebApp.expand();
+                Telegram.WebApp.enableClosingConfirmation();
                 
-                // Генерируем или получаем реферальный код пользователя
-                if (userData.referralCode) {
-                    userReferralCode = userData.referralCode;
-                } else {
-                    // Генерируем уникальный реферальный код
-                    userReferralCode = 'REF' + Math.floor(1000 + Math.random() * 9000);
-                    await userRef.update({ referralCode: userReferralCode });
-                }
-                
-                // Создаем реферальную ссылку
-                userReferralLink = `${config.baseUrl}?ref=${userReferralCode}`;
-                document.getElementById('userReferralLink').textContent = userReferralLink;
-                
-                // Обновляем статистику
-                if (userData.referralStats) {
-                    document.getElementById('totalReferrals').textContent = userData.referralStats.totalReferrals || 0;
-                    document.getElementById('activeReferrals').textContent = userData.referralStats.activeReferrals || 0;
-                    document.getElementById('totalEarned').textContent = (userData.referralStats.totalEarned || 0) + ' ₽';
-                    document.getElementById('availableBalance').textContent = (userData.referralStats.available || 0) + ' ₽';
+                if (Telegram.WebApp.initDataUnsafe?.user) {
+                    await handleLogin();
                 }
             }
+        }
+
+        // Обработка входа через Telegram
+        async function handleLogin() {
+            try {
+                const tgUser = Telegram.WebApp.initDataUnsafe.user;
+                userData.userId = tgUser.id.toString();
+                
+                // Инициализация ссылки на данные пользователя
+                userRef = database.ref('users/' + userData.userId);
+                
+                // Проверяем существование пользователя
+                const snapshot = await userRef.once('value');
+                
+                if (!snapshot.exists()) {
+                    await createNewUser();
+                } else {
+                    userData = {...userData, ...snapshot.val()};
+                    // Инициализируем referralStats, если их нет
+                    if (!userData.referralStats) {
+                        userData.referralStats = {
+                            totalReferrals: 0,
+                            activeReferrals: 0,
+                            totalEarned: 0,
+                            available: 0
+                        };
+                        await userRef.update({ referralStats: userData.referralStats });
+                    }
+                }
+                
+                // Настраиваем слушатель изменений в реальном времени
+                setupRealtimeUpdates();
+                
+                // Обрабатываем реферальную ссылку
+                await processReferralLink();
+                
+                // Обрабатываем промокод из URL
+                await processPromoCode();
+                
+                updateUI();
+            } catch (error) {
+                console.error("Ошибка входа:", error);
+                showNotification("Ошибка входа. Попробуйте снова.", "error");
+            }
+        }
+
+        // Создание нового пользователя
+        async function createNewUser() {
+            userData.name = Telegram.WebApp.initDataUnsafe.user.first_name || 
+                           Telegram.WebApp.initDataUnsafe.user.username || 
+                           "Космонавт";
+            userData.avatar = Telegram.WebApp.initDataUnsafe.user.photo_url || 
+                            `https://via.placeholder.com/150/6a5acd/ffffff?text=${userData.name.charAt(0)}`;
+            
+            // Генерируем реферальный код и промокод
+            userData.referralCode = generateReferralCode();
+            userData.myPromoCode = generatePromoCode();
+            
+            await userRef.set(userData);
+            showNotification("Новый профиль создан!", "success");
+        }
+
+        // Генерация реферального кода
+        function generateReferralCode() {
+            return 'REF-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+        }
+
+        // Генерация промокода
+        function generatePromoCode() {
+            return 'PROMO-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+        }
+
+        // Обработка реферальной ссылки
+        async function processReferralLink() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const referralCode = urlParams.get('ref');
+            
+            if (referralCode && !userData.referredBy) {
+                const referrerSnapshot = await database.ref('users')
+                    .orderByChild('referralCode')
+                    .equalTo(referralCode)
+                    .once('value');
+                
+                if (referrerSnapshot.exists()) {
+                    const [referrerId, referrerData] = Object.entries(referrerSnapshot.val())[0];
+                    userData.referredBy = referrerId;
+                    
+                    // Обновляем статистику реферера
+                    await database.ref(`users/${referrerId}/referralStats`).update({
+                        totalReferrals: firebase.database.ServerValue.increment(1),
+                        activeReferrals: firebase.database.ServerValue.increment(1)
+                    });
+                    
+                    // Добавляем реферала в структуру
+                    await database.ref(`referrals/${referrerId}`).push().set({
+                        userId: userData.userId,
+                        name: userData.name,
+                        date: Date.now(),
+                        earnings: 0,
+                        lastActivity: Date.now()
+                    });
+                    
+                    // Обновляем данные пользователя
+                    await userRef.update({
+                        referredBy: referrerId
+                    });
+                    
+                    showNotification("Вы успешно зарегистрировались по реферальной ссылке!", "success");
+                }
+            }
+        }
+
+        // Обработка промокода из URL
+        async function processPromoCode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const promoCode = urlParams.get('promo');
+            
+            if (promoCode && (!userData.usedPromoCodes || !userData.usedPromoCodes.includes(promoCode))) {
+                await applyPromoCode(promoCode);
+            }
+        }
+
+        // Применение промокода
+        async function applyPromoCode(code = null) {
+            try {
+                const promoCode = code || elements.promoCodeInput.value.trim();
+                
+                if (!promoCode) {
+                    showNotification("Введите промокод", "warning");
+                    return;
+                }
+                
+                if (userData.usedPromoCodes?.includes(promoCode)) {
+                    showNotification("Вы уже использовали этот промокод", "warning");
+                    return;
+                }
+                
+                // Проверяем, не пытается ли пользователь использовать свой промокод
+                if (promoCode === userData.myPromoCode) {
+                    showNotification("Нельзя использовать собственный промокод", "warning");
+                    return;
+                }
+                
+                // Ищем пользователя с таким промокодом
+                const promoUserSnapshot = await database.ref('users')
+                    .orderByChild('myPromoCode')
+                    .equalTo(promoCode)
+                    .once('value');
+                
+                if (!promoUserSnapshot.exists()) {
+                    showNotification("Промокод не найден", "error");
+                    return;
+                }
+                
+                const [promoUserId, promoUserData] = Object.entries(promoUserSnapshot.val())[0];
+                
+                // Добавляем промокод в список использованных
+                await userRef.update({
+                    usedPromoCodes: firebase.database.ServerValue.arrayUnion(promoCode)
+                });
+                
+                // Обновляем локальные данные
+                if (!userData.usedPromoCodes) userData.usedPromoCodes = [];
+                userData.usedPromoCodes.push(promoCode);
+                
+                showNotification("Промокод успешно активирован! 5% от ваших пополнений будет идти владельцу промокода.", "success");
+                elements.promoCodeInput.value = "";
+            } catch (error) {
+                console.error("Ошибка применения промокода:", error);
+                showNotification("Ошибка при применении промокода", "error");
+            }
+        }
+
+        // Настройка синхронизации в реальном времени
+        function setupRealtimeUpdates() {
+            if (unsubscribeAuth) {
+                unsubscribeAuth(); // Отписываемся от предыдущего слушателя
+            }
+            
+            unsubscribeAuth = userRef.on('value', (snapshot) => {
+                const dbData = snapshot.val();
+                if (dbData) {
+                    // Обновляем только измененные поля
+                    Object.keys(dbData).forEach(key => {
+                        if (userData[key] !== dbData[key]) {
+                            userData[key] = dbData[key];
+                        }
+                    });
+                    updateUI();
+                }
+            }, (error) => {
+                console.error("Ошибка синхронизации:", error);
+                showNotification("Ошибка соединения с сервером", "error");
+            });
+        }
+
+        // Обновление интерфейса
+        function updateUI() {
+            elements.avatar.src = userData.avatar;
+            elements.username.textContent = userData.name;
+            elements.balance.textContent = `${userData.balance} ⭐️`;
+            
+            // Реферальная система
+            elements.totalReferrals.textContent = userData.referralStats?.totalReferrals || 0;
+            elements.activeReferrals.textContent = userData.referralStats?.activeReferrals || 0;
+            elements.totalEarned.textContent = `${userData.referralStats?.totalEarned || 0} ⭐️`;
+            elements.availableBalance.textContent = `${userData.referralStats?.available || 0} ⭐️`;
+            elements.userReferralLink.textContent = `${window.location.href.split('?')[0]}?ref=${userData.referralCode}`;
+            
+            // Промокод
+            elements.userPromoCode.textContent = userData.myPromoCode || "Генерация...";
+            
+            // Загружаем структуру рефералов и историю начислений
+            loadReferralStructure();
+            loadEarningsHistory();
         }
 
         // Загрузка структуры рефералов
-        async function loadReferralStructure(userId) {
+        async function loadReferralStructure() {
+            if (!userData.userId) return;
+            
+            const snapshot = await database.ref(`referrals/${userData.userId}`).once('value');
             const container = document.getElementById('referralList');
-            container.innerHTML = '<p>Загрузка...</p>';
-            
-            const snapshot = await database.ref(`referrals/${userId}`).once('value');
-            
             container.innerHTML = '';
             
             if (!snapshot.exists()) {
-                container.innerHTML = '<div class="empty-list">У вас пока нет рефералов</div>';
+                container.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.7); padding: 20px;">У вас пока нет рефералов</div>';
                 return;
             }
             
@@ -482,64 +572,43 @@
             });
             
             if (referrals.length === 0) {
-                container.innerHTML = '<div class="empty-list">У вас пока нет рефералов</div>';
+                container.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.7); padding: 20px;">У вас пока нет рефералов</div>';
                 return;
             }
             
-            // Загружаем данные о каждом реферале
-            const usersRef = database.ref('users');
-            const usersSnapshot = await usersRef.once('value');
-            const allUsers = [];
-            usersSnapshot.forEach(child => {
-                allUsers.push({
-                    id: child.key,
-                    ...child.val()
-                });
-            });
-            
             referrals.forEach(ref => {
-                const user = allUsers.find(u => u.id === ref.userId);
-                if (user) {
-                    const element = createReferralElement(user, ref);
-                    container.appendChild(element);
-                }
-            });
-        }
-
-        // Создание элемента реферала
-        function createReferralElement(user, refData) {
-            const el = document.createElement('div');
-            el.className = 'structure-item';
-            
-            const firstLetter = user.username ? user.username.charAt(0).toUpperCase() : 'U';
-            const statusClass = refData.lastActivity > Date.now() - 30*24*60*60*1000 ? 'status-active' : 'status-inactive';
-            const statusText = refData.lastActivity > Date.now() - 30*24*60*60*1000 ? 'Активен' : 'Неактивен';
-            
-            el.innerHTML = `
-                <div class="user-info">
-                    <div class="user-avatar">${firstLetter}</div>
-                    <div>
-                        <div class="user-name">${user.username || 'Аноним'}</div>
-                        <div class="user-status ${statusClass}">${statusText}</div>
+                const el = document.createElement('div');
+                el.className = 'structure-item';
+                
+                const firstLetter = ref.name?.charAt(0) || 'U';
+                const isActive = ref.lastActivity > Date.now() - 30*24*60*60*1000;
+                
+                el.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="user-avatar">${firstLetter}</div>
+                        <div>
+                            <div>${ref.name || 'Анонимный пользователь'}</div>
+                            <div style="font-size: 12px; color: ${isActive ? var(--success) : '#666'}">
+                                ${isActive ? 'Активен' : 'Неактивен'}
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="user-earnings">+${refData.bonus || 0} ₽</div>
-            `;
-            
-            return el;
+                    <div class="user-earnings">+${ref.earnings || 0} ⭐️</div>
+                `;
+                container.appendChild(el);
+            });
         }
 
         // Загрузка истории начислений
-        async function loadEarningsHistory(userId) {
+        async function loadEarningsHistory() {
+            if (!userData.userId) return;
+            
+            const snapshot = await database.ref(`referralEarnings/${userData.userId}`).orderByChild('timestamp').limitToLast(20).once('value');
             const container = document.getElementById('earningsHistory');
-            container.innerHTML = '<p>Загрузка...</p>';
-            
-            const snapshot = await database.ref(`referralEarnings/${userId}`).orderByChild('timestamp').limitToLast(20).once('value');
-            
             container.innerHTML = '';
             
             if (!snapshot.exists()) {
-                container.innerHTML = '<div class="empty-list">Нет данных о начислениях</div>';
+                container.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.7); padding: 20px;">Нет данных о начислениях</div>';
                 return;
             }
             
@@ -552,7 +621,7 @@
             });
             
             if (earnings.length === 0) {
-                container.innerHTML = '<div class="empty-list">Нет данных о начислениях</div>';
+                container.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.7); padding: 20px;">Нет данных о начислениях</div>';
                 return;
             }
             
@@ -560,36 +629,43 @@
             earnings.sort((a, b) => b.timestamp - a.timestamp);
             
             earnings.forEach(earning => {
-                const element = createEarningElement(earning);
-                container.appendChild(element);
+                const el = document.createElement('div');
+                el.className = 'structure-item';
+                
+                const date = new Date(earning.timestamp).toLocaleDateString('ru-RU');
+                let description = '';
+                
+                if (earning.type === 'deposit') {
+                    description = `Пополнение реферала ${earning.referralName || ''}`;
+                } else if (earning.type === 'loss') {
+                    description = `Комиссия с проигрыша ${earning.referralName || ''}`;
+                } else if (earning.type === 'promo') {
+                    description = `Бонус по промокоду ${earning.promoCode || ''}`;
+                } else {
+                    description = 'Реферальное начисление';
+                }
+                
+                el.innerHTML = `
+                    <div>
+                        <div>${description}</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.7);">${date}</div>
+                    </div>
+                    <div class="user-earnings">+${earning.amount} ⭐️</div>
+                `;
+                container.appendChild(el);
             });
         }
 
-        // Создание элемента начисления
-        function createEarningElement(earning) {
-            const el = document.createElement('div');
-            el.className = 'structure-item';
-            
-            const date = new Date(earning.timestamp).toLocaleDateString('ru-RU');
-            let description = '';
-            
-            if (earning.type === 'deposit') {
-                description = `Пополнение реферала ${earning.referralName || ''}`;
-            } else if (earning.type === 'loss') {
-                description = `Комиссия с проигрыша ${earning.referralName || ''}`;
-            } else {
-                description = 'Реферальное начисление';
-            }
-            
-            el.innerHTML = `
-                <div>
-                    <div>${description}</div>
-                    <div style="font-size: 12px; color: #666;">${date}</div>
-                </div>
-                <div class="user-earnings">+${earning.amount} ₽</div>
-            `;
-            
-            return el;
+        // Копирование реферальной ссылки
+        function copyReferralLink() {
+            navigator.clipboard.writeText(elements.userReferralLink.textContent)
+                .then(() => {
+                    showNotification('Реферальная ссылка скопирована!', 'success');
+                })
+                .catch(err => {
+                    console.error('Ошибка копирования: ', err);
+                    showNotification('Не удалось скопировать ссылку', 'error');
+                });
         }
 
         // Инициализация вкладок
@@ -604,94 +680,269 @@
                     document.getElementById(`${tabId}-tab`).classList.add('active');
                 });
             });
-            
-            // Копирование реферальной ссылки
-            document.getElementById('copyReferralBtn').addEventListener('click', copyReferralLink);
         }
-        
-        // Копирование реферальной ссылки
-        function copyReferralLink() {
-            navigator.clipboard.writeText(userReferralLink)
-                .then(() => {
-                    const btn = document.getElementById('copyReferralBtn');
-                    btn.innerHTML = `
-                        <svg viewBox="0 0 24 24">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                        </svg>
-                        Скопировано!
-                    `;
-                    setTimeout(() => {
-                        btn.innerHTML = `
-                            <svg viewBox="0 0 24 24">
-                                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                            </svg>
-                            Копировать
-                        `;
-                    }, 2000);
-                })
-                .catch(err => {
-                    console.error('Ошибка копирования: ', err);
-                    alert('Не удалось скопировать ссылку');
+
+        // Функция для обработки пополнения баланса с учетом рефералов и промокодов
+        async function handleDeposit(userId, amount) {
+            try {
+                // Обновляем баланс пользователя
+                await database.ref(`users/${userId}/balance`).transaction(balance => {
+                    return (balance || 0) + amount;
                 });
+                
+                // Получаем данные пользователя
+                const userSnapshot = await database.ref(`users/${userId}`).once('value');
+                const user = userSnapshot.val();
+                
+                // Если пользователь пришел по реферальной ссылке
+                if (user.referredBy) {
+                    const referralBonus = amount * 0.05; // 5% от пополнения
+                    
+                    // Начисляем бонус рефереру
+                    await database.ref(`users/${user.referredBy}`).transaction(data => {
+                        if (!data) return data;
+                        
+                        // Обновляем баланс и статистику
+                        data.balance = (data.balance || 0) + referralBonus;
+                        data.referralStats = data.referralStats || {
+                            totalReferrals: 0,
+                            activeReferrals: 0,
+                            totalEarned: 0,
+                            available: 0
+                        };
+                        
+                        data.referralStats.totalEarned = (data.referralStats.totalEarned || 0) + referralBonus;
+                        data.referralStats.available = (data.referralStats.available || 0) + referralBonus;
+                        
+                        return data;
+                    });
+                    
+                    // Добавляем запись в историю начислений реферера
+                    await database.ref(`referralEarnings/${user.referredBy}`).push().set({
+                        amount: referralBonus,
+                        timestamp: Date.now(),
+                        type: 'deposit',
+                        referralId: userId,
+                        referralName: user.name
+                    });
+                    
+                    // Обновляем структуру рефералов
+                    const referralsRef = database.ref(`referrals/${user.referredBy}`);
+                    const referralsSnapshot = await referralsRef.orderByChild('userId').equalTo(userId).once('value');
+                    
+                    if (referralsSnapshot.exists()) {
+                        referralsSnapshot.forEach(child => {
+                            child.ref.update({
+                                earnings: (child.val().earnings || 0) + referralBonus,
+                                lastActivity: Date.now()
+                            });
+                        });
+                    }
+                }
+                
+                // Обработка промокодов
+                if (user.usedPromoCodes?.length > 0) {
+                    const promoBonus = amount * 0.05; // 5% от пополнения
+                    
+                    // Для каждого использованного промокода находим владельца и начисляем бонус
+                    for (const promoCode of user.usedPromoCodes) {
+                        const promoUserSnapshot = await database.ref('users')
+                            .orderByChild('myPromoCode')
+                            .equalTo(promoCode)
+                            .once('value');
+                        
+                        if (promoUserSnapshot.exists()) {
+                            const [promoUserId, promoUserData] = Object.entries(promoUserSnapshot.val())[0];
+                            
+                            // Начисляем бонус владельцу промокода
+                            await database.ref(`users/${promoUserId}`).transaction(data => {
+                                if (!data) return data;
+                                
+                                data.balance = (data.balance || 0) + promoBonus;
+                                return data;
+                            });
+                            
+                            // Добавляем запись в историю начислений
+                            await database.ref(`referralEarnings/${promoUserId}`).push().set({
+                                amount: promoBonus,
+                                timestamp: Date.now(),
+                                type: 'promo',
+                                promoCode: promoCode,
+                                userId: userId,
+                                userName: user.name
+                            });
+                        }
+                    }
+                }
+                
+                return true;
+            } catch (error) {
+                console.error("Ошибка обработки пополнения:", error);
+                return false;
+            }
         }
 
-        // Обновление данных пользователя
-        async function updateTelegramUser(tgUser) {
-            if (!tgUser?.id) return;
-            
-            const userId = tgUser.id.toString();
-            const userRef = database.ref(`users/${userId}`);
-            const snapshot = await userRef.once('value');
-            
-            const userData = {
-                id: userId,
-                username: tgUser.username || '',
-                first_name: tgUser.first_name || '',
-                last_name: tgUser.last_name || '',
-                last_active: firebase.database.ServerValue.TIMESTAMP
-            };
-            
-            if (!snapshot.exists()) {
-                userData.created_at = firebase.database.ServerValue.TIMESTAMP;
-                userData.balance = 0;
-                userData.referralStats = {
-                    totalReferrals: 0,
-                    activeReferrals: 0,
-                    totalEarned: 0,
-                    available: 0
-                };
-                await userRef.set(userData);
-            } else {
-                await userRef.update(userData);
+        // Функция для обработки проигрыша с учетом рефералов
+        async function handleLoss(userId, amount) {
+            try {
+                // Получаем данные пользователя
+                const userSnapshot = await database.ref(`users/${userId}`).once('value');
+                const user = userSnapshot.val();
+                
+                // Если пользователь пришел по реферальной ссылке
+                if (user.referredBy) {
+                    const referralBonus = amount * 0.30; // 30% от проигрыша
+                    
+                    // Начисляем бонус рефереру
+                    await database.ref(`users/${user.referredBy}`).transaction(data => {
+                        if (!data) return data;
+                        
+                        // Обновляем баланс и статистику
+                        data.balance = (data.balance || 0) + referralBonus;
+                        data.referralStats = data.referralStats || {
+                            totalReferrals: 0,
+                            activeReferrals: 0,
+                            totalEarned: 0,
+                            available: 0
+                        };
+                        
+                        data.referralStats.totalEarned = (data.referralStats.totalEarned || 0) + referralBonus;
+                        data.referralStats.available = (data.referralStats.available || 0) + referralBonus;
+                        
+                        return data;
+                    });
+                    
+                    // Добавляем запись в историю начислений реферера
+                    await database.ref(`referralEarnings/${user.referredBy}`).push().set({
+                        amount: referralBonus,
+                        timestamp: Date.now(),
+                        type: 'loss',
+                        referralId: userId,
+                        referralName: user.name
+                    });
+                    
+                    // Обновляем структуру рефералов
+                    const referralsRef = database.ref(`referrals/${user.referredBy}`);
+                    const referralsSnapshot = await referralsRef.orderByChild('userId').equalTo(userId).once('value');
+                    
+                    if (referralsSnapshot.exists()) {
+                        referralsSnapshot.forEach(child => {
+                            child.ref.update({
+                                earnings: (child.val().earnings || 0) + referralBonus,
+                                lastActivity: Date.now()
+                            });
+                        });
+                    }
+                }
+                
+                return true;
+            } catch (error) {
+                console.error("Ошибка обработки проигрыша:", error);
+                return false;
             }
-            
-            return { key: userId, ref: userRef };
         }
 
-        // Показать загрузку
-        function showLoading(message) {
-            let overlay = document.querySelector('.loading-overlay');
+        // Показать уведомление
+        function showNotification(message, type = 'success', duration = 3000) {
+            const notification = document.getElementById('notification');
+            const notificationMsg = document.getElementById('notification-message');
+            const notificationIcon = document.querySelector('.notification-icon');
             
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.className = 'loading-overlay';
-                overlay.innerHTML = `
-                    <div class="spinner"></div>
-                    <div>${message || 'Загрузка...'}</div>
-                `;
-                document.body.appendChild(overlay);
-            } else {
-                overlay.querySelector('div:last-child').textContent = message || 'Загрузка...';
+            notification.className = 'notification';
+            notification.classList.add(`notification-${type}`);
+            
+            // Устанавливаем иконку в зависимости от типа
+            switch(type) {
+                case 'success':
+                    notificationIcon.className = 'fas fa-check-circle notification-icon';
+                    break;
+                case 'error':
+                    notificationIcon.className = 'fas fa-times-circle notification-icon';
+                    break;
+                case 'warning':
+                    notificationIcon.className = 'fas fa-exclamation-circle notification-icon';
+                    break;
+                default:
+                    notificationIcon.className = 'fas fa-info-circle notification-icon';
+            }
+            
+            notificationMsg.textContent = message;
+            notification.style.display = 'flex';
+            
+            // Скрываем уведомление через указанное время
+            setTimeout(() => {
+                notification.classList.add('hide');
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                    notification.classList.remove('hide');
+                }, 300);
+            }, duration);
+        }
+
+        // Создание звездного фона
+        function createStars() {
+            const container = document.getElementById('stars-container');
+            const starCount = Math.floor(window.innerWidth / 2);
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const size = Math.random() * 3;
+                const duration = 2 + Math.random() * 8;
+                const delay = Math.random() * 5;
+                
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.animationDuration = `${duration}s`;
+                star.style.animationDelay = `${delay}s`;
+                star.style.opacity = Math.random();
+                
+                container.appendChild(star);
+                
+                star.addEventListener('animationend', () => {
+                    star.remove();
+                    createStar();
+                });
             }
         }
 
-        // Скрыть загрузку
-        function hideLoading() {
-            const overlay = document.querySelector('.loading-overlay');
-            if (overlay) {
-                overlay.remove();
-            }
+        function createStar() {
+            const container = document.getElementById('stars-container');
+            const star = document.createElement('div');
+            star.className = 'star';
+            
+            const size = Math.random() * 3;
+            const duration = 2 + Math.random() * 8;
+            
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = '-10px';
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.animationDuration = `${duration}s`;
+            star.style.opacity = Math.random();
+            
+            container.appendChild(star);
+            
+            star.addEventListener('animationend', () => {
+                star.remove();
+            });
         }
+
+        // Функции меню
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        // Глобальные функции
+        window.handleDeposit = handleDeposit;
+        window.handleLoss = handleLoss;
+        window.copyReferralLink = copyReferralLink;
+        window.applyPromoCode = applyPromoCode;
+        window.toggleMenu = toggleMenu;
     </script>
 </body>
 </html>
