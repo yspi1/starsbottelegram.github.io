@@ -5,6 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Пополнение баланса</title>
     <style>
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.3s ease;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            background: #9932CC;
+        }
+
+        .back-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
         :root {
             --primary-color: #8A2BE2;
             --secondary-color: #BA55D3;
@@ -276,8 +304,19 @@
             margin-bottom: 16px;
         }
 
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
         }
 
         .stars-info {
@@ -399,158 +438,10 @@
             justify-content: space-between;
             margin-bottom: 5px;
         }
-
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: background 0.3s ease;
-            z-index: 1000;
-        }
-
-        .back-btn:hover {
-            background: #9932CC;
-        }
-
-        .back-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: white;
-        }
-
-        .admin-settings {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f5f5f5;
-            border-radius: 10px;
-        }
-
-        .admin-settings h3 {
-            margin-bottom: 15px;
-        }
-
-        .settings-group {
-            margin-bottom: 15px;
-        }
-
-        .settings-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .settings-row label {
-            width: 200px;
-            margin-bottom: 0;
-        }
-
-        .settings-row input {
-            width: 100px;
-            margin-right: 10px;
-        }
-
-        .settings-row span {
-            font-size: 14px;
-        }
-
-        .save-settings-btn {
-            margin-top: 10px;
-            padding: 8px 16px;
-            background: var(--success-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .revshare-levels {
-            margin-top: 15px;
-        }
-
-        .revshare-level {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .revshare-level input {
-            width: 60px;
-            margin-right: 10px;
-        }
-
-        .revshare-level span {
-            font-size: 14px;
-            width: 100px;
-        }
-
-        .add-level-btn {
-            margin-top: 10px;
-            padding: 6px 12px;
-            background: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .remove-level-btn {
-            margin-left: 10px;
-            padding: 2px 6px;
-            background: var(--danger-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-         /* Все предыдущие стили остаются */
-        .referral-tree {
-            width: 100%;
-            height: 400px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            padding: 15px;
-            overflow: auto;
-        }
-
-        .node circle {
-            fill: #8A2BE2;
-            stroke: #BA55D3;
-            stroke-width: 2px;
-        }
-
-        .node text {
-            font: 12px sans-serif;
-            fill: #333;
-        }
-
-        .link {
-            fill: none;
-            stroke: #ccc;
-            stroke-width: 1.5px;
-        }
-
-        .tree-container {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 8px;
-        }
     </style>
 </head>
 <body>
-    <a href="javascript:history.back()" class="back-btn">
+     <a href="javascript:history.back()" class="back-btn">
         <svg viewBox="0 0 24 24">
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
         </svg>
@@ -558,10 +449,7 @@
     </a>
     
     <div class="container">
-            <div class="card" id="referralTreeCard" style="display: none;">
-            <h2>Реферальная структура</h2>
-            <div class="tree-container">
-                <div id="referralTree" class="referral-tree"></div>
+        <div class="card">
             <h1>Пополнение баланса</h1>
             
             <form id="depositForm">
@@ -611,7 +499,7 @@
                         </svg>
                         Копировать
                     </button>
-                    <div class="bonus-info">Приводите друзей и получайте процент от их пополнений и проигрышей!</div>
+                    <div class="bonus-info">Дайте эту ссылку другу. Когда он пополнит баланс, вы оба получите +5% к сумме пополнения!</div>
                     
                     <!-- Статистика рефералов -->
                     <div class="referral-stats" id="referralStats" style="display: none;">
@@ -625,15 +513,7 @@
                             <span id="activeReferrals">0</span>
                         </div>
                         <div class="referral-stats-item">
-                            <span>Заработано с пополнений:</span>
-                            <span id="totalEarnedFromDeposits">0 звёзд</span>
-                        </div>
-                        <div class="referral-stats-item">
-                            <span>Заработано с проигрышей:</span>
-                            <span id="totalEarnedFromLosses">0 звёзд</span>
-                        </div>
-                        <div class="referral-stats-item">
-                            <span>Общий доход:</span>
+                            <span>Заработано:</span>
                             <span id="totalEarned">0 звёзд</span>
                         </div>
                     </div>
@@ -690,48 +570,13 @@
         <div class="admin-panel" id="adminPanel">
             <h2>Админ-панель</h2>
             <div id="adminTransactions"></div>
-            
-            <!-- Настройки реферальной системы -->
-            <div class="admin-settings">
-                <h3>Настройки реферальной системы</h3>
-                
-                <div class="settings-group">
-                    <h4>Настройки RevShare</h4>
-                    <div class="settings-row">
-                        <label>Процент с пополнений:</label>
-                        <input type="number" id="depositPercent" min="0" max="100" step="1">
-                        <span>% (для 1 уровня)</span>
-                    </div>
-                    <div class="settings-row">
-                        <label>Процент с проигрышей:</label>
-                        <input type="number" id="lossPercent" min="0" max="100" step="1">
-                        <span>% (для 1 уровня)</span>
-                    </div>
-                    <div class="settings-row">
-                        <label>Макс. уровней:</label>
-                        <input type="number" id="maxLevels" min="1" max="10" step="1">
-                        <span>уровней</span>
-                    </div>
-                </div>
-                
-                <div class="settings-group revshare-levels">
-                    <h4>Проценты по уровням</h4>
-                    <div id="revshareLevelsContainer">
-                        <!-- Уровни будут добавлены динамически -->
-                    </div>
-                    <button type="button" class="add-level-btn" id="addLevelBtn">Добавить уровень</button>
-                </div>
-                
-                <button type="button" class="save-settings-btn" id="saveSettingsBtn">Сохранить настройки</button>
-            </div>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://d3js.org/d3.v6.min.js"></script>
-
+    
     <script>
         // Инициализация Firebase
         const firebaseConfig = {
@@ -749,26 +594,17 @@
         }
         
         // Конфигурация
-         const config = {
+        const config = {
             telegramSupport: "@support",
             minStars: 50,
             maxStars: 10000,
             starRate: 1.45,
             adminIds: ["1062148525", "1290724329"],
-            promoBonusPercent: 5,
-            promoExpireDays: 30,
-            referralSettings: {
-                depositPercent: 5,
-                lossPercent: 30,
-                maxLevels: 3,
-                levels: [
-                    { level: 1, depositPercent: 5, lossPercent: 30 },
-                    { level: 2, depositPercent: 3, lossPercent: 20 },
-                    { level: 3, depositPercent: 1, lossPercent: 10 }
-                ]
-            },
+            promoBonusPercent: 5, // 5% бонус за промокод
+            referralLossPercent: 30, // 30% от проигрыша рефереру
             baseUrl: window.location.href.split('?')[0]
         };
+        
         // Основные переменные
         let currentUser = null;
         let selectedStars = 0;
@@ -800,8 +636,6 @@
                     if (isAdmin) {
                         document.getElementById('adminPanel').style.display = 'block';
                         loadAdminTransactions();
-                        loadReferralSettings();
-                        initAdminSettings();
                     }
                     
                     // Загружаем реферальные данные пользователя
@@ -823,128 +657,6 @@
                 showError("Произошла ошибка при загрузке. Пожалуйста, попробуйте позже.");
             }
         });
-
-        // Инициализация админских настроек
-        function initAdminSettings() {
-            // Заполняем поля настроек
-            document.getElementById('depositPercent').value = config.referralSettings.depositPercent;
-            document.getElementById('lossPercent').value = config.referralSettings.lossPercent;
-            document.getElementById('maxLevels').value = config.referralSettings.maxLevels;
-            
-            // Заполняем уровни
-            const levelsContainer = document.getElementById('revshareLevelsContainer');
-            levelsContainer.innerHTML = '';
-            
-            config.referralSettings.levels.forEach(level => {
-                addLevelRow(level);
-            });
-            
-            // Обработчики кнопок
-            document.getElementById('addLevelBtn').addEventListener('click', () => {
-                const newLevel = {
-                    level: config.referralSettings.levels.length + 1,
-                    depositPercent: 1,
-                    lossPercent: 5
-                };
-                addLevelRow(newLevel);
-                config.referralSettings.levels.push(newLevel);
-            });
-            
-            document.getElementById('saveSettingsBtn').addEventListener('click', saveReferralSettings);
-        }
-        
-        // Добавление строки уровня
-        function addLevelRow(level) {
-            const levelsContainer = document.getElementById('revshareLevelsContainer');
-            const levelDiv = document.createElement('div');
-            levelDiv.className = 'revshare-level';
-            levelDiv.innerHTML = `
-                <span>Уровень ${level.level}:</span>
-                <input type="number" class="level-deposit" value="${level.depositPercent}" min="0" max="100" step="1">
-                <span>% с пополнений</span>
-                <input type="number" class="level-loss" value="${level.lossPercent}" min="0" max="100" step="1">
-                <span>% с проигрышей</span>
-                ${level.level > 1 ? `<button class="remove-level-btn" data-level="${level.level}">×</button>` : ''}
-            `;
-            levelsContainer.appendChild(levelDiv);
-            
-            // Обработчик кнопки удаления уровня
-            if (level.level > 1) {
-                levelDiv.querySelector('.remove-level-btn').addEventListener('click', function() {
-                    const levelToRemove = parseInt(this.dataset.level);
-                    config.referralSettings.levels = config.referralSettings.levels.filter(l => l.level !== levelToRemove);
-                    levelsContainer.removeChild(levelDiv);
-                    
-                    // Перенумеруем уровни
-                    config.referralSettings.levels.forEach((l, index) => {
-                        l.level = index + 1;
-                    });
-                    
-                    // Перерисовываем уровни
-                    levelsContainer.innerHTML = '';
-                    config.referralSettings.levels.forEach(l => addLevelRow(l));
-                });
-            }
-        }
-        
-        // Загрузка настроек реферальной системы
-        function loadReferralSettings() {
-            database.ref('referralSettings').once('value', snapshot => {
-                if (snapshot.exists()) {
-                    const settings = snapshot.val();
-                    config.referralSettings = settings;
-                    
-                    // Обновляем UI если мы админ
-                    if (isAdmin) {
-                        document.getElementById('depositPercent').value = settings.depositPercent;
-                        document.getElementById('lossPercent').value = settings.lossPercent;
-                        document.getElementById('maxLevels').value = settings.maxLevels;
-                        
-                        const levelsContainer = document.getElementById('revshareLevelsContainer');
-                        levelsContainer.innerHTML = '';
-                        settings.levels.forEach(level => addLevelRow(level));
-                    }
-                }
-            });
-        }
-        
-        // Сохранение настроек реферальной системы
-        async function saveReferralSettings() {
-            showLoading("Сохранение настроек...");
-            
-            try {
-                const newSettings = {
-                    depositPercent: parseInt(document.getElementById('depositPercent').value) || 5,
-                    lossPercent: parseInt(document.getElementById('lossPercent').value) || 30,
-                    maxLevels: parseInt(document.getElementById('maxLevels').value) || 3,
-                    levels: []
-                };
-                
-                // Собираем данные по уровням
-                const levelElements = document.querySelectorAll('.revshare-level');
-                levelElements.forEach((el, index) => {
-                    const depositPercent = parseInt(el.querySelector('.level-deposit').value) || 0;
-                    const lossPercent = parseInt(el.querySelector('.level-loss').value) || 0;
-                    
-                    newSettings.levels.push({
-                        level: index + 1,
-                        depositPercent: depositPercent,
-                        lossPercent: lossPercent
-                    });
-                });
-                
-                // Сохраняем в базу данных
-                await database.ref('referralSettings').set(newSettings);
-                config.referralSettings = newSettings;
-                
-                hideLoading();
-                showMessage("Настройки реферальной системы успешно сохранены!");
-            } catch (error) {
-                hideLoading();
-                console.error("Ошибка сохранения настроек:", error);
-                showError("Не удалось сохранить настройки");
-            }
-        }
 
         // Проверка реферального кода в URL
         function checkReferralCode() {
@@ -997,8 +709,6 @@
                     document.getElementById('referralStats').style.display = 'block';
                     document.getElementById('totalReferrals').textContent = userData.referralStats.totalReferrals || 0;
                     document.getElementById('activeReferrals').textContent = userData.referralStats.activeReferrals || 0;
-                    document.getElementById('totalEarnedFromDeposits').textContent = (userData.referralStats.totalEarnedFromDeposits || 0) + ' звёзд';
-                    document.getElementById('totalEarnedFromLosses').textContent = (userData.referralStats.totalEarnedFromLosses || 0) + ' звёзд';
                     document.getElementById('totalEarned').textContent = (userData.referralStats.totalEarned || 0) + ' звёзд';
                 }
             }
@@ -1091,9 +801,6 @@
             
             // Обработчик кнопки копирования реферальной ссылки
             document.getElementById('copyReferralBtn').addEventListener('click', copyReferralLink);
-            
-            // Обработчик формы пополнения
-            document.getElementById('depositForm').addEventListener('submit', submitDepositForm);
         }
         
         // Копирование реферальной ссылки
@@ -1122,7 +829,7 @@
                 });
         }
 
-       // Обновленная функция проверки промокода
+        // Применение промокода
         async function applyPromoCode() {
             const promoCodeInput = document.getElementById('promoCode');
             const promoCode = promoCodeInput.value.trim().toUpperCase();
@@ -1133,16 +840,11 @@
                 promoMessage.textContent = 'Введите промокод';
                 return;
             }
-
-            if (activePromoCode) {
-                promoMessage.className = 'promo-error';
-                promoMessage.textContent = 'У вас уже активирован промокод';
-                return;
-            }
-
+            
             showLoading("Проверка промокода...");
             
             try {
+                // Проверяем, существует ли такой промокод
                 const usersRef = database.ref('users');
                 const snapshot = await usersRef.orderByChild('referralCode').equalTo(promoCode).once('value');
                 
@@ -1152,15 +854,6 @@
                     promoMessage.textContent = 'Промокод не найден';
                     return;
                 }
-
-                const promoData = await database.ref(`promoCodes/${promoCode}`).once('value');
-                if (promoData.exists() && promoData.val().expires < Date.now()) {
-                    hideLoading();
-                    promoMessage.className = 'promo-error';
-                    promoMessage.textContent = 'Промокод истек';
-                    return;
-                }
-
                 
                 // Получаем данные пользователя, которому принадлежит промокод
                 let promoOwner = null;
@@ -1192,15 +885,6 @@
                     promoCode: promoCode,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 };
-                       
-            } catch (error) {
-                hideLoading();
-                console.error("Ошибка применения промокода:", error);
-                promoMessage.className = 'promo-error';
-                promoMessage.textContent = 'Ошибка применения промокода';
-            }
-        }
-
                 
                 await database.ref(`referrals/${promoOwner.id}/${currentUser.key}`).set(referralData);
                 
@@ -1210,8 +894,6 @@
                         stats = {
                             totalReferrals: 0,
                             activeReferrals: 0,
-                            totalEarnedFromDeposits: 0,
-                            totalEarnedFromLosses: 0,
                             totalEarned: 0
                         };
                     }
@@ -1440,7 +1122,7 @@
                 
                 ${t.status === 'pending' ? `
                 <div class="admin-controls">
-                    <button class="admin-btn approve-btn" onclick="approveTransaction('${t.id}', '${t.userId}', ${t.stars})">
+                    <button class="admin-btn approve-btn" onclick="updateTransactionStatus('${t.id}', 'completed', ${t.stars + (t.bonusStars || 0)}, '${t.userId}')">
                         Одобрить
                     </button>
                     <button class="admin-btn reject-btn" onclick="updateTransactionStatus('${t.id}', 'failed')">
@@ -1453,261 +1135,35 @@
             return el;
         }
 
-        // Подтверждение транзакции (с начислением реферальных бонусов)
-        async function approveTransaction(transactionId, userId, amount) {
-            showLoading("Обработка транзакции...");
-            
-            try {
-                // 1. Начисляем средства пользователю
-                await updateUserBalance(userId, amount);
-                
-                // 2. Получаем данные пользователя
-                const userSnapshot = await database.ref(`users/${userId}`).once('value');
-                const userData = userSnapshot.val();
-                
-                // 3. Проверяем реферальную программу
-                if (userData.referredBy) {
-                    // 4. Начисляем бонусы по реферальной программе (RevShare)
-                    await processReferralBonuses(userId, userData.referredBy, amount, 'deposit');
-                }
-                
-                // 5. Обновляем статус транзакции
-                await database.ref(`transactions/${transactionId}`).update({
-                    status: 'completed',
-                    completedAt: firebase.database.ServerValue.TIMESTAMP
-                });
-                
-                hideLoading();
-                showMessage("Транзакция подтверждена. Средства зачислены.");
-                loadAdminTransactions();
-            } catch (error) {
-                hideLoading();
-                console.error("Ошибка подтверждения транзакции:", error);
-                showError("Не удалось подтвердить транзакцию");
-            }
-        }
-
-       // Обновленная функция обработки реферальных бонусов
-        async function processReferralBonuses(userId, referrerId, amount, type) {
-            try {
-                const referralChain = await getReferralChain(referrerId);
-                
-                for (let i = 0; i < referralChain.length; i++) {
-                    const currentReferrerId = referralChain[i];
-                    const level = i + 1;
-                    
-                    const levelSettings = config.referralSettings.levels.find(l => l.level === level);
-                    if (!levelSettings) break;
-
-                    let bonus = 0;
-                    if (type === 'deposit') {
-                        bonus = Math.floor(amount * (levelSettings.depositPercent / 100));
-                    } else if (type === 'loss') {
-                        bonus = Math.floor(amount * (levelSettings.lossPercent / 100));
-                    }
-
-                    if (bonus > 0) {
-                        await updateUserBalance(currentReferrerId, bonus);
-                        
-                        const historyData = {
-                            userId,
-                            referrerId: currentReferrerId,
-                            amount,
-                            bonus,
-                            type,
-                            level,
-                            timestamp: firebase.database.ServerValue.TIMESTAMP
-                        };
-                        
-                        await database.ref(`referralHistory/${currentReferrerId}`).push(historyData);
-                        await updateReferralStats(currentReferrerId, bonus, type);
-                    }
-                }
-            } catch (error) {
-                console.error("Ошибка начисления бонусов:", error);
-            }
-        }
-                
-                return true;
-            } catch (error) {
-                console.error("Ошибка обработки реферальных бонусов:", error);
-                return false;
-            }
-        }
-        / Новая функция для визуализации дерева
-        function renderReferralTree(userId) {
-            const container = document.getElementById('referralTree');
-            container.innerHTML = '';
-            
-            database.ref(`referrals/${userId}`).on('value', async snapshot => {
-                if (!snapshot.exists()) return;
-                
-                const referrals = [];
-                snapshot.forEach(child => referrals.push(child.val()));
-                
-                const treeData = await buildTreeData(userId, referrals);
-                renderTreeVisualization(treeData);
-            });
-        }
-        async function buildTreeData(rootId, referrals) {
-            const rootUser = await getUserData(rootId);
-            return {
-                name: rootUser.username,
-                children: await Promise.all(referrals.map(async ref => ({
-                    name: ref.username,
-                    children: await buildTreeData(ref.userId, [])
-                })))
-            };
-        }
-
-        function renderTreeVisualization(data) {
-            const width = 800;
-            const height = 600;
-
-            const svg = d3.select("#referralTree")
-                .append("svg")
-                .attr("width", width)
-                .attr("height", height);
-
-            const treeLayout = d3.tree().size([width, height]);
-            const root = d3.hierarchy(data);
-            treeLayout(root);
-
-            svg.selectAll(".link")
-                .data(root.links())
-                .enter()
-                .append("path")
-                .attr("class", "link")
-                .attr("d", d3.linkHorizontal()
-                    .x(d => d.y)
-                    .y(d => d.x));
-
-            const nodes = svg.selectAll(".node")
-                .data(root.descendants())
-                .enter()
-                .append("g")
-                .attr("class", "node")
-                .attr("transform", d => `translate(${d.y},${d.x})`);
-
-            nodes.append("circle")
-                .attr("r", 20)
-                .attr("fill", "#8A2BE2");
-
-            nodes.append("text")
-                .text(d => d.data.name)
-                .attr("dx", 25)
-                .attr("dy", 5)
-                .attr("fill", "#333");
-        }
-         
-        // Добавляем вызов визуализации при загрузке данных пользователя
-        async function loadUserReferralData(userId) {
-        
-        // Получение цепочки рефералов (все уровни)
-        async function getReferralChain(referrerId) {
-            const chain = [referrerId];
-            let currentId = referrerId;
-            let level = 1;
-            
-            // Идем вверх по реферальной цепочке, пока не достигнем максимального уровня
-            while (level < config.referralSettings.maxLevels) {
-                const userSnapshot = await database.ref(`users/${currentId}`).once('value');
-                const userData = userSnapshot.val();
-                
-                if (userData && userData.referredBy) {
-                    chain.push(userData.referredBy);
-                    currentId = userData.referredBy;
-                    level++;
-                } else {
-                    break;
-                }
-            }
-            
-            return chain;
-        }
-
-        // Обновление баланса пользователя
-        async function updateUserBalance(userId, amount) {
-            return database.ref(`users/${userId}/balance`).transaction(balance => {
-                return (balance || 0) + amount;
-            });
-        }
-
-        // Сохранение информации о реферальном начислении
-        async function saveReferralPayment(userId, referrerId, amount, bonus, type, level) {
-            const paymentData = {
-                userId: userId,
-                amount: amount,
-                bonus: bonus,
-                type: type,
-                level: level,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            };
-            
-            await database.ref(`referrals/${referrerId}/${userId}`).set(paymentData);
-            
-            // Обновляем статистику реферера
-            await database.ref(`users/${referrerId}/referralStats`).transaction(stats => {
-                if (!stats) {
-                    stats = {
-                        totalReferrals: 0,
-                        activeReferrals: 0,
-                        totalEarnedFromDeposits: 0,
-                        totalEarnedFromLosses: 0,
-                        totalEarned: 0
-                    };
-                }
-                
-                if (type === 'deposit') {
-                    stats.totalEarnedFromDeposits = (stats.totalEarnedFromDeposits || 0) + bonus;
-                } else if (type === 'loss') {
-                    stats.totalEarnedFromLosses = (stats.totalEarnedFromLosses || 0) + bonus;
-                }
-                
-                stats.totalEarned = (stats.totalEarnedFromDeposits || 0) + (stats.totalEarnedFromLosses || 0);
-                
-                // Обновляем счетчик активных рефералов только для депозитов
-                if (type === 'deposit') {
-                    stats.activeReferrals = (stats.activeReferrals || 0) + 1;
-                }
-                
-                return stats;
-            });
-        }
-
-        // Обработка проигрыша (списание средств и начисление комиссии рефереру)
-        async function processUserLoss(userId, lossAmount) {
-            showLoading("Обработка проигрыша...");
-            
-            try {
-                // 1. Списываем средства у пользователя
-                await updateUserBalance(userId, -lossAmount);
-                
-                // 2. Получаем данные пользователя
-                const userSnapshot = await database.ref(`users/${userId}`).once('value');
-                const userData = userSnapshot.val();
-                
-                // 3. Проверяем реферальную программу
-                if (userData.referredBy) {
-                    // 4. Начисляем комиссию рефереру по RevShare системе
-                    await processReferralBonuses(userId, userData.referredBy, lossAmount, 'loss');
-                }
-                
-                hideLoading();
-                return true;
-            } catch (error) {
-                hideLoading();
-                console.error("Ошибка обработки проигрыша:", error);
-                return false;
-            }
-        }
-
-        // Обновление статуса транзакции (без начисления средств)
-        async function updateTransactionStatus(id, status) {
+        // Обновление статуса транзакции (ИСПРАВЛЕННАЯ ФУНКЦИЯ)
+        async function updateTransactionStatus(id, status, stars, userId) {
             showLoading("Обновление статуса...");
             
             try {
+                // Обновляем статус транзакции
                 await database.ref(`transactions/${id}`).update({ status });
+                
+                // Если статус "completed", добавляем звёзды пользователю
+                if (status === 'completed' && userId && stars) {
+                    const userRef = database.ref(`users/${userId}`);
+                    
+                    // Используем транзакцию для безопасного обновления баланса
+                    await userRef.transaction(user => {
+                        if (user) {
+                            user.balance = (user.balance || 0) + stars;
+                        }
+                        return user;
+                    });
+                    
+                    // Получаем данные транзакции для обработки реферальных бонусов
+                    const transactionRef = database.ref(`transactions/${id}`);
+                    const snapshot = await transactionRef.once('value');
+                    const transaction = snapshot.val();
+                    
+                    // Начисляем реферальные бонусы
+                    await processReferralBonuses(transaction, userId, stars);
+                }
+                
                 hideLoading();
                 showMessage("Статус транзакции обновлен");
                 loadAdminTransactions();
@@ -1718,8 +1174,126 @@
             }
         }
 
-        // Обработка формы пополнения
-        async function submitDepositForm(e) {
+        // Обработка реферальных бонусов
+        async function processReferralBonuses(transaction, userId, stars) {
+            const userRef = database.ref(`users/${userId}`);
+            const userSnapshot = await userRef.once('value');
+            const userData = userSnapshot.val();
+            
+            // 1. Если был использован промокод - начисляем 5% бонус обоим
+            if (transaction.promoCode) {
+                await processPromoCodeBonus(transaction, userId, stars);
+            }
+            
+            // 2. Если пользователь был приглашен по реферальной ссылке
+            if (userData.referredBy) {
+                await processReferralLinkBonus(transaction, userId, stars, userData.referredBy);
+            }
+        }
+
+        // Обработка бонуса за промокод (5% обоим)
+        async function processPromoCodeBonus(transaction, userId, stars) {
+            const promoUsersRef = database.ref('users');
+            const promoSnapshot = await promoUsersRef.orderByChild('referralCode').equalTo(transaction.promoCode).once('value');
+            
+            if (promoSnapshot.exists()) {
+                promoSnapshot.forEach(child => {
+                    const promoOwnerId = child.key;
+                    if (promoOwnerId !== userId) {
+                        const referralBonus = Math.floor(transaction.stars * (config.promoBonusPercent / 100));
+                        
+                        // Обновляем баланс владельца промокода
+                        database.ref(`users/${promoOwnerId}`).transaction(user => {
+                            if (user) {
+                                user.balance = (user.balance || 0) + referralBonus;
+                                
+                                // Сохраняем историю реферальных начислений
+                                const referralHistory = {
+                                    type: 'promo_bonus',
+                                    userId: userId,
+                                    username: transaction.username,
+                                    stars: transaction.stars,
+                                    bonus: referralBonus,
+                                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                                };
+                                
+                                if (!user.referralHistory) {
+                                    user.referralHistory = {};
+                                }
+                                
+                                user.referralHistory[transaction.id] = referralHistory;
+                                
+                                // Обновляем статистику реферера
+                                if (!user.referralStats) {
+                                    user.referralStats = {
+                                        totalReferrals: 0,
+                                        activeReferrals: 0,
+                                        totalEarned: 0
+                                    };
+                                }
+                                user.referralStats.totalEarned = (user.referralStats.totalEarned || 0) + referralBonus;
+                            }
+                            return user;
+                        });
+                    }
+                });
+            }
+        }
+
+        // Обработка бонуса за реферальную ссылку (30% от проигрыша)
+        async function processReferralLinkBonus(transaction, userId, stars, referredBy) {
+            // Находим пользователя, который привел
+            const referrerRef = database.ref('users');
+            const referrerSnapshot = await referrerRef.orderByChild('referralCode').equalTo(referredBy).once('value');
+            
+            if (referrerSnapshot.exists()) {
+                referrerSnapshot.forEach(child => {
+                    const referrerId = child.key;
+                    if (referrerId !== userId) {
+                        // Рассчитываем 30% от суммы проигрыша
+                        const referralBonus = Math.floor(transaction.stars * (config.referralLossPercent / 100));
+                        
+                        // Обновляем баланс реферера
+                        database.ref(`users/${referrerId}`).transaction(user => {
+                            if (user) {
+                                user.balance = (user.balance || 0) + referralBonus;
+                                
+                                // Сохраняем историю реферальных начислений
+                                const referralHistory = {
+                                    type: 'loss_commission',
+                                    userId: userId,
+                                    username: transaction.username,
+                                    stars: transaction.stars,
+                                    bonus: referralBonus,
+                                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                                };
+                                
+                                if (!user.referralHistory) {
+                                    user.referralHistory = {};
+                                }
+                                
+                                user.referralHistory[transaction.id] = referralHistory;
+                                
+                                // Обновляем статистику пригласившего
+                                if (!user.referralStats) {
+                                    user.referralStats = {
+                                        totalReferrals: 0,
+                                        totalEarned: 0,
+                                        activeReferrals: 0
+                                    };
+                                }
+                                
+                                user.referralStats.totalEarned = (user.referralStats.totalEarned || 0) + referralBonus;
+                            }
+                            return user;
+                        });
+                    }
+                });
+            }
+        }
+
+        // Обработка формы
+        document.getElementById('depositForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const btn = document.getElementById('submitBtn');
@@ -1792,7 +1366,7 @@
                 console.error('Ошибка:', error);
                 showError(btn, btnText, 'Произошла ошибка при создании транзакции');
             }
-        }
+        });
 
         // Показать загрузку
         function showLoading(message) {
@@ -1857,9 +1431,7 @@
         }
 
         // Глобальные функции для вызова из HTML
-        window.approveTransaction = approveTransaction;
         window.updateTransactionStatus = updateTransactionStatus;
-        window.processUserLoss = processUserLoss;
     </script>
 </body>
 </html>
