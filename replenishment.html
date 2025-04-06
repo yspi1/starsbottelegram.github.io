@@ -438,6 +438,93 @@
             justify-content: space-between;
             margin-bottom: 5px;
         }
+         /* Добавляем новые стили для партнерской системы */
+        .partner-dashboard {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .payout-form {
+            margin-top: 20px;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+        }
+        
+        .level-badge {
+            background: var(--secondary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .referral-levels {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        
+        .level-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(138, 43, 226, 0.1);
+            border-radius: 8px;
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        .level-percent {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .partner-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        
+        .status-pending {
+            color: var(--warning-color);
+        }
+        
+        .status-completed {
+            color: var(--success-color);
+        }
+        
+        .status-rejected {
+            color: var(--danger-color);
+        }
+
+        
     </style>
 </head>
 <body>
@@ -566,7 +653,61 @@
             <h2>Мои транзакции</h2>
             <div id="transactionsList"></div>
         </div>
+  <!-- Добавленная секция партнерского кабинета -->
+        <div class="card" id="partnerCard" style="display: none;">
+            <div class="partner-dashboard">
+                <h2>Партнерский кабинет</h2>
+                 <div class="dashboard-stats">
+                <div class="stat-item">
+                    <div>Общий заработок</div>
+                    <div class="stat-value" id="totalEarnings">0₽</div>
+                </div>
+                <div class="stat-item">
+                    <div>Доступно к выплате</div>
+                    <div class="stat-value" id="availableEarnings">0₽</div>
+                </div>
+            </div>
 
+            <h3>Реферальные уровни</h3>
+            <div class="referral-levels">
+                <div class="level-item">
+                    <div>1-й уровень</div>
+                    <div class="level-percent" id="level1Percent">30%</div>
+                    <div id="level1Count">0 рефералов</div>
+                </div>
+                <div class="level-item">
+                    <div>2-й уровень</div>
+                    <div class="level-percent" id="level2Percent">10%</div>
+                    <div id="level2Count">0 рефералов</div>
+                </div>
+                <div class="level-item">
+                    <div>3-й уровень</div>
+                    <div class="level-percent" id="level3Percent">5%</div>
+                    <div id="level3Count">0 рефералов</div>
+                </div>
+            </div>
+
+            <div class="payout-form">
+                <h3>Запрос выплаты</h3>
+                <div class="form-group">
+                    <label>Сумма (мин. 1000₽)</label>
+                    <input type="number" id="payoutAmount" min="1000" placeholder="Введите сумму">
+                </div>
+                <div class="form-group">
+                    <label>Метод выплаты</label>
+                    <select id="payoutMethod" class="form-control">
+                        <option value="card">Банковская карта</option>
+                        <option value="usdt">USDT (TRC20)</option>
+                        <option value="qiwi">QIWI Кошелек</option>
+                    </select>
+                </div>
+                <button class="btn btn-success" id="requestPayoutBtn">Запросить выплату</button>
+            </div>
+
+            <h3>История выплат</h3>
+            <div id="payoutHistory"></div>
+        </div>
+    </div>
         <div class="admin-panel" id="adminPanel">
             <h2>Админ-панель</h2>
             <div id="adminTransactions"></div>
@@ -600,9 +741,14 @@
             maxStars: 10000,
             starRate: 1.45,
             adminIds: ["1062148525", "1290724329"],
-            promoBonusPercent: 5, // 5% бонус за промокод
-            referralLossPercent: 30, // 30% от проигрыша рефереру
             baseUrl: window.location.href.split('?')[0]
+            revshareLevels: [0.3, 0.1, 0.05], // Проценты по уровням (30%, 10%, 5%)
+            minPayout: 1000, // Минимальная сумма выплаты
+            platformMargin: 0.05, // 5% маржа платформы
+            partnerBonusThreshold: 10, // Бонус за 10 рефералов
+            partnerBonusPercent: 0.05, // +5% к RevShare
+            minBet: 10 // Минимальная ставка
+        };
         };
         
         // Основные переменные
