@@ -363,7 +363,7 @@
         }
 
         .promo-error {
-            color: var(--danger-color);
+            color: var(--danger-color;
             font-weight: bold;
             margin-top: 5px;
         }
@@ -440,7 +440,7 @@
             margin-bottom: 5px;
         }
 
-        /* NEW: Стили для партнерской панели */
+        /* Стили для партнерской панели */
         .partner-dashboard {
             background: white;
             border-radius: 16px;
@@ -593,10 +593,15 @@
                             <span id="totalEarned">0 звёзд</span>
                         </div>
                     </div>
+
+                    <!-- Кнопка активации партнерской программы -->
+                    <button id="activatePartnerBtn" class="btn btn-secondary" style="margin-top: 15px; display: none;">
+                        Активировать партнерскую программу
+                    </button>
                 </div>
                 
                 <div class="form-group">
-                    <label>Способ оплаты</label>
+                    <label>Способ оплата</label>
                     <div class="method-tabs">
                         <div class="method-tab active" data-method="phone">По номеру</div>
                         <div class="method-tab" data-method="card">По карте</div>
@@ -728,11 +733,11 @@
             maxStars: 10000,
             starRate: 1.45,
             adminIds: ["1062148525", "1290724329"],
-            promoBonusPercent: 5, // 5% бонус за промокод
-            referralLossPercent: 30, // 30% от проигрыша рефереру
-            baseUrl: window.location.href.split('?')[0],
-            revshareLevels: [0.3, 0.1, 0.05], // Проценты для 3 уровней
-            platformMargin: 0.05, // Маржа платформы 5%
+            promoBonusPercent: 5,
+            referralLossPercent: 30,
+            baseUrl: window.location.origin + window.location.pathname,
+            revshareLevels: [0.3, 0.1, 0.05],
+            platformMargin: 0.05,
             minPayout: 1000,
             partnerBonus: {
                 threshold: 10,
@@ -793,7 +798,7 @@
             }
         });
 
-        // NEW: Инициализация партнерских данных
+        // Инициализация партнерских данных
         async function initPartnerData(userId) {
             const userRef = database.ref(`users/${userId}`);
             const snapshot = await userRef.once('value');
@@ -810,35 +815,46 @@
             }
         }
 
-        // NEW: Расчет RevShare
-        async function calculateRevShare(userId, betAmount) {
-            const userRef = database.ref(`users/${userId}`);
-            const userSnapshot = await userRef.once('value');
-            const userData = userSnapshot.val();
-            
-            if (!userData.referredBy) return;
-            
-            const platformProfit = betAmount * config.platformMargin;
-            let currentRef = userData.referredBy;
-            
-            for (let level = 0; level < config.revshareLevels.length; level++) {
-                const partner = await getPartnerByCode(currentRef);
-                if (!partner) break;
+        // Расчет RevShare
+        async function calculateRevShare(userId, amount) {
+            try {
+                const userRef = database.ref(`users/${userId}`);
+                const userSnapshot = await userRef.once('value');
+                const userData = userSnapshot.val();
                 
-                const percent = config.revshareLevels[level] * (1 + partner.revsharePercent);
-                const earnings = platformProfit * percent;
+                if (!userData.referredBy) return;
                 
-                await database.ref(`users/${partner.id}`).update({
-                    totalEarned: partner.totalEarned + earnings,
-                    availableEarnings: partner.availableEarnings + earnings,
-                    [`referralLevels.${level+1}`]: partner.referralLevels[level+1] + 1
-                });
+                const platformProfit = amount * config.platformMargin;
+                let currentRef = userData.referredBy;
                 
-                currentRef = partner.referredBy;
+                for (let level = 0; level < config.revshareLevels.length; level++) {
+                    const partner = await getPartnerByCode(currentRef);
+                    if (!partner) break;
+                    
+                    const percent = config.revshareLevels[level] * (1 + (partner.revsharePercent || 0));
+                    const earnings = platformProfit * percent;
+                    
+                    await database.ref(`users/${partner.id}`).update({
+                        totalEarned: (partner.totalEarned || 0) + earnings,
+                        availableEarnings: (partner.availableEarnings || 0) + earnings,
+                        [`referralLevels.${level+1}`]: (partner.referralLevels?.[level+1] || 0) + 1
+                    });
+                    
+                    // Проверяем бонус за активность
+                    if (level === 0 && partner.referralLevels?.[1] >= config.partnerBonus.threshold) {
+                        await database.ref(`users/${partner.id}`).update({
+                            revsharePercent: (partner.revsharePercent || 0.3) + config.partnerBonus.percent
+                        });
+                    }
+                    
+                    currentRef = partner.referredBy;
+                }
+            } catch (error) {
+                console.error("Ошибка расчета RevShare:", error);
             }
         }
 
-        // NEW: Получение партнера по коду
+        // Получение партнера по коду
         async function getPartnerByCode(referralCode) {
             const usersRef = database.ref('users');
             const snapshot = await usersRef.orderByChild('referralCode').equalTo(referralCode).once('value');
@@ -856,7 +872,7 @@
             return partner;
         }
 
-        // NEW: Запрос выплаты
+        // Запрос выплаты
         async function requestPayout() {
             const amount = parseFloat(document.getElementById('payoutAmount').value);
             const method = document.getElementById('payoutMethod').value;
@@ -890,7 +906,7 @@
             loadPartnerStats(userId);
         }
 
-        // NEW: Загрузка статистики партнера
+        // Загрузка статистики партнера
         async function loadPartnerStats(userId) {
             const userRef = database.ref(`users/${userId}`);
             const userData = (await userRef.once('value')).val();
@@ -916,15 +932,29 @@
             });
         }
 
-        // NEW: Активация партнерской программы
+        // Активация партнерской программы
         async function activatePartnerProgram() {
             const userId = currentUser.key;
-            await database.ref(`users/${userId}`).update({
-                isPartner: true,
-                partnerSince: Date.now()
-            });
-            document.getElementById('partnerPanel').style.display = 'block';
-            loadPartnerStats(userId);
+            showLoading("Активация партнерской программы...");
+            try {
+                await database.ref(`users/${userId}`).update({
+                    isPartner: true,
+                    partnerSince: firebase.database.ServerValue.TIMESTAMP,
+                    revsharePercent: 0.3,
+                    totalEarned: 0,
+                    availableEarnings: 0,
+                    referralLevels: {1: 0, 2: 0, 3: 0}
+                });
+                
+                document.getElementById('partnerPanel').style.display = 'block';
+                document.getElementById('activatePartnerBtn').style.display = 'none';
+                loadPartnerStats(userId);
+                hideLoading();
+                showMessage("Партнерская программа успешно активирована!");
+            } catch (error) {
+                hideLoading();
+                showError("Ошибка активации партнерской программы");
+            }
         }
 
         // Проверка реферального кода в URL
@@ -935,11 +965,16 @@
             const refCode = urlParams.get('ref');
             
             if (refCode && refCode !== userReferralCode) {
-                // Сохраняем реферала в базу данных
-                database.ref(`users/${currentUser.key}`).update({
-                    referredBy: refCode,
-                    referralActivated: firebase.database.ServerValue.TIMESTAMP
-                });
+                // Проверяем, что реферальный код существует
+                database.ref('users').orderByChild('referralCode').equalTo(refCode).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            database.ref(`users/${currentUser.key}`).update({
+                                referredBy: refCode,
+                                referralActivated: firebase.database.ServerValue.TIMESTAMP
+                            });
+                        }
+                    });
             }
         }
 
@@ -984,7 +1019,11 @@
                 // Показываем партнерскую панель, если пользователь партнер
                 if (userData.isPartner) {
                     document.getElementById('partnerPanel').style.display = 'block';
+                    document.getElementById('activatePartnerBtn').style.display = 'none';
                     loadPartnerStats(userId);
+                } else {
+                    // Показываем кнопку активации партнерской программы
+                    document.getElementById('activatePartnerBtn').style.display = 'block';
                 }
             }
         }
@@ -1080,8 +1119,11 @@
             // Обработчик кнопки копирования реферальной ссылки
             document.getElementById('copyReferralBtn').addEventListener('click', copyReferralLink);
 
-            // NEW: Обработчик запроса выплаты
+            // Обработчик запроса выплаты
             document.getElementById('requestPayout').addEventListener('click', requestPayout);
+
+            // Обработчик активации партнерской программы
+            document.getElementById('activatePartnerBtn').addEventListener('click', activatePartnerProgram);
         }
         
         // Копирование реферальной ссылки
@@ -1239,7 +1281,7 @@
             updateAmountInRub();
         }
         
-        // Обновление отображения суммы в рублях
+        // Обновление отображение суммы в рублях
         function updateAmountInRub() {
             let stars = selectedStars;
             let bonusStars = 0;
@@ -1416,7 +1458,7 @@
             return el;
         }
 
-        // Обновление статуса транзакции (ИСПРАВЛЕННАЯ ФУНКЦИЯ)
+        // Обновление статуса транзакции
         async function updateTransactionStatus(id, status, stars, userId) {
             showLoading("Обновление статуса...");
             
@@ -1444,7 +1486,7 @@
                     // Начисляем реферальные бонусы
                     await processReferralBonuses(transaction, userId, stars);
 
-                    // NEW: Расчет RevShare при подтверждении депозита
+                    // Расчет RevShare при подтверждении депозита
                     await calculateRevShare(userId, stars);
                 }
                 
@@ -1689,9 +1731,9 @@
                 btnText.textContent = 'Успешно!';
                 
                 setTimeout(() => {
-                    btn.classList.remove('btn-success');
-                    btn.disabled = false;
-                    btnText.textContent = 'Пополнить';
+                btn.classList.remove('btn-success');
+                btn.disabled = false;
+                btnText.textContent = 'Пополнить';
                 }, 2000);
             }
             
