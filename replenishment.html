@@ -738,7 +738,7 @@
         const config = {
             telegramSupport: "@support",
             minStars: 50,
-            maxStars: 10000,
+            maxStars: 100000,
             starRate: 1.45,
             adminIds: ["1062148525", "1290724329"],
             baseUrl: window.location.href.split('?')[0]
@@ -891,6 +891,7 @@
             const userRef = database.ref(`users/${userId}`);
             const snapshot = await userRef.once('value');
             
+            
             const userData = {
                 id: userId,
                 username: tgUser.username || '',
@@ -909,7 +910,184 @@
             
             return { key: userId, ref: userRef };
         }
+          if (!snapshot.exists()) {
+        userData.isPartner = false;
+        userData.revsharePercent = 0.3; // Базовый 30%
+        userData.totalEarned = 0;
+        userData.availableEarnings = 0;
+        userData.payoutHistory = {};
+        userData.referralLevels = {1: 0, 2: 0, 3: 0};
+        await userRef.set(userData);
+    }
+ // Показываем партнерский кабинет если пользователь партнер
+    if (userData.isPartner) {
+        document.getElementById('partnerCard').style.display = 'block';
+        loadPartnerStats(userId);
+    }
+}
 
+// Загрузка статистики партнера
+async function loadPartnerStats(userId) {
+    const userRef = database.ref(`users/${userId}`);
+    const snapshot = await userRef.once('value');
+    const userData = snapshot.val();
+    
+    document.getElementById('totalEarnings').textContent = `${userData.totalEarned}₽`;
+    document.getElementById('availableEarnings').textContent = `${userData.availableEarnings}₽`;
+    
+    // Загрузка истории выплат
+    const payoutHistory = userData.payoutHistory || {};
+    const historyContainer = document.getElementById('payoutHistory');
+    historyContainer.innerHTML = '';
+    
+    Object.entries(payoutHistory).forEach(([key, payout]) => {
+        const el = document.createElement('div');
+        el.className = 'transaction-item';
+        el.innerHTML = `
+            <div>${payout.amount}₽ (${payout.method})</div>
+            <div class="status-${payout.status}">${payout.status}</div>
+            <small>${new Date(payout.timestamp).toLocaleString()}</small>
+        `;
+        historyContainer.appendChild(el);
+    });
+}
+
+// Логика расчета RevShare
+async function calculateRevShare(userId, betAmount) {
+    const userRef = database.ref(`users/${userId}`);
+    const userSnapshot = await userRef.once('value');
+    const userData = userSnapshot.val();
+    
+    if (!userData.referredBy) return;
+    
+    // Находим всех партнеров по уровням
+    const partners = await getReferralChain(userData.referredBy);
+    
+    // Доход платформы с ставки
+    const platformProfit = betAmount * config.platformMargin;
+    
+    partners.forEach((partner, level) => {
+        if (level >= config.revshareLevels.length) return;
+        
+        const percent = config.revshareLevels[level] * (1 + partner.revsharePercent);
+        const earnings = platformProfit * percent;
+        
+        // Обновляем баланс партнера
+        database.ref(`users/${partner.id}`).transaction(user => {
+            user.totalEarned += earnings;
+            user.availableEarnings += earnings;
+            return user;
+        });
+    });
+}
+
+// Получение цепочки рефералов
+async function getReferralChain(referralCode) {
+    const partners = [];
+    let currentCode = referralCode;
+    
+    for (let level = 0; level < config.revshareLevels.length; level++) {
+        const partner = await findPartnerByCode(currentCode);
+        if (!partner) break;
+        
+        partners.push(partner);
+        currentCode = partner.referredBy;
+    }
+    
+    return partners;
+}
+
+// Поиск партнера по коду
+async function findPartnerByCode(code) {
+    const usersRef = database.ref('users');
+    const snapshot = await usersRef.orderByChild('referralCode').equalTo(code).once('value');
+    
+    if (snapshot.exists()) {
+        let partner = null;
+        snapshot.forEach(child => {
+            partner = {id: child.key, ...child.val()};
+        });
+        return partner;
+    }
+    return null;
+}
+
+// Запрос выплаты
+async function requestPayout() {
+    const amount = parseFloat(document.getElementById('payoutAmount').value);
+    const method = document.getElementById('payoutMethod').value;
+    
+    if (amount < config.minPayout) {
+        alert(`Минимальная сумма выплаты ${config.minPayout}₽`);
+        return;
+    }
+    
+    const userId = currentUser.key;
+    const userRef = database.ref(`users/${userId}`);
+    const snapshot = await userRef.once('value');
+    const userData = snapshot.val();
+    
+    if (userData.availableEarnings < amount) {
+        alert('Недостаточно средств для выплаты');
+        return;
+    }
+    
+    // Создаем запрос на выплату
+    const payoutData = {
+        amount: amount,
+        method: method,
+        status: 'pending',
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+    
+    await userRef.child(`payoutHistory/${Date.now()}`).set(payoutData);
+    await userRef.update({availableEarnings: userData.availableEarnings - amount});
+    
+    loadPartnerStats(userId);
+    alert('Запрос на выплату успешно создан!');
+}
+
+// Обновление реферальных уровней
+async function updateReferralLevels(userId) {
+    const userRef = database.ref(`users/${userId}`);
+    const snapshot = await userRef.child('referrals').once('value');
+    
+    if (snapshot.exists()) {
+        const referrals = snapshot.val();
+        const levels = {1: 0, 2: 0, 3: 0};
+        
+        Object.values(referrals).forEach(ref => {
+            if (ref.level <= 3) levels[ref.level]++;
+        });
+        
+        await userRef.update({referralLevels: levels});
+        
+        // Проверка бонуса за активность
+        if (levels[1] >= config.partnerBonusThreshold) {
+            await userRef.transaction(user => {
+                user.revsharePercent += config.partnerBonusPercent;
+                return user;
+            });
+        }
+    }
+}
+
+// Инициализация отслеживания ставок
+function trackBet(userId, amount) {
+    const betRef = database.ref(`bets/${userId}/${Date.now()}`);
+    betRef.set({
+        amount: amount,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+    
+    // Расчет RevShare
+    calculateRevShare(userId, amount);
+}
+
+// Пример использования при ставке
+function placeBet(amount) {
+    trackBet(currentUser.key, amount);
+}
         // Инициализация формы
         function initForm() {
             // Обработчики кнопок суммы
