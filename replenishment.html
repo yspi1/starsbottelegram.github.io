@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Пополнение баланса</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .back-btn {
             position: absolute;
@@ -438,6 +439,81 @@
             justify-content: space-between;
             margin-bottom: 5px;
         }
+
+        /* NEW: Стили для партнерской панели */
+        .partner-dashboard {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .partner-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .level-badge {
+            background: var(--secondary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .payout-history-item {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+
+        .level-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .level-percent {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .payout-form {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .status-pending {
+            color: var(--warning-color);
+        }
+
+        .status-completed {
+            color: var(--success-color);
+        }
+
+        .status-failed {
+            color: var(--danger-color);
+        }
     </style>
 </head>
 <body>
@@ -567,6 +643,58 @@
             <div id="transactionsList"></div>
         </div>
 
+        <!-- Партнерская панель -->
+        <div class="card" id="partnerPanel" style="display: none;">
+            <div class="partner-dashboard">
+                <h2>Партнерский кабинет</h2>
+                
+                <div class="partner-stats">
+                    <div class="stat-card">
+                        <div>Общий доход</div>
+                        <div class="stat-value" id="totalEarnings">0₽</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>Доступно</div>
+                        <div class="stat-value" id="availableEarnings">0₽</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>Рефералы</div>
+                        <div class="stat-value" id="totalReferralsCount">0</div>
+                    </div>
+                </div>
+
+                <h3>Реферальные уровни</h3>
+                <div class="referral-levels">
+                    <div class="level-item">
+                        <span>1-й уровень</span>
+                        <span class="level-percent">30%</span>
+                    </div>
+                    <div class="level-item">
+                        <span>2-й уровень</span>
+                        <span class="level-percent">10%</span>
+                    </div>
+                    <div class="level-item">
+                        <span>3-й уровень</span>
+                        <span class="level-percent">5%</span>
+                    </div>
+                </div>
+
+                <h3>Запрос выплаты</h3>
+                <div class="payout-form">
+                    <input type="number" id="payoutAmount" placeholder="Сумма (мин. 1000₽)" class="form-control">
+                    <select id="payoutMethod" class="form-control">
+                        <option value="card">Банковская карта</option>
+                        <option value="usdt">USDT (TRC20)</option>
+                        <option value="qiwi">QIWI Кошелек</option>
+                    </select>
+                    <button class="btn btn-success" id="requestPayout">Запросить выплату</button>
+                </div>
+
+                <h3>История выплат</h3>
+                <div id="payoutHistory"></div>
+            </div>
+        </div>
+
         <div class="admin-panel" id="adminPanel">
             <h2>Админ-панель</h2>
             <div id="adminTransactions"></div>
@@ -602,7 +730,14 @@
             adminIds: ["1062148525", "1290724329"],
             promoBonusPercent: 5, // 5% бонус за промокод
             referralLossPercent: 30, // 30% от проигрыша рефереру
-            baseUrl: window.location.href.split('?')[0]
+            baseUrl: window.location.href.split('?')[0],
+            revshareLevels: [0.3, 0.1, 0.05], // Проценты для 3 уровней
+            platformMargin: 0.05, // Маржа платформы 5%
+            minPayout: 1000,
+            partnerBonus: {
+                threshold: 10,
+                percent: 0.05
+            }
         };
         
         // Основные переменные
@@ -658,6 +793,140 @@
             }
         });
 
+        // NEW: Инициализация партнерских данных
+        async function initPartnerData(userId) {
+            const userRef = database.ref(`users/${userId}`);
+            const snapshot = await userRef.once('value');
+            
+            if (!snapshot.exists()) {
+                await userRef.set({
+                    isPartner: false,
+                    revsharePercent: 0.3,
+                    totalEarned: 0,
+                    availableEarnings: 0,
+                    referralLevels: {1: 0, 2: 0, 3: 0},
+                    payoutHistory: {}
+                });
+            }
+        }
+
+        // NEW: Расчет RevShare
+        async function calculateRevShare(userId, betAmount) {
+            const userRef = database.ref(`users/${userId}`);
+            const userSnapshot = await userRef.once('value');
+            const userData = userSnapshot.val();
+            
+            if (!userData.referredBy) return;
+            
+            const platformProfit = betAmount * config.platformMargin;
+            let currentRef = userData.referredBy;
+            
+            for (let level = 0; level < config.revshareLevels.length; level++) {
+                const partner = await getPartnerByCode(currentRef);
+                if (!partner) break;
+                
+                const percent = config.revshareLevels[level] * (1 + partner.revsharePercent);
+                const earnings = platformProfit * percent;
+                
+                await database.ref(`users/${partner.id}`).update({
+                    totalEarned: partner.totalEarned + earnings,
+                    availableEarnings: partner.availableEarnings + earnings,
+                    [`referralLevels.${level+1}`]: partner.referralLevels[level+1] + 1
+                });
+                
+                currentRef = partner.referredBy;
+            }
+        }
+
+        // NEW: Получение партнера по коду
+        async function getPartnerByCode(referralCode) {
+            const usersRef = database.ref('users');
+            const snapshot = await usersRef.orderByChild('referralCode').equalTo(referralCode).once('value');
+            
+            if (!snapshot.exists()) return null;
+            
+            let partner = null;
+            snapshot.forEach(child => {
+                partner = {
+                    id: child.key,
+                    ...child.val()
+                };
+            });
+            
+            return partner;
+        }
+
+        // NEW: Запрос выплаты
+        async function requestPayout() {
+            const amount = parseFloat(document.getElementById('payoutAmount').value);
+            const method = document.getElementById('payoutMethod').value;
+            
+            if (amount < config.minPayout) {
+                alert(`Минимальная сумма выплаты: ${config.minPayout}₽`);
+                return;
+            }
+            
+            const userId = currentUser.key;
+            const userRef = database.ref(`users/${userId}`);
+            const userData = (await userRef.once('value')).val();
+            
+            if (userData.availableEarnings < amount) {
+                alert('Недостаточно средств для выплаты');
+                return;
+            }
+            
+            const payoutData = {
+                amount: amount,
+                method: method,
+                status: 'pending',
+                timestamp: Date.now()
+            };
+            
+            await userRef.update({
+                availableEarnings: userData.availableEarnings - amount,
+                [`payoutHistory.${Date.now()}`]: payoutData
+            });
+            
+            loadPartnerStats(userId);
+        }
+
+        // NEW: Загрузка статистики партнера
+        async function loadPartnerStats(userId) {
+            const userRef = database.ref(`users/${userId}`);
+            const userData = (await userRef.once('value')).val();
+            
+            document.getElementById('totalEarnings').textContent = `${userData.totalEarned}₽`;
+            document.getElementById('availableEarnings').textContent = `${userData.availableEarnings}₽`;
+            document.getElementById('totalReferralsCount').textContent = 
+                Object.values(userData.referralLevels || {}).reduce((a, b) => a + b, 0);
+            
+            // Загрузка истории выплат
+            const historyContainer = document.getElementById('payoutHistory');
+            historyContainer.innerHTML = '';
+            
+            Object.entries(userData.payoutHistory || {}).forEach(([key, payout]) => {
+                const div = document.createElement('div');
+                div.className = 'payout-history-item';
+                div.innerHTML = `
+                    <div>${payout.amount}₽ (${payout.method})</div>
+                    <div class="status-${payout.status}">${payout.status}</div>
+                    <small>${new Date(payout.timestamp).toLocaleDateString()}</small>
+                `;
+                historyContainer.appendChild(div);
+            });
+        }
+
+        // NEW: Активация партнерской программы
+        async function activatePartnerProgram() {
+            const userId = currentUser.key;
+            await database.ref(`users/${userId}`).update({
+                isPartner: true,
+                partnerSince: Date.now()
+            });
+            document.getElementById('partnerPanel').style.display = 'block';
+            loadPartnerStats(userId);
+        }
+
         // Проверка реферального кода в URL
         function checkReferralCode() {
             if (!currentUser) return;
@@ -711,6 +980,12 @@
                     document.getElementById('activeReferrals').textContent = userData.referralStats.activeReferrals || 0;
                     document.getElementById('totalEarned').textContent = (userData.referralStats.totalEarned || 0) + ' звёзд';
                 }
+
+                // Показываем партнерскую панель, если пользователь партнер
+                if (userData.isPartner) {
+                    document.getElementById('partnerPanel').style.display = 'block';
+                    loadPartnerStats(userId);
+                }
             }
         }
 
@@ -760,6 +1035,9 @@
             } else {
                 await userRef.update(userData);
             }
+
+            // Инициализация партнерских данных
+            await initPartnerData(userId);
             
             return { key: userId, ref: userRef };
         }
@@ -801,6 +1079,9 @@
             
             // Обработчик кнопки копирования реферальной ссылки
             document.getElementById('copyReferralBtn').addEventListener('click', copyReferralLink);
+
+            // NEW: Обработчик запроса выплаты
+            document.getElementById('requestPayout').addEventListener('click', requestPayout);
         }
         
         // Копирование реферальной ссылки
@@ -1162,6 +1443,9 @@
                     
                     // Начисляем реферальные бонусы
                     await processReferralBonuses(transaction, userId, stars);
+
+                    // NEW: Расчет RevShare при подтверждении депозита
+                    await calculateRevShare(userId, stars);
                 }
                 
                 hideLoading();
@@ -1432,6 +1716,8 @@
 
         // Глобальные функции для вызова из HTML
         window.updateTransactionStatus = updateTransactionStatus;
+        window.requestPayout = requestPayout;
+        window.activatePartnerProgram = activatePartnerProgram;
     </script>
 </body>
 </html>
