@@ -234,32 +234,14 @@
             background-color: var(--tg-bg);
             border-radius: 8px;
             padding: 8px;
-            gap: 8px;
         }
 
-        .bet-input {
-            background-color: var(--tg-bg);
-            border: 1px solid var(--tg-primary);
-            border-radius: 8px;
+        .bet-amount {
+            font-size: 16px;
+            font-weight: bold;
             color: var(--tg-text);
-            padding: 12px;
-            font-size: 14px;
-            width: 48%;
+            min-width: 40px;
             text-align: center;
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        .bet-input:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px var(--tg-primary);
-        }
-
-        /* Скрыть стрелки в input number */
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
         }
 
         .action-buttons {
@@ -476,36 +458,6 @@
                 font-size: 13px;
             }
         }
-
-        /* Стили для кнопок быстрой ставки */
-        .quick-bets {
-            display: flex;
-            justify-content: space-between;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .quick-bet-btn {
-            flex: 1;
-            padding: 8px;
-            font-size: 12px;
-            background-color: var(--tg-bg);
-            border: 1px solid var(--tg-primary);
-            color: var(--tg-text);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .quick-bet-btn:hover {
-            background-color: var(--tg-primary);
-            color: white;
-        }
-
-        .quick-bet-btn.active {
-            background-color: var(--tg-primary);
-            color: white;
-        }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
@@ -572,15 +524,6 @@
         </div>
 
         <div class="game-area">
-            <!-- Быстрые ставки -->
-            <div class="quick-bets">
-                <button class="quick-bet-btn" onclick="setQuickBet(10)">10</button>
-                <button class="quick-bet-btn" onclick="setQuickBet(50)">50</button>
-                <button class="quick-bet-btn" onclick="setQuickBet(100)">100</button>
-                <button class="quick-bet-btn" onclick="setQuickBet(500)">500</button>
-                <button class="quick-bet-btn" onclick="setQuickBet(1000)">1K</button>
-            </div>
-
             <div class="game-grid" id="grid"></div>
 
             <div class="current-win" id="current-win"></div>
@@ -592,26 +535,28 @@
                 </div>
                 <div class="info-card">
                     <div class="info-label" id="star-label-2">2⭐</div>
-                    <div class="info-value">×<span id="mult-2">1.3</span></div>
+                    <div class="info-value">×<span id="mult-2">1.5</span></div>
                 </div>
                 <div class="info-card">
                     <div class="info-label" id="star-label-3">3⭐</div>
-                    <div class="info-value">×<span id="mult-3">1.6</span></div>
+                    <div class="info-value">×<span id="mult-3">2.0</span></div>
                 </div>
                 <div class="info-card">
                     <div class="info-label" id="star-label-4">4⭐</div>
-                    <div class="info-value">×<span id="mult-4">2.0</span></div>
+                    <div class="info-value">×<span id="mult-4">3.0</span></div>
                 </div>
             </div>
 
             <div class="controls">
                 <div class="bet-control">
-                    <input type="number" id="bombs-input" class="bet-input"
-                            min="1" max="24" value="5"
-                           placeholder="Кол-во мин">
-                    <input type="number" id="bet-input" class="bet-input"
-                            min="10" max="10000" value="100"
-                            step="10" placeholder="Ставка">
+                    <button class="btn btn-secondary btn-icon" id="bomb-dec">-</button>
+                    <div class="bet-amount" id="bombs-display">5</div>
+                    <button class="btn btn-secondary btn-icon" id="bomb-inc">+</button>
+                </div>
+                <div class="bet-control">
+                    <button class="btn btn-secondary btn-icon" id="bet-dec">-</button>
+                    <div class="bet-amount" id="current-bet">100</div>
+                    <button class="btn btn-secondary btn-icon" id="bet-inc">+</button>
                 </div>
                 <div class="action-buttons">
                     <button class="btn btn-primary" id="start-btn">ИГРАТЬ</button>
@@ -632,7 +577,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Конфигурация игры (уменьшенные коэффициенты)
+        // Конфигурация игры
         const config = {
             minBet: 10,
             maxBet: 10000,
@@ -640,9 +585,9 @@
             minBombs: 1,
             maxBombs: 24,
             gridSize: 5,
-            baseRiskMultiplier: 0.2, // Уменьшен базовый множитель
-            minMultiplier: 0.4,
-            maxMultiplier: 3.5 // Уменьшен максимальный множитель
+            baseRiskMultiplier: 0.3,
+            minMultiplier: 0.5,
+            maxMultiplier: 5.88
         };
 
         // Состояние игры
@@ -656,7 +601,7 @@
             balance: 0,
             maxWin: 0,
             wins: 0,
-            currentMultipliers: [1.0, 1.3, 1.6, 2.0], // Уменьшенные коэффициенты
+            currentMultipliers: [1.0, 1.5, 2.0, 3.0],
             currentWin: 0,
             starOffset: 0,
             userId: null,
@@ -667,10 +612,14 @@
         // Элементы DOM
         const elements = {
             grid: document.getElementById('grid'),
-            bombsInput: document.getElementById('bombs-input'),
-            betInput: document.getElementById('bet-input'),
+            bombsDisplay: document.getElementById('bombs-display'),
+            currentBet: document.getElementById('current-bet'),
             startBtn: document.getElementById('start-btn'),
             cashoutBtn: document.getElementById('cashout-btn'),
+            bombDec: document.getElementById('bomb-dec'),
+            bombInc: document.getElementById('bomb-inc'),
+            betDec: document.getElementById('bet-dec'),
+            betInc: document.getElementById('bet-inc'),
             balance: document.getElementById('balance'),
             maxWin: document.getElementById('max-win'),
             currentWin: document.getElementById('current-win'),
@@ -694,22 +643,6 @@
             loginBtn: document.getElementById('loginBtn'),
             gameContainer: document.getElementById('gameContainer')
         };
-
-        // Установка быстрой ставки
-        function setQuickBet(amount) {
-            state.bet = Math.min(amount, config.maxBet);
-            elements.betInput.value = state.bet;
-            updateUI();
-            
-            // Подсветка активной кнопки
-            document.querySelectorAll('.quick-bet-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (parseInt(btn.textContent) === amount || 
-                    (btn.textContent === '1K' && amount === 1000)) {
-                    btn.classList.add('active');
-                }
-            });
-        }
 
         // Показать уведомление
         function showNotification(message, type = 'success', duration = 3000) {
@@ -949,21 +882,10 @@
         function setupEventListeners() {
             elements.startBtn.addEventListener('click', startGame);
             elements.cashoutBtn.addEventListener('click', cashOut);
-            
-            // Обработчики для полей ввода
-            elements.bombsInput.addEventListener('input', function() {
-                const value = Math.min(Math.max(parseInt(this.value) || 1, config.minBombs), config.maxBombs);
-                state.bombs = value;
-                this.value = value;
-                calculateMultipliers();
-            });
-
-            elements.betInput.addEventListener('input', function() {
-                const value = Math.min(Math.max(parseInt(this.value) || config.minBet, config.minBet), config.maxBet);
-                state.bet = value - (value % config.betStep);
-                this.value = state.bet;
-                updateUI();
-            });
+            elements.betDec.addEventListener('click', () => changeBet(-config.betStep));
+            elements.betInc.addEventListener('click', () => changeBet(config.betStep));
+            elements.bombDec.addEventListener('click', () => changeBombs(-1));
+            elements.bombInc.addEventListener('click', () => changeBombs(1));
         }
 
         // Проверка баланса
@@ -975,22 +897,22 @@
             return true;
         }
 
-        // Расчет множителей (с уменьшенными коэффициентами)
+        // Расчет множителей
         function calculateMultipliers() {
             if (state.bombs === 24) {
                 state.currentMultipliers = [config.maxMultiplier, 0, 0, 0];
             } else {
                 const riskFactor = state.bombs / config.maxBombs;
                 const baseMultiplier = config.minMultiplier + 
-                    (config.baseRiskMultiplier * riskFactor * 6); // Уменьшено влияние риска
+                    (config.baseRiskMultiplier * riskFactor * 10);
                 
-                const progression = 1 + (state.starOffset * 0.06); // Уменьшена прогрессия
+                const progression = 1 + (state.starOffset * 0.1);
                 
                 state.currentMultipliers = [
-                    parseFloat((baseMultiplier * 0.7 * progression).toFixed(2)),
-                    parseFloat((baseMultiplier * 0.9 * progression).toFixed(2)),
-                    parseFloat((baseMultiplier * 1.1 * progression).toFixed(2)),
-                    parseFloat((baseMultiplier * 1.3 * progression).toFixed(2))
+                    parseFloat((baseMultiplier * 0.8 * progression).toFixed(2)),
+                    parseFloat((baseMultiplier * 1.2 * progression).toFixed(2)),
+                    parseFloat((baseMultiplier * 1.6 * progression).toFixed(2)),
+                    parseFloat((baseMultiplier * 2.0 * progression).toFixed(2))
                 ];
             }
             updateMultipliersDisplay();
@@ -1001,6 +923,30 @@
             for (let i = 0; i < 4; i++) {
                 elements.starLabels[i].textContent = `${state.starOffset + i + 1}⭐`;
                 elements.multipliers[i].textContent = state.currentMultipliers[i] || '-';
+            }
+        }
+
+        // Изменение ставки
+        function changeBet(delta) {
+            if (state.gameActive) return;
+            
+            const newBet = state.bet + delta;
+            if (newBet >= config.minBet && newBet <= config.maxBet) {
+                state.bet = newBet;
+                elements.currentBet.textContent = state.bet;
+                updateUI();
+            }
+        }
+
+        // Изменение количества бомб
+        function changeBombs(delta) {
+            if (state.gameActive) return;
+            
+            const newBombs = state.bombs + delta;
+            if (newBombs >= config.minBombs && newBombs <= config.maxBombs) {
+                state.bombs = newBombs;
+                elements.bombsDisplay.textContent = state.bombs;
+                calculateMultipliers();
             }
         }
 
@@ -1048,6 +994,7 @@
                 return;
             });
             
+            disableControls(true);
             calculateMultipliers();
             
             showNotification(`Игра началась! Ставка: ⭐${state.bet}`, 'success');
@@ -1155,8 +1102,18 @@
         function endGame(isWin) {
             state.gameActive = false;
             state.cashoutProcessed = false;
+            disableControls(false);
             resetCashoutButton();
             updateUI();
+        }
+
+        // Управление элементами управления
+        function disableControls(disabled) {
+            elements.bombDec.disabled = disabled;
+            elements.bombInc.disabled = disabled;
+            elements.betDec.disabled = disabled;
+            elements.betInc.disabled = disabled;
+            elements.startBtn.disabled = disabled;
         }
 
         // Сброс кнопки "Забрать"
@@ -1178,13 +1135,13 @@
         function updateUI() {
             elements.balance.textContent = state.balance;
             elements.maxWin.textContent = state.maxWin;
-            elements.betInput.value = state.bet;
-            elements.bombsInput.value = state.bombs;
+            elements.currentBet.textContent = state.bet;
+            elements.bombsDisplay.textContent = state.bombs;
             
             // Изменяем цвет кнопки "Играть" если недостаточно средств
             if (state.bet > state.balance) {
-                elements.startBtn.classList.add('btn-danger');
                 elements.startBtn.classList.remove('btn-primary');
+                elements.startBtn.classList.add('btn-danger');
                 elements.startBtn.disabled = true;
             } else {
                 elements.startBtn.classList.remove('btn-danger');
