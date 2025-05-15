@@ -1,734 +1,756 @@
+import os
+from flask import Flask, request, jsonify, render_template_string
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import time
+import logging
+from threading import Thread
+import telebot
+from telebot import types
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('bot.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Конфигурация
+class Config:
+    BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', 'YOUR_BOT_TOKEN')
+    ADMIN_IDS = [int(x) for x in os.getenv('ADMIN_IDS', '123456789').split(',')]
+    REQUEST_DELAY = int(os.getenv('REQUEST_DELAY', '5'))
+    WEBAPP_HOST = os.getenv('WEBAPP_HOST', '0.0.0.0')
+    WEBAPP_PORT = int(os.getenv('WEBAPP_PORT', '5000'))
+    WEBAPP_URL = os.getenv('WEBAPP_URL', 'https://yourdomain.com')
+
+# Полный список почтовых аккаунтов
+SENDERS = {
+    'korlithiobtennick@mail.ru': 'feDLSiueGT89APb81v74',
+    'avyavya.vyaavy@mail.ru': 'zmARvx1MRvXppZV6xkXj',
+    'gdfds98@mail.ru': '1CtFuHTaQxNda8X06CaQ',
+    'dfsdfdsfdf51@mail.ru': 'SXxrCndCR59s5G9sGc6L',
+    'aria.therese.svensson@mail.com': 'Zorro1ab',
+    'taterbug@verizon.net': 'Holly1!',
+    'ejbrickner@comcast.net': 'Pass1178',
+    'teressapeart@cox.net': 'Quinton2329!',
+    'liznees@verizon.net': 'Dancer008',
+    'olajakubovich@mail.com': 'OlaKub2106OlaKub2106',
+    'kcdg@charter.net': 'Jennifer3*',
+    'bean_118@hotmail.com': 'Liverpool118!',
+    'dsdhjas@mail.com': 'LONGHACH123',
+    'robitwins@comcast.net': 'May241996',
+    'wasina@live.com': 'Marlas21',
+    'aruzhan.01@mail.com': '1234567!',
+    'rob.tackett@live.com': 'metallic',
+    'lindahallenbeck@verizon.net': 'Anakin@2014',
+    'hlaw82@mail.com': 'Snoopy37$$',
+    'paintmadman@comcast.net': 'mycat2200*',
+    'prideandjoy@verizon.net': 'Ihatejen12',
+    'sdgdfg56@mail.com': 'kenwood4201',
+    'garrett.danelz@comcast.net': 'N11golfer!',
+    'gillian_1211@hotmail.com': 'Gilloveu1211',
+    'sunpit16@hotmail.com': 'Putter34!',
+    'fdshelor@verizon.net': 'Masco123*',
+    'yeags1@cox.net': 'Zoomom1965!',
+    'amine002@usa.com': 'iScrRoXAei123',
+    'bbarcelo16@cox.net': 'Bsb161089$$',
+    'laliebert@hotmail.com': 'pirates2',
+    'vallen285@comcast.net': 'Delft285!1!',
+    'sierra12@email.com': 'tegen1111',
+    'luanne.zapevalova@mail.com': 'FqWtJdZ5iN@',
+    'kmay@windstream.net': 'Nascar98',
+    'redbrick1@mail.com': 'Redbrick11',
+    'ivv9ah7f@mail.com': 'K226nw8duwg',
+    'erkobir@live.com': 'floydLAWTON019',
+    'Misscarter@mail.com': 'ashtray19',
+    'carlieruby10@cox.net': 'Lollypop789$',
+    'blackops2013@mail.com': 'amason123566',
+    'caroline_cullum@comcast.net': 'carter14',
+    'dpb13@live.com': 'Ic&ynum13',
+    'heirhunter@usa.com': 'Noguys@714',
+    'sherri.edwards@verizon.net': 'Dreaming123#',
+    'rami.rami1980@hotmail.com': 'ramirami1980',
+    'jmsingleton2@comcast.net': '151728Jn$$',
+    'aberancho@aol.com': '10diegguuss10',
+    'dgidel@iowatelecom.net': 'Buster48',
+    'gpopandopul@mail.com': 'GEORG62A',
+    'bolgodonsk@mail.com': '012345678!',
+    'colbycolb@cox.net': 'Signals@1',
+    'nicrey4@comcast.net': 'Dabears54',
+    'mordechai@mail.com': 'Mordechai',
+    'inemrzoya@mail.com': 'rLS1elaUrLS1elaU',
+    'tarabedford@comcast.net': 'Money4me',
+    'mycockneedsit@mail.com': 'benjamin3',
+    'saralaine@mail.com': 'sarlaine12!1',
+    'jonb2006@verizon.net': '1969Camaro',
+    'rjhssa1@verizon.net': 'Donna613*',
+    'cameron.doug@charter.net': 'Jake2122$',
+    'bridget.shappell@comcast.net': 'Brennan1',
+    'rugs8@comcast.net': 'baseball46',
+    'averyjacobs3@mail.com': '1960682644!',
+    'lstefanick@hotmail.com': 'Luv2dance2',
+    'bchavez123@mail.com': 'aadrianachavez',
+    'lukejamesjones@mail.com': 'tinkerbell1',
+    'emahoney123@comcast.net': 'Shieknmme3#',
+    'mandy10.mcevoy@btinternet.com': 'Tr1plets3',
+    'jet747@cox.net': 'Sadie@1234',
+    'landsgascareservices@mail.com': 'Alisha25@',
+    'samantha224@mail.com': 'Madden098!@',
+    'kbhamil@wowway.com': 'Carol1940',
+    'email@bjasper.com': 'Lhsnh4us123!',
+    'biggsbrian@cox.net': 'Trains@2247Trains@2247',
+    'dzzeblnd@aol.com': 'Geosgal@1',
+    'jtrego@indy.rr.com': 'Jackwill14!',
+    'chrisphonte.rj@comcast.net': 'Junior@3311',
+    'tvwifiguy@comcast.net': 'Bill#0101',
+    'defenestrador@mail.com': 'm0rb1d8ss',
+    'glangley@gmx.com': 'ironhide',
+    'zmbuohbo@nietamail.com': 'bwhshijvS!7708',
+    'mzwdxmbr@vecinomail.com': 'yogovhrcS!9604',
+    'sdwljbvw@senoramail.com': 'fhfmqzwhS!3765',
+    'bvmqjvxg@menormail.com': 'obcyxskhX!5435',
+    'vpdsmckd@nietamail.com': 'soivmwqbA!4968',
+    'rtckyhny@vecinomail.com': 'xxtgawjxX!8484',
+    'etczzucr@senoramail.com': 'jlgflnfvS!9717',
+    'muztpwnl@menormail.com': 'xplstfvnA!4629',
+    'afbzgbqs@nietamail.com': 'hcthlbkkS!9664',
+    'vwnajvtb@vecinomail.com': 'qpaufpfdX!6846',
+    'ndnxnqst@senoramail.com': 'uamvwtvxY!4448',
+    'aehbzvtn@menormail.com': 'pdzabldbX!1586',
+    'yuofldqp@nietamail.com': 'uumnzcoqA!9950',
+    'iryxsvsg@vecinomail.com': 'hcnkpndqY!3869',
+    'adeppaas@senoramail.com': 'qdjmsbtrY!8595',
+    'vbrexarm@menormail.com': 'mpyxepysX!5838',
+    'uiwedngh@nietamail.com': 'xenlwbqqX!3150',
+    'kgwbdctw@vecinomail.com': 'vgnbhgclX!7983',
+    'yxjcdhet@senoramail.com': 'ykfdidaiY!2510',
+    'hfrtvmrz@menormail.com': 'cirrohtjY!3834',
+    'mpudwtru@nietamail.com': 'ofdhcbjqX!8197',
+    'eoulmbhe@vecinomail.com': 'wdcytnqaY!2858',
+    'diniduks@senoramail.com': 'qdatfzqaS!4552',
+    'acpidkkq@menormail.com': 'slownwabX!7663',
+    'nkpswjsb@nietamail.com': 'tjyaixxvY!7554',
+    'charlotte2850@hotmail.com': 'kelalu2850'
+}
+
+RECEIVERS = [
+    'sms@telegram.org', 'dmca@telegram.org', 'abuse@telegram.org',
+    'sticker@telegram.org', 'support@telegram.org', 'topCA@telegram.org', 
+    'recover@telegram.org', 'ceo@telegram.org'
+]
+
+# Полные тексты жалоб
+COMPLAINT_TEXTS = {
+    "spam": (
+        "Здравствуйте, уважаемая поддержка. На вашей платформе я нашел пользователя который отправляет много ненужных сообщений - СПАМ. "
+        "Его юзернейм - {username}, его айди - {user_id}, ссылка на чат - {chat_link}, ссылка на нарушения - {violation_link}. "
+        "Пожалуйста примите меры по отношению к данному пользователю."
+    ),
+    "doxing": (
+        "Здравствуйте, уважаемая поддержка, на вашей платформе я нашел пользователя, который распространяет чужие данные без их согласия. "
+        "его юзернейм - {username}, его айди - {user_id}, ссылка на чат - {chat_link}, ссылка на нарушение/нарушения - {violation_link}. "
+        "Пожалуйста примите меры по отношению к данному пользователю путем блокировки его акккаунта."
+    ),
+    "abuse": (
+        "Здравствуйте, уважаемая поддержка телеграм. Я нашел пользователя который открыто выражается нецензурной лексикой и спамит в чатах. "
+        "его юзернейм - {username}, его айди - {user_id}, ссылка на чат - {chat_link}, ссылка на нарушение/нарушения - {violation_link}. "
+        "Пожалуйста примите меры по отношению к данному пользователю путем блокировки его акккаунта."
+    ),
+    "session": (
+        "Здравствуйте, уважаемая поддержка. Я случайно перешел по фишинговой ссылке и утерял доступ к своему аккаунту. "
+        "Его юзернейм - {username}, его айди - {user_id}. Пожалуйста удалите аккаунт или обнулите сессии"
+    ),
+    "premium": (
+        "Добрый день поддержка Telegram! Аккаунт {username}, {user_id} приобрёл премиум в вашем мессенджере чтобы рассылать "
+        "спам-сообщения и обходить ограничения Telegram. Прошу проверить данную жалобу и принять меры!"
+    ),
+    "virtual": (
+        "Добрый день поддержка Telegram! Аккаунт {username}, {user_id} использует виртуальный номер купленный на сайте по активации номеров. "
+        "Отношения к номеру он не имеет, номер никак к нему не относиться. Прошу разберитесь с этим. Заранее спасибо!"
+    ),
+    "personal_data": (
+        "Здравствуйте, уважаемая поддержка телеграм. На вашей платформе я нашел канал, который распространяет личные данные невинных людей. "
+        "Ссылка на канал - {channel_link}, ссылки на нарушения - {violation_link}. Пожалуйста заблокируйте данный канал."
+    ),
+    "animal_abuse": (
+        "Здравствуйте, уважаемая поддержка телеграма. На вашей платформе я нашел канал который распространяет жестокое обращение с животными. "
+        "Ссылка на канал - {channel_link}, ссылки на нарушения - {violation_link}. Пожалуйста заблокируйте данный канал."
+    ),
+    "cp": (
+        "Здравствуйте, уважаемая поддержка телеграма. На вашей платформе я нашел канал который распространяет порнографию с участием несовершеннолетних. "
+        "Ссылка на канал - {channel_link}, ссылки на нарушения - {violation_link}. Пожалуйста заблокируйте данный канал."
+    ),
+    "drugs": (
+        "Здравствуйте, уважаемый модератор телеграмм, хочу пожаловаться вам на канал, который продает услуги доксинга, сваттинга. "
+        "Ссылка на телеграмм канал: {channel_link} Ссылка на нарушение: {violation_link} Просьба заблокировать данный канал."
+    ),
+    "bot_doxing": (
+        "Здравствуйте, уважаемая поддержка телеграм. На вашей платформе я нашел бота, который осуществляет поиск по личным данным ваших пользователей. "
+        "Ссылка на бота - {bot_username}. Пожалуйста разберитесь и заблокируйте данного бота."
+    )
+}
+
+# Инициализация Flask и Telegram бота
+app = Flask(__name__)
+bot = telebot.TeleBot(Config.BOT_TOKEN)
+
+def send_email(receiver, sender_email, sender_password, subject, body):
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = receiver
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+        
+        with smtplib.SMTP('smtp.mail.ru', 587) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, receiver, msg.as_string())
+            time.sleep(3)
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка при отправке email: {e}")
+        return False
+
+@app.route('/api/complaint', methods=['POST'])
+def handle_complaint():
+    try:
+        data = request.json
+        logger.info(f"Получены данные: {data}")
+        
+        complaint_type = data.get('type')
+        if not complaint_type:
+            return jsonify({"status": "error", "message": "Тип жалобы не указан"}), 400
+        
+        required_fields = []
+        if complaint_type in ["spam", "doxing", "abuse"]:
+            required_fields = ['username', 'user_id', 'chat_link', 'violation_link']
+        elif complaint_type in ["session", "premium", "virtual"]:
+            required_fields = ['username', 'user_id']
+        elif complaint_type in ["personal_data", "animal_abuse", "cp", "drugs"]:
+            required_fields = ['channel_link', 'violation_link']
+        elif complaint_type == "bot_doxing":
+            required_fields = ['bot_username']
+        
+        missing_fields = [f for f in required_fields if f not in data]
+        if missing_fields:
+            return jsonify({"status": "error", "message": f"Отсутствуют поля: {', '.join(missing_fields)}"}), 400
+        
+        Thread(target=process_complaint, args=(data,)).start()
+        return jsonify({"status": "success", "message": "Жалоба принята в обработку"})
+    
+    except Exception as e:
+        logger.error(f"Ошибка обработки жалобы: {e}")
+        return jsonify({"status": "error", "message": "Внутренняя ошибка сервера"}), 500
+
+def process_complaint(data):
+    try:
+        complaint_type = data['type']
+        body = COMPLAINT_TEXTS[complaint_type].format(**data)
+        subject = {
+            "spam": "Жалоба на спам",
+            "doxing": "Жалоба на доксинг",
+            "abuse": "Жалоба на оскорбления",
+            "session": "Запрос на удаление сессий",
+            "premium": "Жалоба на премиум аккаунт",
+            "virtual": "Жалоба на виртуальный номер",
+            "personal_data": "Жалоба на распространение личных данных",
+            "animal_abuse": "Жалоба на жестокое обращение с животными",
+            "cp": "Жалоба на запрещенный контент",
+            "drugs": "Жалоба на продажу запрещенных веществ",
+            "bot_doxing": "Жалоба на бота для доксинга"
+        }.get(complaint_type, "Жалоба Telegram")
+        
+        total_sent = 0
+        for sender_email, sender_password in SENDERS.items():
+            for receiver in RECEIVERS:
+                if send_email(receiver, sender_email, sender_password, subject, body):
+                    total_sent += 1
+                time.sleep(Config.REQUEST_DELAY)
+        
+        logger.info(f"Отправлено {total_sent} жалоб типа {complaint_type}")
+        notify_admin(f"Отправлено {total_sent} жалоб типа {complaint_type}")
+        
+    except Exception as e:
+        logger.error(f"Ошибка обработки жалобы: {e}")
+
+def notify_admin(message):
+    for admin_id in Config.ADMIN_IDS:
+        try:
+            bot.send_message(admin_id, message)
+        except Exception as e:
+            logger.error(f"Ошибка уведомления админа: {e}")
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    markup = types.InlineKeyboardMarkup()
+    btn = types.InlineKeyboardButton(
+        text="Открыть TG KILLER", 
+        web_app=types.WebAppInfo(url=f"{Config.WEBAPP_URL}/webapp")
+    )
+    markup.add(btn)
+    
+    bot.send_message(
+        message.chat.id,
+        "🔹 <b>TG KILLER WebApp</b> by @russianplanter\n\n"
+        "Нажмите кнопку ниже, чтобы открыть интерфейс для отправки жалоб\n\n"
+        "Используйте только в образовательных целях!",
+        reply_markup=markup,
+        parse_mode='HTML'
+    )
+
+# HTML для WebApp
+WEBAPP_HTML = """
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Космическая поддержка</title>
+    <title>TG KILLER</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     <style>
         :root {
-            --space-dark: #0B0D21;
-            --neon-blue: #00F3FF;
-            --star-yellow: #FFE81F;
-            --planet-purple: #6C63FF;
-            --danger-red: #FF4D4D;
-            --success-green: #00CC88;
+            --primary-color: #0088cc;
+            --secondary-color: #f5f5f5;
+            --error-color: #dc3545;
+            --success-color: #28a745;
         }
-
-        body {
-            font-family: 'Arial', sans-serif;
+        
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background: var(--space-dark);
-            color: white;
-            min-height: 100vh;
-            overflow-x: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
-
-        .space-background {
-            position: fixed;
-            width: 100vw;
-            height: 100vh;
-            background: 
-                radial-gradient(circle at 20% 80%, var(--planet-purple), transparent 30%),
-                radial-gradient(circle at 80% 20%, var(--neon-blue), transparent 30%),
-                linear-gradient(to bottom, #000000, var(--space-dark));
-            z-index: -1;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        
+        body {
+            background-color: var(--secondary-color);
+            color: #333;
+            line-height: 1.6;
             padding: 20px;
-            position: relative;
         }
-
-        /* Кнопка "Назад" */
-        .back-button {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--neon-blue);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 10;
-            transition: all 0.3s ease;
-        }
-
-        .back-button:hover {
-            background: rgba(0, 243, 255, 0.2);
-            transform: translateX(-3px);
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
-        }
-
-        .btn {
-            padding: 12px 25px;
-            border-radius: 8px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--neon-blue);
-            color: var(--space-dark);
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 243, 255, 0.3);
-        }
-
-        .btn-danger {
-            background: var(--danger-red);
-            color: white;
-        }
-
-        .btn-success {
-            background: var(--success-green);
-            color: white;
-        }
-
-        .ticket-card {
-            margin-bottom: 15px;
-            background: rgba(255,255,255,0.05);
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
             border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             overflow: hidden;
-            transition: all 0.3s ease;
         }
-
-        .ticket-header {
-            padding: 15px;
-            cursor: pointer;
+        
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+        
+        .tabs {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 243, 255, 0.05);
-            user-select: none;
+            border-bottom: 1px solid #ddd;
         }
-
-        .ticket-body {
-            padding: 0 15px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            transition: all 0.3s;
         }
-
-        .ticket-expanded .ticket-body {
-            max-height: 1000px;
-            padding: 15px;
+        
+        .tab.active {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
         }
-
-        .message {
-            margin: 15px 0;
-            padding: 15px;
-            border-radius: 10px;
-            position: relative;
-            background: rgba(255,255,255,0.1);
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
         }
-
-        .admin-message {
-            background: rgba(108, 99, 255, 0.15);
-            border-left: 3px solid var(--planet-purple);
+        
+        .tab-content.active {
+            display: block;
         }
-
-        .user-message {
-            background: rgba(0, 243, 255, 0.15);
-            border-left: 3px solid var(--neon-blue);
+        
+        .form-group {
+            margin-bottom: 15px;
         }
-
-        .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 10px;
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
         }
-
-        .open { background: var(--success-green); }
-        .closed { background: var(--danger-red); }
-
-        .priority-tag {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            background: rgba(255, 232, 31, 0.15);
-            color: var(--star-yellow);
-        }
-
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.9);
-            color: var(--space-dark);
-            backdrop-filter: blur(5px);
-            transform: translateY(100%);
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-
-        .notification.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        form {
-            display: grid;
-            gap: 15px;
-        }
-
-        input, textarea, select {
+        
+        input, select, textarea {
             width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
             padding: 12px;
             border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.05);
-            color: white;
-            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: background-color 0.3s;
         }
-
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: var(--neon-blue);
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+        
+        button:hover {
+            background-color: #006699;
         }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255,255,255,0.1);
-            border-top-color: var(--neon-blue);
-            border-radius: 50%;
-            margin: 20px auto;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .reply-form {
+        
+        .status {
+            padding: 10px;
+            border-radius: 8px;
             margin-top: 15px;
+            text-align: center;
+            display: none;
         }
-
-        .reply-form textarea {
-            margin-bottom: 10px;
+        
+        .success {
+            background-color: var(--success-color);
+            color: white;
+            display: block;
+        }
+        
+        .error {
+            background-color: var(--error-color);
+            color: white;
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 15px;
+            display: none;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <div class="space-background"></div>
-
-    <!-- Кнопка "Назад" -->
-    <button class="back-button" onclick="window.location.href='index.html'">
-        <i class="fas fa-arrow-left"></i>
-    </button>
-
-    <div id="loadingScreen" class="container" style="color: white; text-align: center; padding-top: 100px;">
-        <h2>🛰 Инициализация системы...</h2>
-        <div class="spinner"></div>
-    </div>
-
-    <div id="appContent" class="hidden">
-        <!-- Интерфейс пользователя -->
-        <div id="userInterface" class="container">
-            <div class="card">
-                <h1 style="color: var(--neon-blue);">🚀 Космическая поддержка</h1>
-                <form id="ticketForm">
-                    <input type="text" id="subject" placeholder="Тема вопроса" required>
-                    <select id="priority" required>
-                        <option value="low">🌌 Низкий приоритет</option>
-                        <option value="medium" selected>🛸 Средний приоритет</option>
-                        <option value="high">🚨 Высокий приоритет</option>
-                    </select>
-                    <textarea id="problem" rows="4" placeholder="Опишите вашу проблему..." required></textarea>
-                    <button type="submit" class="btn">📡 Отправить запрос</button>
-                </form>
-            </div>
-
-            <div class="card">
-                <h2>📬 Мои запросы</h2>
-                <div id="ticketsContainer"></div>
-            </div>
+    <div class="container">
+        <div class="header">
+            <h2>TG KILLER</h2>
+            <p>by @russianplanter</p>
         </div>
-
-        <!-- Панель администратора -->
-        <div id="adminPanel" class="container hidden">
-            <div class="card">
-                <h2 style="color: var(--planet-purple);">👾 Панель управления</h2>
-                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <input type="text" id="adminSearch" placeholder="Поиск по запросам..." style="flex: 1;">
-                    <select id="filterStatus">
-                        <option value="all">Все статусы</option>
-                        <option value="open">Открытые</option>
-                        <option value="closed">Закрытые</option>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="openTab('account')">Аккаунты</div>
+            <div class="tab" onclick="openTab('channel')">Каналы</div>
+            <div class="tab" onclick="openTab('bot')">Боты</div>
+        </div>
+        
+        <!-- Аккаунты -->
+        <div id="account" class="tab-content active">
+            <form id="accountForm">
+                <div class="form-group">
+                    <label for="accountType">Тип жалобы:</label>
+                    <select id="accountType" required>
+                        <option value="spam">Спам</option>
+                        <option value="doxing">Доксинг</option>
+                        <option value="abuse">Оскорбления</option>
+                        <option value="session">Удаление сессий</option>
+                        <option value="premium">Премка для спама</option>
+                        <option value="virtual">Вирт номер</option>
                     </select>
                 </div>
-                <div id="adminTicketsContainer"></div>
+                
+                <div class="form-group">
+                    <label for="accountUsername">Юзернейм (с @):</label>
+                    <input type="text" id="accountUsername" placeholder="@username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="accountId">ID аккаунта:</label>
+                    <input type="text" id="accountId" placeholder="123456789" required>
+                </div>
+                
+                <div id="accountExtraFields">
+                    <div class="form-group">
+                        <label for="accountChatLink">Ссылка на чат:</label>
+                        <input type="text" id="accountChatLink" placeholder="https://t.me/chat">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="accountViolationLink">Ссылка на нарушение:</label>
+                        <input type="text" id="accountViolationLink" placeholder="https://t.me/...">
+                    </div>
+                </div>
+                
+                <button type="submit">Отправить жалобу</button>
+            </form>
+            
+            <div id="accountStatus" class="status"></div>
+            <div id="accountLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Отправка жалоб...</p>
+            </div>
+        </div>
+        
+        <!-- Каналы -->
+        <div id="channel" class="tab-content">
+            <form id="channelForm">
+                <div class="form-group">
+                    <label for="channelType">Тип жалобы:</label>
+                    <select id="channelType" required>
+                        <option value="personal_data">Личные данные</option>
+                        <option value="animal_abuse">Жестокость</option>
+                        <option value="cp">Запрещенный контент</option>
+                        <option value="drugs">Продажа запрещенных веществ</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="channelLink">Ссылка на канал:</label>
+                    <input type="text" id="channelLink" placeholder="https://t.me/channel" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="channelViolationLink">Ссылка на нарушение:</label>
+                    <input type="text" id="channelViolationLink" placeholder="https://t.me/..." required>
+                </div>
+                
+                <button type="submit">Отправить жалобу</button>
+            </form>
+            
+            <div id="channelStatus" class="status"></div>
+            <div id="channelLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Отправка жалоб...</p>
+            </div>
+        </div>
+        
+        <!-- Боты -->
+        <div id="bot" class="tab-content">
+            <form id="botForm">
+                <div class="form-group">
+                    <label for="botType">Тип жалобы:</label>
+                    <select id="botType" required>
+                        <option value="bot_doxing">Бот для доксинга</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="botUsername">Юзернейм бота (с @):</label>
+                    <input type="text" id="botUsername" placeholder="@bot_username" required>
+                </div>
+                
+                <button type="submit">Отправить жалобу</button>
+            </form>
+            
+            <div id="botStatus" class="status"></div>
+            <div id="botLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Отправка жалоб...</p>
             </div>
         </div>
     </div>
-
-    <div id="notification" class="notification"></div>
 
     <script>
-        // Конфигурация Firebase
-        const firebaseConfig = {
-            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8",
-            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com"
-        };
-
-        // ID администраторов
-        const ADMIN_IDS = ['1290724329', '1062148525'];
+        // Инициализация WebApp Telegram
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
         
-        // Текущий пользователь
-        let currentUser = { 
-            id: null, 
-            username: 'Гость', 
-            isAdmin: false 
-        };
-
-        // Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        // Основная функция инициализации
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                // Инициализация пользователя
-                await initUser();
-                
-                // Настройка обработчиков событий
-                setupEventListeners();
-                
-                // Загрузка и отображение контента
-                await renderContent();
-                
-                // Скрытие загрузочного экрана
-                toggleLoader(false);
-                
-            } catch (error) {
-                console.error('Ошибка инициализации:', error);
-                showNotification('❌ Ошибка загрузки системы', 'error');
-                toggleLoader(false);
-            }
+        // Показываем кнопку "Назад"
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => {
+            tg.close();
         });
-
-        // Инициализация пользователя
-        async function initUser() {
-            // Проверка Telegram WebApp
-            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-                const tgUser = Telegram.WebApp.initDataUnsafe.user;
-                currentUser.id = tgUser.id.toString();
-                currentUser.username = tgUser.username || 
-                    [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 
-                    'Пользователь';
-                
-                // Инициализация Telegram WebApp
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-            } else {
-                // Гостевой доступ
-                currentUser.id = 'guest_' + Math.random().toString(36).substr(2, 9);
-            }
+        
+        // Переключение вкладок
+        function openTab(tabName) {
+            // Скрыть все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
             
-            // Проверка прав администратора
-            currentUser.isAdmin = ADMIN_IDS.includes(currentUser.id);
+            // Деактивировать все табы
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
             
-            // Переключение интерфейсов
-            toggleUserInterface();
-        }
-
-        // Переключение между интерфейсами
-        function toggleUserInterface() {
-            const userInterface = document.getElementById('userInterface');
-            const adminPanel = document.getElementById('adminPanel');
+            // Показать выбранную вкладку
+            document.getElementById(tabName).classList.add('active');
             
-            if (currentUser.isAdmin) {
-                userInterface.classList.add('hidden');
-                adminPanel.classList.remove('hidden');
-            } else {
-                userInterface.classList.remove('hidden');
-                adminPanel.classList.add('hidden');
+            // Активировать выбранный таб
+            event.currentTarget.classList.add('active');
+            
+            // Показываем/скрываем дополнительные поля для аккаунтов
+            if (tabName === 'account') {
+                toggleAccountFields();
             }
         }
-
-        // Настройка обработчиков событий
-        function setupEventListeners() {
-            // Форма создания тикета
-            document.getElementById('ticketForm').addEventListener('submit', handleSubmit);
+        
+        // Показываем/скрываем дополнительные поля для аккаунтов
+        function toggleAccountFields() {
+            const accountType = document.getElementById('accountType').value;
+            const extraFields = document.getElementById('accountExtraFields');
             
-            // Элементы админ-панели
-            document.getElementById('adminSearch').addEventListener('input', () => renderAdminTickets());
-            document.getElementById('filterStatus').addEventListener('change', () => renderAdminTickets());
-            
-            // Глобальные обработчики
-            document.addEventListener('click', handleActions);
+            if (['spam', 'doxing', 'abuse'].includes(accountType)) {
+                extraFields.style.display = 'block';
+                document.getElementById('accountChatLink').required = true;
+                document.getElementById('accountViolationLink').required = true;
+            } else {
+                extraFields.style.display = 'none';
+                document.getElementById('accountChatLink').required = false;
+                document.getElementById('accountViolationLink').required = false;
+            }
         }
-
-        // Обработка отправки формы
-        async function handleSubmit(e) {
+        
+        // Обработчик изменения типа жалобы для аккаунтов
+        document.getElementById('accountType').addEventListener('change', toggleAccountFields);
+        
+        // Обработчики отправки форм
+        document.getElementById('accountForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            submitComplaint('account');
+        });
+        
+        document.getElementById('channelForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitComplaint('channel');
+        });
+        
+        document.getElementById('botForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitComplaint('bot');
+        });
+        
+        // Функция отправки жалобы
+        function submitComplaint(formType) {
+            const form = document.getElementById(`${formType}Form`);
+            const loading = document.getElementById(`${formType}Loading`);
+            const status = document.getElementById(`${formType}Status`);
             
-            try {
-                // Создание нового тикета
-                const newTicket = createTicketObject();
-                
-                // Сохранение в Firebase
-                await database.ref(`tickets/${newTicket.id}`).set(newTicket);
-                
-                // Сброс формы и уведомление
-                document.getElementById('ticketForm').reset();
-                showNotification('🚀 Запрос успешно отправлен!');
-                
-                // Обновление интерфейса
-                renderContent();
-                
-            } catch (error) {
-                console.error('Ошибка отправки тикета:', error);
-                showNotification('❌ Ошибка отправки запроса', 'error');
-            }
-        }
-
-        // Создание объекта тикета
-        function createTicketObject() {
-            return {
-                id: generateId(),
-                userId: currentUser.id,
-                username: currentUser.username,
-                subject: document.getElementById('subject').value.trim(),
-                problem: document.getElementById('problem').value.trim(),
-                priority: document.getElementById('priority').value,
-                status: 'open',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                messages: []
-            };
-        }
-
-        // Генерация ID
-        function generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-        }
-
-        // Основная функция рендеринга
-        async function renderContent() {
-            try {
-                if (currentUser.isAdmin) {
-                    await renderAdminTickets();
-                } else {
-                    const tickets = await loadUserTickets();
-                    renderUserTickets(tickets);
-                }
-            } catch (error) {
-                console.error('Ошибка рендеринга:', error);
-                showNotification('❌ Ошибка загрузки данных', 'error');
-            }
-        }
-
-        // Загрузка тикетов пользователя
-        async function loadUserTickets() {
-            try {
-                const snapshot = await database.ref('tickets')
-                    .orderByChild('userId')
-                    .equalTo(currentUser.id)
-                    .once('value');
-                
-                return parseFirebaseData(snapshot);
-                
-            } catch (error) {
-                console.error('Ошибка загрузки тикетов:', error);
-                throw error;
-            }
-        }
-
-        // Рендеринг админ-панели
-        async function renderAdminTickets() {
-            try {
-                const snapshot = await database.ref('tickets').once('value');
-                const allTickets = parseFirebaseData(snapshot);
-                const filteredTickets = filterTickets(allTickets);
-                
-                document.getElementById('adminTicketsContainer').innerHTML = 
-                    filteredTickets.map(t => createAdminTicketElement(t)).join('');
-                    
-            } catch (error) {
-                console.error('Ошибка загрузки тикетов:', error);
-                throw error;
-            }
-        }
-
-        // Фильтрация тикетов
-        function filterTickets(tickets) {
-            const searchTerm = document.getElementById('adminSearch').value.toLowerCase();
-            const statusFilter = document.getElementById('filterStatus').value;
+            // Собираем данные
+            let type, data;
             
-            return tickets
-                .filter(t => !ADMIN_IDS.includes(t.userId)) // Исключаем тикеты админов
-                .filter(t => statusFilter === 'all' || t.status === statusFilter)
-                .filter(t => 
-                    t.userId.includes(searchTerm) ||
-                    t.subject.toLowerCase().includes(searchTerm) ||
-                    t.problem.toLowerCase().includes(searchTerm)
-                )
-                .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        }
-
-        // Рендеринг тикетов пользователя
-        function renderUserTickets(tickets) {
-            const container = document.getElementById('ticketsContainer');
-            
-            if (tickets.length === 0) {
-                container.innerHTML = '<p>У вас пока нет активных запросов</p>';
-                return;
-            }
-            
-            container.innerHTML = tickets
-                .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-                .map(t => createUserTicketElement(t))
-                .join('');
-        }
-
-        // Создание элемента тикета для пользователя
-        function createUserTicketElement(ticket) {
-            return `
-                <div class="ticket-card ${ticket.status}" data-id="${ticket.id}">
-                    <div class="ticket-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="status-indicator ${ticket.status}"></div>
-                            <h3 style="margin: 0">${ticket.subject}</h3>
-                        </div>
-                        <div class="priority-tag">${getPriorityLabel(ticket.priority)}</div>
-                    </div>
-                    <div class="ticket-body ${ticket.status === 'open' ? 'ticket-expanded' : ''}">
-                        <div class="messages">${renderMessages(ticket)}</div>
-                        ${ticket.status === 'open' ? createReplyForm(ticket.id, false) : ''}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Создание элемента тикета для администратора
-        function createAdminTicketElement(ticket) {
-            return `
-                <div class="ticket-card ${ticket.status}" data-id="${ticket.id}">
-                    <div class="ticket-header">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div class="status-indicator ${ticket.status}"></div>
-                            <div>
-                                <h3 style="margin: 0">${ticket.subject}</h3>
-                                <small>${ticket.username} • ${formatDate(ticket.createdAt)}</small>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 10px;">
-                            <div class="priority-tag">${getPriorityLabel(ticket.priority)}</div>
-                            ${createAdminControls(ticket)}
-                        </div>
-                    </div>
-                    <div class="ticket-body ticket-expanded">
-                        <div class="messages">${renderMessages(ticket)}</div>
-                        ${createReplyForm(ticket.id, true, ticket.status)}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Создание элементов управления для админа
-        function createAdminControls(ticket) {
-            return ticket.status === 'open' ? 
-                `<button class="btn btn-danger close-btn" data-id="${ticket.id}">Закрыть</button>` :
-                `<button class="btn btn-success reopen-btn" data-id="${ticket.id}">Открыть</button>`;
-        }
-
-        // Обработка действий
-        function handleActions(e) {
-            // Обработка кнопок закрыть/открыть
-            if (e.target.classList.contains('close-btn')) {
-                closeTicket(e.target.dataset.id);
-                return;
-            }
-            
-            if (e.target.classList.contains('reopen-btn')) {
-                reopenTicket(e.target.dataset.id);
-                return;
-            }
-            
-            // Обработка кнопок отправки ответа
-            if (e.target.classList.contains('send-reply') || e.target.classList.contains('send-user-reply')) {
-                const isAdmin = e.target.classList.contains('send-reply');
-                const ticketId = e.target.dataset.id;
-                sendReply(ticketId, isAdmin);
-                return;
-            }
-            
-            // Обработка клика по заголовку тикета (только если клик не по кнопке или другому интерактивному элементу)
-            if (e.target.closest('.ticket-header') && !e.target.closest('button') && !e.target.closest('a')) {
-                const ticketCard = e.target.closest('.ticket-card');
-                ticketCard.classList.toggle('ticket-expanded');
-            }
-        }
-
-        // Отправка ответа
-        async function sendReply(ticketId, isAdmin) {
-            const textareaId = isAdmin ? `adminReply-${ticketId}` : `userReply-${ticketId}`;
-            const textarea = document.getElementById(textareaId);
-            const text = textarea?.value.trim();
-            
-            if (!text) {
-                showNotification('✏️ Введите текст сообщения', 'error');
-                return;
-            }
-
-            try {
-                // Создание сообщения
-                const message = {
-                    message: text,
-                    timestamp: new Date().toISOString(),
-                    isAdmin
+            if (formType === 'account') {
+                type = document.getElementById('accountType').value;
+                data = {
+                    username: document.getElementById('accountUsername').value,
+                    user_id: document.getElementById('accountId').value
                 };
-
-                // Сохранение в Firebase
-                await database.ref(`tickets/${ticketId}/messages`).push(message);
-                await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
                 
-                // Очистка поля и уведомление
-                textarea.value = '';
-                showNotification(isAdmin ? '👾 Ответ отправлен' : '🚀 Сообщение доставлено');
-                
-                // Обновление интерфейса
-                renderContent();
-                
-            } catch (error) {
-                console.error('Ошибка отправки ответа:', error);
-                showNotification('❌ Ошибка отправки', 'error');
+                if (['spam', 'doxing', 'abuse'].includes(type)) {
+                    data.chat_link = document.getElementById('accountChatLink').value;
+                    data.violation_link = document.getElementById('accountViolationLink').value;
+                }
+            } 
+            else if (formType === 'channel') {
+                type = document.getElementById('channelType').value;
+                data = {
+                    channel_link: document.getElementById('channelLink').value,
+                    violation_link: document.getElementById('channelViolationLink').value
+                };
+            } 
+            else if (formType === 'bot') {
+                type = document.getElementById('botType').value;
+                data = {
+                    bot_username: document.getElementById('botUsername').value
+                };
             }
-        }
-
-        // Закрытие тикета
-        async function closeTicket(ticketId) {
-            try {
-                await database.ref(`tickets/${ticketId}/status`).set('closed');
-                await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
-                showNotification('🔒 Запрос закрыт');
-                renderContent();
-            } catch (error) {
-                console.error('Ошибка закрытия тикета:', error);
-                showNotification('❌ Ошибка закрытия тикета', 'error');
-            }
-        }
-
-        // Повторное открытие тикета
-        async function reopenTicket(ticketId) {
-            try {
-                await database.ref(`tickets/${ticketId}/status`).set('open');
-                await database.ref(`tickets/${ticketId}/updatedAt`).set(new Date().toISOString());
-                showNotification('🔓 Запрос открыт');
-                renderContent();
-            } catch (error) {
-                console.error('Ошибка открытия тикета:', error);
-                showNotification('❌ Ошибка открытия тикета', 'error');
-            }
-        }
-
-        // Вспомогательные функции
-        function parseFirebaseData(snapshot) {
-            if (!snapshot.val()) return [];
-            return Object.entries(snapshot.val()).map(([id, value]) => ({ id, ...value }));
-        }
-
-        function getPriorityLabel(priority) {
-            const labels = {
-                low: '🌌 Низкий',
-                medium: '🛸 Средний',
-                high: '🚨 Высокий'
-            };
-            return labels[priority] || '🛸 Средний';
-        }
-
-        function formatDate(dateString) {
-            const options = { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            };
-            return new Date(dateString).toLocaleString('ru-RU', options);
-        }
-
-        function renderMessages(ticket) {
-            const messages = [
-                createMessage(ticket.problem, ticket.username, ticket.createdAt, false),
-                ...(ticket.messages ? Object.values(ticket.messages) : []).map(msg => 
-                    createMessage(msg.message, msg.isAdmin ? 'Администратор' : ticket.username, msg.timestamp, msg.isAdmin)
-                )
-            ];
-            return messages.join('');
-        }
-
-        function createMessage(text, author, date, isAdmin) {
-            return `
-                <div class="message ${isAdmin ? 'admin-message' : 'user-message'}">
-                    <div class="message-text">${text}</div>
-                    <div class="message-info">${author} • ${formatDate(date)}</div>
-                </div>
-            `;
-        }
-
-        function createReplyForm(ticketId, isAdmin, status = 'open') {
-            if (status !== 'open') return '';
             
-            return `
-                <div class="reply-form">
-                    <textarea id="${isAdmin ? 'admin' : 'user'}Reply-${ticketId}" 
-                              placeholder="${isAdmin ? 'Ваш ответ...' : 'Ваше сообщение...'}"></textarea>
-                    <button class="btn ${isAdmin ? 'btn-success' : ''} ${isAdmin ? 'send-reply' : 'send-user-reply'}" 
-                            data-id="${ticketId}">
-                        ${isAdmin ? '📡 Ответить' : '📤 Отправить'}
-                    </button>
-                </div>
-            `;
-        }
-
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.className = `notification ${type} show`;
-            notification.textContent = message;
+            // Показываем загрузку
+            loading.style.display = 'block';
+            status.style.display = 'none';
+            form.style.opacity = '0.5';
+            form.querySelector('button').disabled = true;
             
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+            // Отправляем данные на сервер
+            fetch('/api/complaint', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: type,
+                    ...data
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                loading.style.display = 'none';
+                form.style.opacity = '1';
+                form.querySelector('button').disabled = false;
+                
+                if (result.status === 'success') {
+                    status.className = 'status success';
+                    status.textContent = 'Жалоба успешно отправлена!';
+                    form.reset();
+                } else {
+                    status.className = 'status error';
+                    status.textContent = 'Ошибка: ' + result.message;
+                }
+                
+                status.style.display = 'block';
+            })
+            .catch(error => {
+                loading.style.display = 'none';
+                form.style.opacity = '1';
+                form.querySelector('button').disabled = false;
+                
+                status.className = 'status error';
+                status.textContent = 'Ошибка соединения: ' + error.message;
+                status.style.display = 'block';
+                
+                console.error('Error:', error);
+            });
         }
-
-        function toggleLoader(show = true) {
-            document.getElementById('loadingScreen').classList.toggle('hidden', !show);
-            document.getElementById('appContent').classList.toggle('hidden', show);
-        }
+        
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleAccountFields();
+        });
     </script>
 </body>
 </html>
+"""
+
+@app.route('/webapp')
+def webapp():
+    return render_template_string(WEBAPP_HTML)
+
+if __name__ == '__main__':
+    # Запуск Flask и бота в разных потоках
+    from threading import Thread
+    Thread(target=app.run, kwargs={
+        'host': Config.WEBAPP_HOST,
+        'port': Config.WEBAPP_PORT
+    }).start()
+    
+    logger.info("Запуск бота...")
+    bot.infinity_polling()
