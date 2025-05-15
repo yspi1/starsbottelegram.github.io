@@ -1,6 +1,4 @@
-Вот полный, готовый к развертыванию на GitHub код для Telegram Web App с отправкой жалоб:
 
-```python
 import os
 from flask import Flask, request, jsonify, render_template_string
 import smtplib
