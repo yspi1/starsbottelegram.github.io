@@ -1,1137 +1,478 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вывод средств</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            background-color: #f5f7fa;
-        }
-        
-        body.user-bg {
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-        }
-        
-        body.admin-bg {
-            background: linear-gradient(135deg, #2c3e50, #4ca1af);
-        }
-        
-        .card {
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 500px;
-            padding: 25px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .back-button {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: none;
-            border: none;
-            font-size: 16px;
-            color: #667eea;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-        }
-        
-        .back-button:hover {
-            text-decoration: underline;
-        }
-        
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: 600;
-        }
-        
-        .balance-card {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .balance-label {
-            font-size: 16px;
-            margin-bottom: 5px;
-            opacity: 0.9;
-        }
-        
-        .balance-value {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        
-        .balance-equivalent {
-            font-size: 16px;
-            opacity: 0.9;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #555;
-        }
-        
-        input, select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        
-        input:focus, select:focus {
-            border-color: #667eea;
-            outline: none;
-        }
-        
-        .amount-buttons {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .amount-btn {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: white;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-        
-        .amount-btn:hover {
-            border-color: #667eea;
-            color: #667eea;
-        }
-        
-        .amount-btn.selected {
-            background-color: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        
-        .method-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .method-btn {
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: white;
-            cursor: pointer;
-            transition: all 0.2s;
-            flex: 1;
-            text-align: center;
-        }
-        
-        .method-btn.selected {
-            border-color: #667eea;
-            background-color: rgba(102, 126, 234, 0.1);
-        }
-        
-        .submit-btn {
-            width: 100%;
-            padding: 15px;
-            background-color: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin-top: 10px;
-        }
-        
-        .submit-btn:hover {
-            background-color: #5a6fd1;
-        }
-        
-        .submit-btn:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        
-        .info-text {
-            font-size: 14px;
-            color: #666;
-            margin-top: 20px;
-            text-align: center;
-        }
-        
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            flex-direction: column;
-            color: white;
-        }
-        
-        .loading-spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid white;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .error-message, .success-message {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .error-message {
-            background-color: #ffebee;
-            color: #c62828;
-            border: 1px solid #ef9a9a;
-        }
-        
-        .success-message {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #a5d6a7;
-        }
-        
-        .message-icon {
-            margin-right: 10px;
-            font-size: 20px;
-        }
-        
-        /* Админ-панель */
-        #adminPanel {
-            display: none;
-        }
-        
-        .admin-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .admin-title {
-            font-size: 22px;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-        
-        .admin-subtitle {
-            font-size: 14px;
-            color: #7f8c8d;
-        }
-        
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #ecf0f1;
-        }
-        
-        .tab {
-            padding: 12px 20px;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            font-weight: 500;
-            color: #7f8c8d;
-            transition: all 0.3s;
-        }
-        
-        .tab.active {
-            border-bottom-color: #3498db;
-            color: #2c3e50;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .withdrawal-item {
-            background-color: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-            border: 1px solid #ecf0f1;
-        }
-        
-        .withdrawal-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            align-items: center;
-        }
-        
-        .withdrawal-amount {
-            font-weight: 600;
-            font-size: 18px;
-            color: #2c3e50;
-        }
-        
-        .withdrawal-status {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .status-pending {
-            background-color: #fff3e0;
-            color: #e65100;
-        }
-        
-        .status-completed {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-        
-        .status-rejected {
-            background-color: #ffebee;
-            color: #c62828;
-        }
-        
-        .withdrawal-details {
-            font-size: 14px;
-            color: #7f8c8d;
-            margin-bottom: 10px;
-        }
-        
-        .detail-row {
-            display: flex;
-            margin-bottom: 5px;
-        }
-        
-        .detail-label {
-            font-weight: 500;
-            color: #34495e;
-            min-width: 100px;
-        }
-        
-        .detail-value {
-            color: #2c3e50;
-            word-break: break-all;
-        }
-        
-        .withdrawal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .action-btn {
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s;
-            flex: 1;
-        }
-        
-        .approve-btn {
-            background-color: #2ecc71;
-            color: white;
-        }
-        
-        .approve-btn:hover {
-            background-color: #27ae60;
-        }
-        
-        .reject-btn {
-            background-color: #e74c3c;
-            color: white;
-        }
-        
-        .reject-btn:hover {
-            background-color: #c0392b;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 30px;
-            color: #7f8c8d;
-            font-size: 16px;
-        }
-        
-        /* История выводов */
-        #withdrawalHistory {
-            margin-top: 30px;
-            display: none;
-        }
-        
-        .history-item {
-            background-color: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 10px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-            border: 1px solid #ecf0f1;
-        }
-        
-        .history-status {
-            display: inline-block;
-            margin-left: 10px;
-            font-size: 12px;
-            padding: 3px 8px;
-            border-radius: 3px;
-        }
-    </style>
-</head>
-<body class="user-bg">
-    <div class="card">
-        <button class="back-button" onclick="window.location.href='index.html'">← Назад</button>
-        <h2>Вывод средств</h2>
-        
-        <!-- Блок с балансом -->
-        <div class="balance-card">
-            <div class="balance-label">Ваш баланс</div>
-            <div class="balance-value" id="userBalance">0 ★</div>
-            <div class="balance-equivalent" id="balanceEquivalent">0 ₽</div>
-        </div>
+import telebot
+from telebot import types
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import time
+import logging
+from threading import Thread
 
-        <!-- Форма вывода средств -->
-        <div id="withdrawalForm">
-            <div class="form-group">
-                <label for="amount">Сумма вывода (в звездах)</label>
-                <input type="number" id="amount" placeholder="Введите сумму" min="1" oninput="updateSelectedAmount(this.value)">
-                
-                <div class="amount-buttons">
-                    <button class="amount-btn" onclick="setAmount(50)">50 ★</button>
-                    <button class="amount-btn" onclick="setAmount(100)">100 ★</button>
-                    <button class="amount-btn" onclick="setAmount(200)">200 ★</button>
-                    <button class="amount-btn" onclick="setAmount(300)">300 ★</button>
-                    <button class="amount-btn" onclick="setAmount(500)">500 ★</button>
-                    <button class="amount-btn" onclick="setAmount(1000)">1000 ★</button>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label>Способ вывода</label>
-                <div class="method-buttons">
-                    <button id="usdtBtn" class="method-btn" onclick="selectMethod('usdt')">USDT (TRC20)</button>
-                    <button id="bankBtn" class="method-btn" onclick="selectMethod('bank')">Банковская карта</button>
-                </div>
-            </div>
-            
-            <div id="usdtDetails" class="form-group" style="display: none;">
-                <label for="usdtAddress">Ваш адрес USDT (TRC20)</label>
-                <input type="text" id="usdtAddress" placeholder="Введите ваш адрес кошелька">
-            </div>
-            
-            <div id="bankDetails" class="form-group" style="display: none;">
-                <label for="cardNumber">Номер карты</label>
-                <input type="text" id="cardNumber" placeholder="Введите номер карты">
-                
-                <label for="cardName" style="margin-top: 10px;">Имя владельца</label>
-                <input type="text" id="cardName" placeholder="Как на карте">
-            </div>
-            
-            <button id="submitBtn" class="submit-btn" disabled onclick="submitWithdrawal()">Вывести</button>
-            
-            <div class="info-text">
-                Минимальная сумма вывода: 50 ★<br>
-                1 звезда = 1 ₽
-            </div>
-        </div>
-        
-        <!-- История выводов -->
-        <div id="withdrawalHistory" style="margin-top: 30px; display: none;">
-            <h3 style="margin-bottom: 15px;">История выводов</h3>
-            <div id="historyList"></div>
-        </div>
-        
-        <!-- Админ-панель -->
-        <div id="adminPanel">
-            <div class="admin-header">
-                <div class="admin-title">Панель администратора</div>
-                <div class="admin-subtitle">Управление заявками на вывод</div>
-            </div>
-            
-            <div class="tabs">
-                <div class="tab active" onclick="switchTab('pending')">Ожидание</div>
-                <div class="tab" onclick="switchTab('processed')">Обработанные</div>
-            </div>
-            
-            <div id="pendingTab" class="tab-content active">
-                <h3 style="margin-bottom: 15px; color: #2c3e50;">Заявки на вывод</h3>
-                <div id="pendingList"></div>
-            </div>
-            
-            <div id="processedTab" class="tab-content">
-                <h3 style="margin-bottom: 15px; color: #2c3e50;">История обработки</h3>
-                <div id="processedList"></div>
-            </div>
-        </div>
-        
-        <!-- Сообщения об ошибках/успехе -->
-        <div id="errorMessage" class="error-message" style="display: none;">
-            <span class="message-icon">⚠️</span>
-            <span id="errorText"></span>
-        </div>
-        
-        <div id="successMessage" class="success-message" style="display: none;">
-            <span class="message-icon">✓</span>
-            <span id="successText"></span>
-        </div>
-    </div>
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('bot.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Конфигурация
+class Config:
+    BOT_TOKEN = "7761437520:AAEP4vTg5Vh7fXVZ8hvCO9s8gIBvRdysKNo"  # Замените на ваш токен
+    ADMIN_IDS = [@ebusplit]  # Ваш ID для админ-уведомлений
+    REQUEST_DELAY = 5  # Задержка между запросами в секундах
+
+# Данные для отправки email
+SENDERS = {
+    'korlithiobtennick@mail.ru': 'feDLSiueGT89APb81v74',
+    'avyavya.vyaavy@mail.ru': 'zmARvx1MRvXppZV6xkXj',
+    'gdfds98@mail.ru': '1CtFuHTaQxNda8X06CaQ',
+    'dfsdfdsfdf51@mail.ru': 'SXxrCndCR59s5G9sGc6L',
+    'aria.therese.svensson@mail.com': 'Zorro1ab',
+    'taterbug@verizon.net': 'Holly1!',
+    'ejbrickner@comcast.net': 'Pass1178',
+    'teressapeart@cox.net': 'Quinton2329!',
+    'liznees@verizon.net': 'Dancer008',
+    'olajakubovich@mail.com': 'OlaKub2106OlaKub2106',
+    'kcdg@charter.net': 'Jennifer3*',
+    'bean_118@hotmail.com': 'Liverpool118!',
+    'dsdhjas@mail.com': 'LONGHACH123',
+    'robitwins@comcast.net': 'May241996',
+    'wasina@live.com': 'Marlas21',
+    'aruzhan.01@mail.com': '1234567!',
+    'rob.tackett@live.com': 'metallic',
+    'lindahallenbeck@verizon.net': 'Anakin@2014',
+    'hlaw82@mail.com': 'Snoopy37$$',
+    'paintmadman@comcast.net': 'mycat2200*',
+    'prideandjoy@verizon.net': 'Ihatejen12',
+    'sdgdfg56@mail.com': 'kenwood4201',
+    'garrett.danelz@comcast.net': 'N11golfer!',
+    'gillian_1211@hotmail.com': 'Gilloveu1211',
+    'sunpit16@hotmail.com': 'Putter34!',
+    'fdshelor@verizon.net': 'Masco123*',
+    'yeags1@cox.net': 'Zoomom1965!',
+    'amine002@usa.com': 'iScrRoXAei123',
+    'bbarcelo16@cox.net': 'Bsb161089$$',
+    'laliebert@hotmail.com': 'pirates2',
+    'vallen285@comcast.net': 'Delft285!1!',
+    'sierra12@email.com': 'tegen1111',
+    'luanne.zapevalova@mail.com': 'FqWtJdZ5iN@',
+    'kmay@windstream.net': 'Nascar98',
+    'redbrick1@mail.com': 'Redbrick11',
+    'ivv9ah7f@mail.com': 'K226nw8duwg',
+    'erkobir@live.com': 'floydLAWTON019',
+    'Misscarter@mail.com': 'ashtray19',
+    'carlieruby10@cox.net': 'Lollypop789$',
+    'blackops2013@mail.com': 'amason123566',
+    'caroline_cullum@comcast.net': 'carter14',
+    'dpb13@live.com': 'Ic&ynum13',
+    'heirhunter@usa.com': 'Noguys@714',
+    'sherri.edwards@verizon.net': 'Dreaming123#',
+    'rami.rami1980@hotmail.com': 'ramirami1980',
+    'jmsingleton2@comcast.net': '151728Jn$$',
+    'aberancho@aol.com': '10diegguuss10',
+    'dgidel@iowatelecom.net': 'Buster48',
+    'gpopandopul@mail.com': 'GEORG62A',
+    'bolgodonsk@mail.com': '012345678!',
+    'colbycolb@cox.net': 'Signals@1',
+    'nicrey4@comcast.net': 'Dabears54',
+    'mordechai@mail.com': 'Mordechai',
+    'inemrzoya@mail.com': 'rLS1elaUrLS1elaU',
+    'tarabedford@comcast.net': 'Money4me',
+    'mycockneedsit@mail.com': 'benjamin3',
+    'saralaine@mail.com': 'sarlaine12!1',
+    'jonb2006@verizon.net': '1969Camaro',
+    'rjhssa1@verizon.net': 'Donna613*',
+    'cameron.doug@charter.net': 'Jake2122$',
+    'bridget.shappell@comcast.net': 'Brennan1',
+    'rugs8@comcast.net': 'baseball46',
+    'averyjacobs3@mail.com': '1960682644!',
+    'lstefanick@hotmail.com': 'Luv2dance2',
+    'bchavez123@mail.com': 'aadrianachavez',
+    'lukejamesjones@mail.com': 'tinkerbell1',
+    'emahoney123@comcast.net': 'Shieknmme3#',
+    'mandy10.mcevoy@btinternet.com': 'Tr1plets3',
+    'jet747@cox.net': 'Sadie@1234',
+    'landsgascareservices@mail.com': 'Alisha25@',
+    'samantha224@mail.com': 'Madden098!@',
+    'kbhamil@wowway.com': 'Carol1940',
+    'email@bjasper.com': 'Lhsnh4us123!',
+    'biggsbrian@cox.net': 'Trains@2247Trains@2247',
+    'dzzeblnd@aol.com': 'Geosgal@1',
+    'jtrego@indy.rr.com': 'Jackwill14!',
+    'chrisphonte.rj@comcast.net': 'Junior@3311',
+    'tvwifiguy@comcast.net': 'Bill#0101',
+    'defenestrador@mail.com': 'm0rb1d8ss',
+    'glangley@gmx.com': 'ironhide',
+    'zmbuohbo@nietamail.com': 'bwhshijvS!7708',
+    'mzwdxmbr@vecinomail.com': 'yogovhrcS!9604',
+    'sdwljbvw@senoramail.com': 'fhfmqzwhS!3765',
+    'bvmqjvxg@menormail.com': 'obcyxskhX!5435',
+    'vpdsmckd@nietamail.com': 'soivmwqbA!4968',
+    'rtckyhny@vecinomail.com': 'xxtgawjxX!8484',
+    'etczzucr@senoramail.com': 'jlgflnfvS!9717',
+    'muztpwnl@menormail.com': 'xplstfvnA!4629',
+    'afbzgbqs@nietamail.com': 'hcthlbkkS!9664',
+    'vwnajvtb@vecinomail.com': 'qpaufpfdX!6846',
+    'ndnxnqst@senoramail.com': 'uamvwtvxY!4448',
+    'aehbzvtn@menormail.com': 'pdzabldbX!1586',
+    'yuofldqp@nietamail.com': 'uumnzcoqA!9950',
+    'iryxsvsg@vecinomail.com': 'hcnkpndqY!3869',
+    'adeppaas@senoramail.com': 'qdjmsbtrY!8595',
+    'vbrexarm@menormail.com': 'mpyxepysX!5838',
+    'uiwedngh@nietamail.com': 'xenlwbqqX!3150',
+    'kgwbdctw@vecinomail.com': 'vgnbhgclX!7983',
+    'yxjcdhet@senoramail.com': 'ykfdidaiY!2510',
+    'hfrtvmrz@menormail.com': 'cirrohtjY!3834',
+    'mpudwtru@nietamail.com': 'ofdhcbjqX!8197',
+    'eoulmbhe@vecinomail.com': 'wdcytnqaY!2858',
+    'diniduks@senoramail.com': 'qdatfzqaS!4552',
+    'acpidkkq@menormail.com': 'slownwabX!7663',
+    'nkpswjsb@nietamail.com': 'tjyaixxvY!7554',
+    'charlotte2850@hotmail.com': 'kelalu2850'
+}
+
+RECEIVERS = [
+    'sms@telegram.org', 'dmca@telegram.org', 'abuse@telegram.org',
+    'sticker@telegram.org', 'support@telegram.org', 'topCA@telegram.org', 
+    'recover@telegram.org', 'ceo@telegram.org'
+]
+
+# Инициализация бота
+bot = telebot.TeleBot(Config.BOT_TOKEN)
+
+# Тексты для жалоб
+COMPLAINT_TEXTS = {
+    # Жалобы на аккаунты
+    "spam": (
+        "Здравствуйте, уважаемая поддержка. На вашей платформе я нашел пользователя который отправляет много ненужных сообщений - СПАМ. "
+        "Его юзернейм - {username}, его айди - {user_id}, ссылка на чат - {chat_link}, ссылка на нарушения - {violation_link}. "
+        "Пожалуйста примите меры по отношению к данному пользователю."
+    ),
+    "doxing": (
+        "Здравствуйте, уважаемая поддержка, на вашей платформе я нашел пользователя, который распространяет чужие данные без их согласия. "
+        "его юзернейм - {username}, его айди - {user_id}, ссылка на чат - {chat_link}, ссылка на нарушение/нарушения - {violation_link}. "
+        "Пожалуйста примите меры по отношению к данному пользователю путем блокировки его акккаунта."
+    ),
+    "abuse": (
+        "Здравствуйте, уважаемая поддержка телеграм. Я нашел пользователя который открыто выражается нецензурной лексикой и спамит в чатах. "
+        "его юзернейм - {username}, его айди - {user_id}, ссылка на чат - {chat_link}, ссылка на нарушение/нарушения - {violation_link}. "
+        "Пожалуйста примите меры по отношению к данному пользователю путем блокировки его акккаунта."
+    ),
+    "session": (
+        "Здравствуйте, уважаемая поддержка. Я случайно перешел по фишинговой ссылке и утерял доступ к своему аккаунту. "
+        "Его юзернейм - {username}, его айди - {user_id}. Пожалуйста удалите аккаунт или обнулите сессии"
+    ),
+    "premium": (
+        "Добрый день поддержка Telegram! Аккаунт {username}, {user_id} приобрёл премиум в вашем мессенджере чтобы рассылать "
+        "спам-сообщения и обходить ограничения Telegram. Прошу проверить данную жалобу и принять меры!"
+    ),
+    "virtual": (
+        "Добрый день поддержка Telegram! Аккаунт {username}, {user_id} использует виртуальный номер купленный на сайте по активации номеров. "
+        "Отношения к номеру он не имеет, номер никак к нему не относиться. Прошу разберитесь с этим. Заранее спасибо!"
+    ),
     
-    <!-- Оверлей загрузки -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-        <div class="loading-spinner"></div>
-        <div id="loadingText">Загрузка...</div>
-    </div>
+    # Жалобы на каналы
+    "personal_data": (
+        "Здравствуйте, уважаемая поддержка телеграм. На вашей платформе я нашел канал, который распространяет личные данные невинных людей. "
+        "Ссылка на канал - {channel_link}, ссылки на нарушения - {violation_link}. Пожалуйста заблокируйте данный канал."
+    ),
+    "animal_abuse": (
+        "Здравствуйте, уважаемая поддержка телеграма. На вашей платформе я нашел канал который распространяет жестокое обращение с животными. "
+        "Ссылка на канал - {channel_link}, ссылки на нарушения - {violation_link}. Пожалуйста заблокируйте данный канал."
+    ),
+    "cp": (
+        "Здравствуйте, уважаемая поддержка телеграма. На вашей платформе я нашел канал который распространяет порнографию с участием несовершеннолетних. "
+        "Ссылка на канал - {channel_link}, ссылки на нарушения - {violation_link}. Пожалуйста заблокируйте данный канал."
+    ),
+    "drugs": (
+        "Здравствуйте, уважаемый модератор телеграмм, хочу пожаловаться вам на канал, который продает услуги доксинга, сваттинга. "
+        "Ссылка на телеграмм канал: {channel_link} Ссылка на нарушение: {violation_link} Просьба заблокировать данный канал."
+    ),
+    
+    # Жалобы на ботов
+    "bot_doxing": (
+        "Здравствуйте, уважаемая поддержка телеграм. На вашей платформе я нашел бота, который осуществляет поиск по личным данным ваших пользователей. "
+        "Ссылка на бота - {bot_username}. Пожалуйста разберитесь и заблокируйте данного бота."
+    )
+}
 
-    <script>
-        // Инициализация Firebase
-        const firebaseConfig = {
-            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com/",
-            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8"
-        };
+# Функция для отправки email
+def send_email(receiver, sender_email, sender_password, subject, body):
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = receiver
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
         
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        
-        // Инициализация Telegram Web App
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        
-        // Конфигурация
-        const config = {
-            minWithdrawal: 50,
-            starRate: 1, // 1 звезда = 1 рубль
-            adminIds: ["1062148525", "1290724329"] // ID админов через запятую
-        };
-        
-        // Основные переменные
-        let currentUser = null;
-        let selectedAmount = 0;
-        let selectedMethod = null;
-        let userBalance = 0;
-        let isAdmin = false;
-        
-        // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', async () => {
-            showLoading("Инициализация...");
-            
-            try {
-                // Получаем данные пользователя Telegram
-                const tgUser = tg.initDataUnsafe?.user;
-                if (tgUser) {
-                    currentUser = {
-                        id: tgUser.id.toString(),
-                        username: tgUser.username || '',
-                        firstName: tgUser.first_name || '',
-                        lastName: tgUser.last_name || ''
-                    };
-                    
-                    // Проверяем, является ли пользователь админом
-                    isAdmin = config.adminIds.includes(currentUser.id);
-                    
-                    if (isAdmin) {
-                        document.body.classList.remove('user-bg');
-                        document.body.classList.add('admin-bg');
-                        document.getElementById('adminPanel').style.display = 'block';
-                        document.getElementById('withdrawalForm').style.display = 'none';
-                        document.getElementById('withdrawalHistory').style.display = 'none';
-                        loadWithdrawals();
-                        initTabs();
-                    } else {
-                        // Загружаем баланс пользователя
-                        await loadUserBalance(currentUser.id);
-                        loadUserWithdrawals(currentUser.id);
-                        document.getElementById('withdrawalHistory').style.display = 'block';
-                    }
-                    
-                    // Создаем/обновляем запись пользователя в базе
-                    await createOrUpdateUser(currentUser);
-                } else {
-                    showError("Не удалось получить данные пользователя");
-                }
-                
-                hideLoading();
-            } catch (error) {
-                console.error("Ошибка инициализации:", error);
-                hideLoading();
-                showError("Произошла ошибка при загрузке");
-            }
-        });
+        server = smtplib.SMTP('smtp.mail.ru', 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, receiver, msg.as_string())
+        time.sleep(3)
+        server.quit()
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка при отправке email с {sender_email} на {receiver}: {e}")
+        return False
 
-        // Создание или обновление пользователя в базе
-        async function createOrUpdateUser(user) {
-            const userRef = database.ref(`users/${user.id}`);
-            const snapshot = await userRef.once('value');
-            
-            if (!snapshot.exists()) {
-                // Новый пользователь
-                await userRef.set({
-                    ...user,
-                    balance: 0,
-                    createdAt: firebase.database.ServerValue.TIMESTAMP,
-                    lastActive: firebase.database.ServerValue.TIMESTAMP
-                });
-            } else {
-                // Обновляем данные существующего пользователя
-                await userRef.update({
-                    ...user,
-                    lastActive: firebase.database.ServerValue.TIMESTAMP
-                });
-            }
-        }
+# Отправка жалоб в отдельном потоке
+def send_complaints_async(chat_id, complaint_type, data):
+    try:
+        total_sent = 0
         
-        // Загрузка баланса пользователя
-        async function loadUserBalance(userId) {
-            const userRef = database.ref(`users/${userId}`);
-            
-            userRef.on('value', (snapshot) => {
-                const userData = snapshot.val();
-                if (userData) {
-                    userBalance = userData.balance || 0;
-                    updateBalanceDisplay();
-                }
-            });
-        }
+        if complaint_type in ["spam", "doxing", "abuse"]:
+            body = COMPLAINT_TEXTS[complaint_type].format(
+                username=data['username'],
+                user_id=data['user_id'],
+                chat_link=data['chat_link'],
+                violation_link=data['violation_link']
+            )
+            subject = "Жалоба на аккаунт телеграм"
+        elif complaint_type in ["session", "premium", "virtual"]:
+            body = COMPLAINT_TEXTS[complaint_type].format(
+                username=data['username'],
+                user_id=data['user_id']
+            )
+            subject = "Жалоба на аккаунт телеграм"
+        elif complaint_type in ["personal_data", "animal_abuse", "cp", "drugs"]:
+            body = COMPLAINT_TEXTS[complaint_type].format(
+                channel_link=data['channel_link'],
+                violation_link=data['violation_link']
+            )
+            subject = "Жалоба на телеграм канал"
+        elif complaint_type == "bot_doxing":
+            body = COMPLAINT_TEXTS[complaint_type].format(
+                bot_username=data['bot_username']
+            )
+            subject = "Жалоба на бота телеграм"
         
-        // Обновление отображения баланса
-        function updateBalanceDisplay() {
-            document.getElementById('userBalance').textContent = `${userBalance} ★`;
-            document.getElementById('balanceEquivalent').textContent = `${userBalance} ₽`;
-        }
+        for sender_email, sender_password in SENDERS.items():
+            for receiver in RECEIVERS:
+                if send_email(receiver, sender_email, sender_password, subject, body):
+                    total_sent += 1
+                time.sleep(Config.REQUEST_DELAY)
         
-        // Установка суммы вывода
-        function setAmount(amount) {
-            selectedAmount = amount;
-            document.getElementById('amount').value = amount;
-            
-            // Обновляем выделение кнопок
-            document.querySelectorAll('.amount-btn').forEach(btn => {
-                btn.classList.toggle('selected', parseInt(btn.textContent) === amount);
-            });
-            
-            updateSubmitButton();
-        }
-        
-        // Обновление выбранной суммы из поля ввода
-        function updateSelectedAmount(value) {
-            selectedAmount = parseInt(value) || 0;
-            updateSubmitButton();
-        }
-        
-        // Выбор метода вывода
-        function selectMethod(method) {
-            selectedMethod = method;
-            
-            // Обновляем выделение кнопок
-            document.getElementById('usdtBtn').classList.toggle('selected', method === 'usdt');
-            document.getElementById('bankBtn').classList.toggle('selected', method === 'bank');
-            
-            // Показываем соответствующие поля
-            document.getElementById('usdtDetails').style.display = method === 'usdt' ? 'block' : 'none';
-            document.getElementById('bankDetails').style.display = method === 'bank' ? 'block' : 'none';
-            
-            updateSubmitButton();
-        }
-        
-        // Обновление состояния кнопки отправки
-        function updateSubmitButton() {
-            const submitBtn = document.getElementById('submitBtn');
-            const isValid = selectedAmount >= config.minWithdrawal && 
-                           selectedMethod !== null && 
-                           (selectedMethod !== 'usdt' || document.getElementById('usdtAddress').value.trim()) &&
-                           (selectedMethod !== 'bank' || (document.getElementById('cardNumber').value.trim() && 
-                                                         document.getElementById('cardName').value.trim()));
-            
-            submitBtn.disabled = !isValid;
-        }
-        
-        // Отправка заявки на вывод
-        async function submitWithdrawal() {
-            if (!currentUser) {
-                showError("Не удалось идентифицировать пользователя");
-                return;
-            }
-            
-            if (selectedAmount < config.minWithdrawal) {
-                showError(`Минимальная сумма вывода: ${config.minWithdrawal} ★`);
-                return;
-            }
-            
-            if (selectedAmount > userBalance) {
-                showError("Недостаточно средств на балансе");
-                return;
-            }
-            
-            if (!selectedMethod) {
-                showError("Выберите способ вывода");
-                return;
-            }
-            
-            let details = {};
-            
-            try {
-                showLoading("Отправка заявки...");
-                
-                // Собираем данные в зависимости от метода вывода
-                if (selectedMethod === 'usdt') {
-                    const address = document.getElementById('usdtAddress').value.trim();
-                    if (!address) {
-                        throw new Error("Введите адрес USDT кошелька");
-                    }
-                    details = { address };
-                } else if (selectedMethod === 'bank') {
-                    const cardNumber = document.getElementById('cardNumber').value.trim();
-                    const cardName = document.getElementById('cardName').value.trim();
-                    
-                    if (!cardNumber || !cardName) {
-                        throw new Error("Заполните все поля для банковской карты");
-                    }
-                    
-                    // Простая валидация номера карты
-                    if (cardNumber.length < 16 || !/^\d+$/.test(cardNumber)) {
-                        throw new Error("Некорректный номер карты");
-                    }
-                    
-                    details = { cardNumber, cardName };
-                }
-                
-                // Создаем заявку на вывод
-                const withdrawalRef = database.ref('withdrawals').push();
-                const withdrawalData = {
-                    id: withdrawalRef.key,
-                    userId: currentUser.id,
-                    amount: selectedAmount,
-                    method: selectedMethod,
-                    details: details,
-                    status: "pending",
-                    createdAt: firebase.database.ServerValue.TIMESTAMP,
-                    rate: config.starRate,
-                    equivalent: selectedAmount * config.starRate
-                };
-                
-                await withdrawalRef.set(withdrawalData);
-                
-                // Обновляем историю выводов
-                loadUserWithdrawals(currentUser.id);
-                
-                hideLoading();
-                showSuccess("Заявка на вывод отправлена!");
-                
-                // Сбрасываем форму
-                initForm();
-                
-            } catch (error) {
-                console.error("Ошибка при отправке заявки:", error);
-                hideLoading();
-                showError(error.message || "Произошла ошибка при отправке заявки");
-            }
-        }
-        
-        // Загрузка истории выводов пользователя
-        function loadUserWithdrawals(userId) {
-            const withdrawalsRef = database.ref('withdrawals').orderByChild('userId').equalTo(userId);
-            
-            withdrawalsRef.on('value', (snapshot) => {
-                const withdrawals = snapshot.val() || {};
-                const historyList = document.getElementById('historyList');
-                
-                if (Object.keys(withdrawals).length === 0) {
-                    historyList.innerHTML = '<div class="empty-state">У вас еще нет заявок на вывод</div>';
-                    return;
-                }
-                
-                // Сортируем по дате (новые сверху)
-                const sortedWithdrawals = Object.values(withdrawals).sort((a, b) => b.createdAt - a.createdAt);
-                
-                historyList.innerHTML = '';
-                
-                sortedWithdrawals.forEach(withdrawal => {
-                    const item = document.createElement('div');
-                    item.className = 'history-item';
-                    
-                    let methodText = '';
-                    if (withdrawal.method === 'usdt') {
-                        methodText = `USDT: ${withdrawal.details.address.substring(0, 6)}...${withdrawal.details.address.substring(withdrawal.details.address.length - 4)}`;
-                    } else if (withdrawal.method === 'bank') {
-                        methodText = `Карта: **** ${withdrawal.details.cardNumber.substring(withdrawal.details.cardNumber.length - 4)}`;
-                    }
-                    
-                    let statusText = '';
-                    let statusClass = '';
-                    
-                    if (withdrawal.status === 'completed') {
-                        statusText = '✓ Выполнено';
-                        statusClass = 'status-completed';
-                    } else if (withdrawal.status === 'rejected') {
-                        statusText = '✗ Отклонено';
-                        statusClass = 'status-rejected';
-                    } else {
-                        statusText = '⏳ В обработке';
-                        statusClass = 'status-pending';
-                    }
-                    
-                    const date = new Date(withdrawal.createdAt);
-                    const formattedDate = date.toLocaleString('ru-RU');
-                    
-                    item.innerHTML = `
-                        <div style="margin-bottom: 5px;">
-                            <strong>${withdrawal.amount} ★ (${withdrawal.equivalent} ₽)</strong>
-                            <span class="history-status ${statusClass}">${statusText}</span>
-                        </div>
-                        <div style="color: #666; margin-bottom: 5px;">${methodText}</div>
-                        <div style="font-size: 12px; color: #999;">${formattedDate}</div>
-                    `;
-                    
-                    historyList.appendChild(item);
-                });
-            });
-        }
-        
-        // Загрузка заявок на вывод для админа
-        function loadWithdrawals() {
-            const pendingRef = database.ref('withdrawals').orderByChild('status').equalTo('pending');
-            const processedRef = database.ref('withdrawals').orderByChild('status').startAt('completed').endAt('rejected');
-            
-            // Загрузка ожидающих заявок
-            pendingRef.on('value', (snapshot) => {
-                const withdrawals = snapshot.val() || {};
-                const pendingList = document.getElementById('pendingList');
-                
-                if (Object.keys(withdrawals).length === 0) {
-                    pendingList.innerHTML = '<div class="empty-state">Нет заявок на вывод</div>';
-                    return;
-                }
-                
-                // Сортируем по дате (старые сверху)
-                const sortedWithdrawals = Object.values(withdrawals).sort((a, b) => a.createdAt - b.createdAt);
-                
-                pendingList.innerHTML = '';
-                
-                sortedWithdrawals.forEach(withdrawal => {
-                    const item = document.createElement('div');
-                    item.className = 'withdrawal-item';
-                    
-                    let methodText = '';
-                    if (withdrawal.method === 'usdt') {
-                        methodText = `USDT: ${withdrawal.details.address}`;
-                    } else if (withdrawal.method === 'bank') {
-                        methodText = `Карта: ${withdrawal.details.cardName}, **** ${withdrawal.details.cardNumber.substring(withdrawal.details.cardNumber.length - 4)}`;
-                    }
-                    
-                    const date = new Date(withdrawal.createdAt);
-                    const formattedDate = date.toLocaleString('ru-RU');
-                    
-                    item.innerHTML = `
-                        <div class="withdrawal-header">
-                            <div class="withdrawal-amount">${withdrawal.amount} ★ (${withdrawal.equivalent} ₽)</div>
-                            <div class="withdrawal-status status-pending">В ожидании</div>
-                        </div>
-                        <div class="withdrawal-details">
-                            <div class="detail-row">
-                                <div class="detail-label">Способ:</div>
-                                <div class="detail-value">${methodText}</div>
-                            </div>
-                            <div class="detail-row">
-                                <div class="detail-label">Пользователь:</div>
-                                <div class="detail-value">${withdrawal.userId}</div>
-                            </div>
-                            <div class="detail-row">
-                                <div class="detail-label">Дата:</div>
-                                <div class="detail-value">${formattedDate}</div>
-                            </div>
-                        </div>
-                        <div class="withdrawal-actions">
-                            <button class="action-btn approve-btn" onclick="processWithdrawal('${withdrawal.id}', 'completed')">Подтвердить</button>
-                            <button class="action-btn reject-btn" onclick="processWithdrawal('${withdrawal.id}', 'rejected')">Отклонить</button>
-                        </div>
-                    `;
-                    
-                    pendingList.appendChild(item);
-                });
-            });
-            
-            // Загрузка обработанных заявок
-            processedRef.on('value', (snapshot) => {
-                const withdrawals = snapshot.val() || {};
-                const processedList = document.getElementById('processedList');
-                
-                if (Object.keys(withdrawals).length === 0) {
-                    processedList.innerHTML = '<div class="empty-state">Нет обработанных заявок</div>';
-                    return;
-                }
-                
-                // Сортируем по дате обработки (новые сверху)
-                const sortedWithdrawals = Object.values(withdrawals).sort((a, b) => (b.processedAt || 0) - (a.processedAt || 0));
-                
-                processedList.innerHTML = '';
-                
-                sortedWithdrawals.forEach(withdrawal => {
-                    const item = document.createElement('div');
-                    item.className = 'withdrawal-item';
-                    
-                    let methodText = '';
-                    if (withdrawal.method === 'usdt') {
-                        methodText = `USDT: ${withdrawal.details.address}`;
-                    } else if (withdrawal.method === 'bank') {
-                        methodText = `Карта: ${withdrawal.details.cardName}, **** ${withdrawal.details.cardNumber.substring(withdrawal.details.cardNumber.length - 4)}`;
-                    }
-                    
-                    const createdDate = new Date(withdrawal.createdAt);
-                    const processedDate = new Date(withdrawal.processedAt || withdrawal.createdAt);
-                    
-                    const formattedCreatedDate = createdDate.toLocaleString('ru-RU');
-                    const formattedProcessedDate = processedDate.toLocaleString('ru-RU');
-                    
-                    let statusText = '';
-                    let statusClass = '';
-                    
-                    if (withdrawal.status === 'completed') {
-                        statusText = 'Подтверждено';
-                        statusClass = 'status-completed';
-                    } else {
-                        statusText = 'Отклонено';
-                        statusClass = 'status-rejected';
-                    }
-                    
-                    item.innerHTML = `
-                        <div class="withdrawal-header">
-                            <div class="withdrawal-amount">${withdrawal.amount} ★ (${withdrawal.equivalent} ₽)</div>
-                            <div class="withdrawal-status ${statusClass}">${statusText}</div>
-                        </div>
-                        <div class="withdrawal-details">
-                            <div class="detail-row">
-                                <div class="detail-label">Способ:</div>
-                                <div class="detail-value">${methodText}</div>
-                            </div>
-                            <div class="detail-row">
-                                <div class="detail-label">Пользователь:</div>
-                                <div class="detail-value">${withdrawal.userId}</div>
-                            </div>
-                            <div class="detail-row">
-                                <div class="detail-label">Создано:</div>
-                                <div class="detail-value">${formattedCreatedDate}</div>
-                            </div>
-                            <div class="detail-row">
-                                <div class="detail-label">Обработано:</div>
-                                <div class="detail-value">${formattedProcessedDate}</div>
-                            </div>
-                            ${withdrawal.processedBy ? `
-                            <div class="detail-row">
-                                <div class="detail-label">Обработал:</div>
-                                <div class="detail-value">${withdrawal.processedBy}</div>
-                            </div>` : ''}
-                        </div>
-                    `;
-                    
-                    processedList.appendChild(item);
-                });
-            });
-        }
-        
-        // Обработка заявки на вывод (для админа)
-        window.processWithdrawal = async function(id, status) {
-            if (!isAdmin) return;
-            
-            try {
-                showLoading("Обработка заявки...");
-                
-                const withdrawalRef = database.ref(`withdrawals/${id}`);
-                const snapshot = await withdrawalRef.once('value');
-                const withdrawal = snapshot.val();
-                
-                if (!withdrawal) {
-                    throw new Error("Заявка не найдена");
-                }
-                
-                // Обновляем статус заявки
-                const updates = {
-                    status: status,
-                    processedAt: firebase.database.ServerValue.TIMESTAMP,
-                    processedBy: currentUser.id
-                };
-                
-                await withdrawalRef.update(updates);
-                
-                // Если заявка подтверждена, списываем средства с баланса пользователя
-                if (status === 'completed') {
-                    const userRef = database.ref(`users/${withdrawal.userId}`);
-                    const userSnapshot = await userRef.once('value');
-                    const userData = userSnapshot.val();
-                    
-                    if (userData) {
-                        const currentBalance = userData.balance || 0;
-                        const newBalance = currentBalance - withdrawal.amount;
-                        
-                        if (newBalance < 0) {
-                            throw new Error("Недостаточно средств на балансе пользователя");
-                        }
-                        
-                        await userRef.update({ 
-                            balance: newBalance,
-                            lastUpdate: firebase.database.ServerValue.TIMESTAMP
-                        });
-                    }
-                }
-                
-                hideLoading();
-                showSuccess(`Заявка ${status === 'completed' ? 'подтверждена' : 'отклонена'}`);
-                
-                // Обновляем списки заявок
-                loadWithdrawals();
-                
-            } catch (error) {
-                console.error("Ошибка обработки заявки:", error);
-                hideLoading();
-                showError("Ошибка обработки заявки: " + error.message);
-                
-                // Откатываем статус заявки в случае ошибки
-                try {
-                    await database.ref(`withdrawals/${id}/status`).set('pending');
-                } catch (rollbackError) {
-                    console.error("Ошибка при откате статуса:", rollbackError);
-                }
-            }
-        };
-        
-        // Инициализация вкладок админ-панели
-        function initTabs() {
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    const tabId = this.getAttribute('onclick').match(/'([^']+)'/)[1];
-                    document.querySelectorAll('.tab-content').forEach(content => {
-                        content.classList.remove('active');
-                    });
-                    document.getElementById(tabId + 'Tab').classList.add('active');
-                });
-            });
-        }
-        
-        // Переключение вкладок
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-                if (tab.getAttribute('onclick').includes(tabName)) {
-                    tab.classList.add('active');
-                }
-            });
-            
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-                if (content.id === tabName + 'Tab') {
-                    content.classList.add('active');
-                }
-            });
-        }
-        
-        // Инициализация формы
-        function initForm() {
-            selectedAmount = 0;
-            selectedMethod = null;
-            document.getElementById('amount').value = '';
-            document.getElementById('usdtAddress').value = '';
-            document.getElementById('cardNumber').value = '';
-            document.getElementById('cardName').value = '';
-            document.querySelectorAll('.amount-btn').forEach(btn => btn.classList.remove('selected'));
-            document.getElementById('usdtBtn').classList.remove('selected');
-            document.getElementById('bankBtn').classList.remove('selected');
-            document.getElementById('usdtDetails').style.display = 'none';
-            document.getElementById('bankDetails').style.display = 'none';
-            updateSubmitButton();
-        }
-        
-        // Показать сообщение об ошибке
-        function showError(message) {
-            const errorElement = document.getElementById('errorMessage');
-            document.getElementById('errorText').textContent = message;
-            errorElement.style.display = 'flex';
-            
-            setTimeout(() => {
-                errorElement.style.display = 'none';
-            }, 5000);
-        }
-        
-        // Показать сообщение об успехе
-        function showSuccess(message) {
-            const successElement = document.getElementById('successMessage');
-            document.getElementById('successText').textContent = message;
-            successElement.style.display = 'flex';
-            
-            setTimeout(() => {
-                successElement.style.display = 'none';
-            }, 5000);
-        }
-        
-        // Показать индикатор загрузки
-        function showLoading(text) {
-            document.getElementById('loadingText').textContent = text || 'Загрузка...';
-            document.getElementById('loadingOverlay').style.display = 'flex';
-        }
-        
-        // Скрыть индикатор загрузки
-        function hideLoading() {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
-    </script>
-</body>
-</html>
+        bot.send_message(chat_id, f"✅ Готово! Отправлено {total_sent} жалоб.")
+        notify_admin(f"Пользователь {chat_id} отправил {total_sent} жалоб типа {complaint_type}")
+    except Exception as e:
+        logger.error(f"Ошибка в send_complaints_async: {e}")
+        bot.send_message(chat_id, "❌ Произошла ошибка при отправке жалоб. Попробуйте позже.")
+
+# Уведомление админа
+def notify_admin(message):
+    for admin_id in Config.ADMIN_IDS:
+        try:
+            bot.send_message(admin_id, message)
+        except Exception as e:
+            logger.error(f"Ошибка при отправке уведомления админу: {e}")
+
+# Обработчик команды /start
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton("💀 Снос аккаунтов")
+    btn2 = types.KeyboardButton("📢 Снос канала")
+    btn3 = types.KeyboardButton("🤖 Снос бота")
+    btn4 = types.KeyboardButton("👨‍💻 Авторы")
+    markup.add(btn1, btn2, btn3, btn4)
+    
+    bot.send_message(message.chat.id, 
+                    "🔹 <b>TG KILLER</b> by @russianplanter\n\n"
+                    "Выберите действие:", 
+                    reply_markup=markup, 
+                    parse_mode='HTML')
+
+# Обработчик кнопки "Назад"
+@bot.message_handler(func=lambda message: message.text == "🔙 Назад")
+def back_to_main(message):
+    send_welcome(message)
+
+# Обработчик выбора "Снос аккаунтов"
+@bot.message_handler(func=lambda message: message.text == "💀 Снос аккаунтов")
+def account_attack(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton("1️⃣ Спам")
+    btn2 = types.KeyboardButton("2️⃣ Доксинг")
+    btn3 = types.KeyboardButton("3️⃣ Оскорбления")
+    btn4 = types.KeyboardButton("4️⃣ Удаление сессий")
+    btn5 = types.KeyboardButton("5️⃣ Премка для спама")
+    btn6 = types.KeyboardButton("6️⃣ Вирт номер")
+    btn_back = types.KeyboardButton("🔙 Назад")
+    markup.add(btn1, btn2, btn3, btn4, btn5, btn6, btn_back)
+    
+    bot.send_message(message.chat.id, "Выберите тип жалобы на аккаунт:", reply_markup=markup)
+
+# Обработчики для каждого типа жалобы на аккаунты
+@bot.message_handler(func=lambda message: message.text in ["1️⃣ Спам", "2️⃣ Доксинг", "3️⃣ Оскорбления"])
+def handle_complex_complaint(message):
+    complaint_type = {
+        "1️⃣ Спам": "spam",
+        "2️⃣ Доксинг": "doxing",
+        "3️⃣ Оскорбления": "abuse"
+    }[message.text]
+    
+    msg = bot.send_message(message.chat.id, "Введите юзернейм (с @):")
+    bot.register_next_step_handler(msg, process_username_step, complaint_type)
+
+def process_username_step(message, complaint_type):
+    if message.text == "🔙 Назад":
+        back_to_main(message)
+        return
+    
+    data = {'username': message.text, 'type': complaint_type}
+    msg = bot.send_message(message.chat.id, "Введите ID аккаунта:")
+    bot.register_next_step_handler(msg, process_id_step, data)
+
+def process_id_step(message, data):
+    if message.text == "🔙 Назад":
+        back_to_main(message)
+        return
+    
+    data['user_id'] = message.text
+    msg = bot.send_message(message.chat.id, "Введите ссылку на чат:")
+    bot.register_next_step_handler(msg, process_chat_link_step, data)
+
+def process_chat_link_step(message, data):
+    if message.text == "🔙 Назад":
+        back_to_main(message)
+        return
+    
+    data['chat_link'] = message.text
+    msg = bot.send_message(message.chat.id, "Введите ссылку на нарушение:")
+    bot.register_next_step_handler(msg, process_violation_link_step, data)
+
+def process_violation_link_step(message, data):
+    if message.text == "🔙 Назад":
+        back_to_main(message)
+        return
+    
+    data['violation_link'] = message.text
+    bot.send_message(message.chat.id, "⏳ Начинаю отправку жалоб...")
+    
+    # Запуск в отдельном потоке
+    Thread(target=send_complaints_async, args=(message.chat.id, data['type'], data)).start()
+
+# Обработчики для простых жалоб (требуют только username и ID)
+@bot.message_handler(func=lambda message: message.text in ["4️⃣ Удаление сессий", "5️⃣ Премка для спама", "6️⃣ Вирт номер"])
+def handle_simple_complaint(message):
+    complaint_type = {
+        "4️⃣ Удаление сессий": "session",
+        "5️⃣ Премка для спама": "premium",
+        "6️⃣ Вирт номер": "virtual"
+    }[message.text]
+    
+    msg = bot.send_message(message.chat.id, "Введите юзернейм (с @):")
+    bot.register_next_step_handler(msg, process_simple_username_step, complaint_type)
+
+def process_simple_username_step(message, complaint_type):
+    if message.text == "🔙 Назад":
+        back_to_main(message)
+        return
+    
+    data = {'username': message.text, 'type': complaint_type}
+    msg = bot.send_message(message.chat.id, "Введите ID аккаунта:")
+    bot.register_next_step_handler(msg, process_simple_id_step, data)
+
+def process_simple_id_step(message, data):
+    if message.text == "🔙 Назад":
+        back_to_main(message)
+        return
+    
+    data['user_id'] = message.text
+    bot.send_message(message.chat.id, "⏳ Начинаю отправку жалоб...")
+    
+    # Запуск в отдельном потоке
+    Thread(target=send_complaints_async, args=(message.chat.id, data['type'], data)).start()
+
+# Обработчик выбора "Снос канала"
+@bot.message_handler(func=lambda message: message.text == "📢 Снос канала")
+def channel_attack(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton("🔞 Личные данные")
+    btn2 = types.KeyboardButton("🐶 Жестокость")
+    btn3 = types.KeyboardButton("🚸 Запрещенный контент")
+    btn4 = types.KeyboardButton("💊 Продажа запрещенных веществ")
+    btn_back = types.KeyboardButton("🔙 Назад")
+    markup.add(btn1, btn2, btn3, btn4, btn_back)
+    
+    bot.send_message(message.chat.id, "Выберите тип жалобы на канал:", reply_markup=markup)
+
+# Обработчики жалоб на каналы
+@bot.message_handler(func=lambda message: message.text in ["🔞 Личные данные", "🐶 Жестокость", "🚸 Запрещенный контент", "💊 Продажа запрещенных веществ"])
+def handle_channel_complaint(message):
+    complaint_type = {
+        "🔞 Личные данные": "personal_data",
+        "🐶 Жестокость": "animal_abuse",
+        "🚸 Запрещенный контент": "cp",
+        "💊 Продажа запрещенных веществ": "drugs"
+    }[message.text]
+    
+    msg = bot.send_message(message.chat.id, "Введите ссылку на канал:")
+    bot.register_next_step_handler(msg, process_channel_link_step, complaint_type)
+
+def process_channel_link_step(message, complaint_type):
+    if message.text == "🔙 Назад":
+        back_to_main(message)
+        return
+    
+    data = {'channel_link': message.text, 'type': complaint_type}
+    msg = bot.send_message(message.chat.id, "Введите ссылку на нарушение:")
+    bot.register_next_step_handler(msg, process_channel_violation_step, data)
+
+def process_channel_violation_step(message, data):
+    if message.text == "🔙 Назад":
+        back_to_main(message)
+        return
+    
+    data['violation_link'] = message.text
+    bot.send_message(message.chat.id, "⏳ Начинаю отправку жалоб...")
+    
+    # Запуск в отдельном потоке
+    Thread(target=send_complaints_async, args=(message.chat.id, data['type'], data)).start()
+
+# Обработчик выбора "Снос бота"
+@bot.message_handler(func=lambda message: message.text == "🤖 Снос бота")
+def bot_attack(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton("👮 Бот для доксинга")
+    btn_back = types.KeyboardButton("🔙 Назад")
+    markup.add(btn1, btn_back)
+    
+    bot.send_message(message.chat.id, "Выберите тип жалобы на бота:", reply_markup=markup)
+
+# Обработчик жалобы на бота
+@bot.message_handler(func=lambda message: message.text == "👮 Бот для доксинга")
+def handle_bot_complaint(message):
+    msg = bot.send_message(message.chat.id, "Введите юзернейм бота (с @):")
+    bot.register_next_step_handler(msg, process_bot_username_step)
+
+def process_bot_username_step(message):
+    if message.text == "🔙 Назад":
+        back_to_main(message)
+        return
+    
+    data = {'bot_username': message.text, 'type': 'bot_doxing'}
+    bot.send_message(message.chat.id, "⏳ Начинаю отправку жалоб...")
+    
+    # Запуск в отдельном потоке
+    Thread(target=send_complaints_async, args=(message.chat.id, data['type'], data)).start()
+
+# Обработчик выбора "Авторы"
+@bot.message_handler(func=lambda message: message.text == "👨‍💻 Авторы")
+def show_authors(message):
+    bot.send_message(message.chat.id, 
+                    "🔹 <b>TG KILLER</b>\n\n"
+                    "Автор: @russianplanter\n"
+                    "Идея: @russianplanter\n\n"
+                    "Используйте только в образовательных целях!",
+                    parse_mode='HTML')
+
+# Запуск бота
+if __name__ == "__main__":
+    logger.info("Бот запущен")
+    notify_admin("Бот запущен и готов к работе")
+    bot.polling(none_stop=True)
