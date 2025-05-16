@@ -28,7 +28,7 @@ class Config:
     REQUEST_DELAY = int(os.getenv('REQUEST_DELAY', '5'))
     WEBAPP_HOST = os.getenv('WEBAPP_HOST', '0.0.0.0')
     WEBAPP_PORT = int(os.getenv('WEBAPP_PORT', '5000'))
-    WEBAPP_URL = os.getenv('WEBAPP_URL', 'https://yourdomain.com')
+    WEBAPP_URL = os.getenv('WEBAPP_URL', 'https://t.me/Wonder_by_alizka_bot?support')
 
 # Полный список почтовых аккаунтов
 SENDERS = {
