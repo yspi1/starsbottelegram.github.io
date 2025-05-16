@@ -1,692 +1,404 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>☠️ T҉G҉ ҉K҉I҉L҉L҉E҉R҉ ☠️</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>TG KILLER v3.0 | by @russianplanter</title>
     <style>
         :root {
-            --matrix-green: #00ff00;
-            --hacker-red: #ff0000;
-            --terminal-bg: #0a0a0a;
-            --input-bg: #111111;
-            --border-color: #003300;
+            --hacker-green: #00ff00;
+            --dark-bg: #121212;
+            --darker-bg: #0a0a0a;
+            --terminal-text: #00ff00;
+            --error-red: #ff0033;
         }
         
         body {
-            background-color: var(--terminal-bg);
-            color: var(--matrix-green);
+            background-color: var(--dark-bg);
+            color: var(--terminal-text);
             font-family: 'Courier New', monospace;
             margin: 0;
             padding: 0;
             line-height: 1.6;
-            overflow-x: hidden;
         }
         
         .container {
-            max-width: 100%;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
-            position: relative;
         }
         
-        .header {
-            text-align: center;
+        header {
+            background-color: var(--darker-bg);
+            padding: 15px;
+            border-bottom: 1px solid var(--hacker-green);
             margin-bottom: 30px;
-            border-bottom: 1px solid var(--hacker-red);
-            padding-bottom: 15px;
-            position: relative;
-        }
-        
-        .title {
-            font-size: 2.5rem;
-            text-shadow: 0 0 10px var(--matrix-green);
-            letter-spacing: 3px;
-            margin-bottom: 10px;
-            animation: glitch 1s linear infinite;
-        }
-        
-        @keyframes glitch {
-            0%, 100% { text-shadow: 0 0 10px var(--matrix-green); }
-            25% { text-shadow: -5px -5px 0 var(--hacker-red); }
-            50% { text-shadow: 5px 5px 0 var(--hacker-red); }
-            75% { text-shadow: 0 0 20px var(--matrix-green); }
-        }
-        
-        .version {
-            color: var(--hacker-red);
-            font-size: 0.8rem;
-        }
-        
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .tab {
-            flex: 1;
             text-align: center;
-            padding: 12px;
+        }
+        
+        h1, h2, h3 {
+            color: var(--hacker-green);
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+        }
+        
+        .logo {
+            font-size: 2.5em;
+            margin: 0;
+            letter-spacing: 3px;
+        }
+        
+        .tagline {
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+        
+        .menu {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .menu-btn {
+            background-color: var(--darker-bg);
+            border: 1px solid var(--hacker-green);
+            color: var(--terminal-text);
+            padding: 15px;
             cursor: pointer;
-            background-color: var(--input-bg);
-            border: 1px solid var(--border-color);
-            margin-right: 5px;
             transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
+            text-align: center;
         }
         
-        .tab:last-child {
-            margin-right: 0;
+        .menu-btn:hover {
+            background-color: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
         }
         
-        .tab.active {
-            background-color: var(--hacker-red);
-            color: black;
-            font-weight: bold;
-            border-color: var(--hacker-red);
-        }
-        
-        .tab:hover:not(.active) {
-            background-color: #1a1a1a;
-        }
-        
-        .tab-content {
+        .form-section {
             display: none;
+            background-color: var(--darker-bg);
             padding: 20px;
-            border: 1px solid var(--border-color);
-            background-color: rgba(0, 20, 0, 0.1);
-            animation: fadeIn 0.5s;
+            border: 1px solid var(--hacker-green);
+            margin-bottom: 30px;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .tab-content.active {
+        .active {
             display: block;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--hacker-red);
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.9rem;
         }
         
         input, select, textarea {
+            background-color: #000;
+            color: var(--terminal-text);
+            border: 1px solid var(--hacker-green);
+            padding: 10px;
             width: 100%;
-            padding: 12px;
-            background-color: var(--input-bg);
-            border: 1px solid var(--border-color);
-            color: var(--matrix-green);
+            margin-bottom: 15px;
             font-family: 'Courier New', monospace;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--hacker-red);
-            box-shadow: 0 0 10px var(--hacker-red);
         }
         
         button {
-            background-color: var(--hacker-red);
-            color: black;
-            border: none;
-            padding: 15px;
-            font-weight: bold;
+            background-color: #000;
+            color: var(--terminal-text);
+            border: 1px solid var(--hacker-green);
+            padding: 10px 20px;
             cursor: pointer;
-            width: 100%;
-            margin-top: 20px;
-            font-family: 'Courier New', monospace;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
             transition: all 0.3s;
+            font-family: 'Courier New', monospace;
         }
         
         button:hover {
-            background-color: #ff3333;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
-        }
-        
-        button:disabled {
-            background-color: #333333;
-            color: #666666;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+            background-color: rgba(0, 255, 0, 0.2);
         }
         
         .status {
             margin-top: 20px;
-            padding: 15px;
-            display: none;
-            border-radius: 4px;
-            animation: fadeIn 0.5s;
+            padding: 10px;
+            border: 1px solid var(--hacker-green);
         }
         
-        .success {
-            background-color: rgba(0, 255, 0, 0.1);
-            border: 1px solid var(--matrix-green);
-            color: var(--matrix-green);
-            display: block;
+        .progress-bar {
+            width: 100%;
+            background-color: #000;
+            height: 20px;
+            margin-top: 10px;
+            border: 1px solid var(--hacker-green);
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: var(--hacker-green);
+            width: 0%;
+            transition: width 0.3s;
         }
         
         .error {
-            background-color: rgba(255, 0, 0, 0.1);
-            border: 1px solid var(--hacker-red);
-            color: var(--hacker-red);
-            display: block;
+            color: var(--error-red);
         }
         
-        .loading {
-            text-align: center;
-            padding: 20px;
-            display: none;
-        }
-        
-        .spinner {
-            border: 4px solid rgba(0, 255, 0, 0.1);
-            border-radius: 50%;
-            border-top: 4px solid var(--matrix-green);
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .scanlines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                to bottom,
-                rgba(0, 255, 0, 0.03) 0%,
-                rgba(0, 255, 0, 0) 10%
-            );
-            background-size: 100% 6px;
-            pointer-events: none;
-            z-index: 1000;
-            animation: scanline 8s linear infinite;
-        }
-        
-        @keyframes scanline {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 100%; }
-        }
-        
-        .binary-rain {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-            opacity: 0.1;
+        .success {
+            color: var(--hacker-green);
         }
         
         .blink {
-            animation: blink 1s step-end infinite;
+            animation: blink 1s infinite;
         }
         
         @keyframes blink {
-            from, to { opacity: 1; }
             50% { opacity: 0; }
         }
         
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            border-top: 1px solid var(--hacker-green);
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+        
         @media (max-width: 768px) {
-            .title {
-                font-size: 1.8rem;
-            }
-            
-            .tab {
-                padding: 10px;
-                font-size: 0.8rem;
-            }
-            
-            input, select, textarea, button {
-                padding: 10px;
+            .menu {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="scanlines"></div>
-    <div class="binary-rain" id="binaryRain"></div>
-    
     <div class="container">
-        <div class="header">
-            <div class="title">☠️ T҉G҉ ҉K҉I҉L҉L҉E҉R҉ ☠️</div>
-            <div class="version">v3.1.4 | by @russianplanter</div>
+        <header>
+            <h1 class="logo">TG KILLER v3.0</h1>
+            <div class="tagline">Утилита для массового репортинга аккаунтов Telegram</div>
+        </header>
+        
+        <div class="menu">
+            <div class="menu-btn" onclick="showSection('account-section')">Снос акков</div>
+            <div class="menu-btn" onclick="showSection('channel-section')">Снос каналов</div>
+            <div class="menu-btn" onclick="showSection('bot-section')">Снос ботов</div>
+            <div class="menu-btn" onclick="showSection('info-section')">Информация</div>
         </div>
         
-        <div class="tabs">
-            <div class="tab active" onclick="openTab('account')">ACCOUNTS</div>
-            <div class="tab" onclick="openTab('channel')">CHANNELS</div>
-            <div class="tab" onclick="openTab('bot')">BOTS</div>
-        </div>
-        
-        <!-- Account Panel -->
-        <div id="account" class="tab-content active">
-            <form id="accountForm">
-                <div class="form-group">
-                    <label>[>] COMPLAINT TYPE:</label>
-                    <select id="accountType" required onchange="toggleAccountFields()">
-                        <option value="spam">SPAM</option>
-                        <option value="doxing">DOXING</option>
-                        <option value="abuse">ABUSE</option>
-                        <option value="session">SESSION HIJACK</option>
-                        <option value="premium">PREMIUM ABUSE</option>
-                        <option value="virtual">VIRTUAL NUMBER</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>[>] TARGET USERNAME (@):</label>
-                    <input type="text" id="accountUsername" placeholder="@username" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>[>] TARGET ID:</label>
-                    <input type="text" id="accountId" placeholder="123456789" required>
-                </div>
-                
-                <div id="accountExtraFields">
-                    <div class="form-group">
-                        <label>[>] CHAT LINK:</label>
-                        <input type="text" id="accountChatLink" placeholder="https://t.me/chat">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>[>] VIOLATION PROOF:</label>
-                        <input type="text" id="accountViolationLink" placeholder="https://t.me/...">
-                    </div>
-                </div>
-                
-                <button type="submit" id="accountSubmit">EXECUTE</button>
-            </form>
+        <!-- Account Section -->
+        <div id="account-section" class="form-section">
+            <h2>Снос аккаунтов</h2>
+            <select id="account-type">
+                <option value="1">Спам/флуд</option>
+                <option value="2">Распространение личных данных</option>
+                <option value="3">Оскорбления/троллинг</option>
+                <option value="4">Снос сессий</option>
+                <option value="5">Виртуальный номер</option>
+                <option value="6">Премиум для спама</option>
+            </select>
             
-            <div id="accountStatus" class="status"></div>
-            <div id="accountLoading" class="loading">
-                <div class="spinner"></div>
-                <div>[+] SENDING COMPLAINTS...</div>
-                <div class="blink">[CONNECTING TO SMTP SERVERS]</div>
+            <input type="text" id="account-username" placeholder="Юзернейм (например, @username)">
+            <input type="text" id="account-id" placeholder="ID пользователя">
+            <input type="text" id="account-chat-link" placeholder="Ссылка на чат (необязательно)">
+            <input type="text" id="account-violation-link" placeholder="Ссылка на нарушение (необязательно)">
+            
+            <button onclick="startAccountAttack()">НАЧАТЬ АТАКУ</button>
+            
+            <div class="status" id="account-status">
+                Статус: Ожидание действий...
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress" id="account-progress"></div>
             </div>
         </div>
         
-        <!-- Channel Panel -->
-        <div id="channel" class="tab-content">
-            <form id="channelForm">
-                <div class="form-group">
-                    <label>[>] COMPLAINT TYPE:</label>
-                    <select id="channelType" required>
-                        <option value="personal_data">PERSONAL DATA</option>
-                        <option value="animal_abuse">ANIMAL ABUSE</option>
-                        <option value="cp">ILLEGAL CONTENT</option>
-                        <option value="drugs">DRUGS SELLING</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>[>] CHANNEL LINK:</label>
-                    <input type="text" id="channelLink" placeholder="https://t.me/channel" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>[>] VIOLATION PROOF:</label>
-                    <input type="text" id="channelViolationLink" placeholder="https://t.me/..." required>
-                </div>
-                
-                <button type="submit" id="channelSubmit">EXECUTE</button>
-            </form>
+        <!-- Channel Section -->
+        <div id="channel-section" class="form-section">
+            <h2>Снос каналов</h2>
+            <select id="channel-type">
+                <option value="1">Личные данные</option>
+                <option value="2">Жестокое обращение с животными</option>
+                <option value="3">Запрещенный контент</option>
+                <option value="4">Доксинг/сваттинг</option>
+            </select>
             
-            <div id="channelStatus" class="status"></div>
-            <div id="channelLoading" class="loading">
-                <div class="spinner"></div>
-                <div>[+] SENDING COMPLAINTS...</div>
-                <div class="blink">[CONNECTING TO SMTP SERVERS]</div>
+            <input type="text" id="channel-link" placeholder="Ссылка на канал (например, @channelname)">
+            <input type="text" id="channel-violation-link" placeholder="Ссылка на нарушение">
+            
+            <button onclick="startChannelAttack()">НАЧАТЬ АТАКУ</button>
+            
+            <div class="status" id="channel-status">
+                Статус: Ожидание действий...
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress" id="channel-progress"></div>
             </div>
         </div>
         
-        <!-- Bot Panel -->
-        <div id="bot" class="tab-content">
-            <form id="botForm">
-                <div class="form-group">
-                    <label>[>] COMPLAINT TYPE:</label>
-                    <select id="botType" required>
-                        <option value="bot_doxing">DOXING BOT</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>[>] BOT USERNAME (@):</label>
-                    <input type="text" id="botUsername" placeholder="@bot_username" required>
-                </div>
-                
-                <button type="submit" id="botSubmit">EXECUTE</button>
-            </form>
+        <!-- Bot Section -->
+        <div id="bot-section" class="form-section">
+            <h2>Снос ботов</h2>
+            <select id="bot-type">
+                <option value="1">Бот для сбора данных</option>
+                <option value="2">Спам-бот</option>
+            </select>
             
-            <div id="botStatus" class="status"></div>
-            <div id="botLoading" class="loading">
-                <div class="spinner"></div>
-                <div>[+] SENDING COMPLAINTS...</div>
-                <div class="blink">[CONNECTING TO SMTP SERVERS]</div>
+            <input type="text" id="bot-username" placeholder="Юзернейм бота (например, @botname)">
+            
+            <button onclick="startBotAttack()">НАЧАТЬ АТАКУ</button>
+            
+            <div class="status" id="bot-status">
+                Статус: Ожидание действий...
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress" id="bot-progress"></div>
             </div>
         </div>
+        
+        <!-- Info Section -->
+        <div id="info-section" class="form-section">
+            <h2>Информация</h2>
+            <p>TG KILLER v3.0 - инструмент для массового репортинга аккаунтов Telegram.</p>
+            <p>Обновление от @russianplanter</p>
+            
+            <h3>Как использовать:</h3>
+            <ol>
+                <li>Выберите тип атаки</li>
+                <li>Заполните необходимые данные</li>
+                <li>Нажмите "НАЧАТЬ АТАКУ"</li>
+                <li>Дождитесь завершения процесса</li>
+            </ol>
+            
+            <h3>Рекомендации:</h3>
+            <ul>
+                <li>Используйте реальные данные нарушений для большей эффективности</li>
+                <li>Не злоупотребляйте инструментом</li>
+                <li>Для сноса сессий укажите точный юзернейм и ID</li>
+            </ul>
+            
+            <div class="status">
+                Версия: 3.0 | Статус: <span class="success">АКТИВЕН</span>
+            </div>
+        </div>
+        
+        <footer>
+            TG KILLER v3.0 | by @russianplanter | 2023
+            <br>
+            <span class="blink">_</span>
+        </footer>
     </div>
-
+    
     <script>
-        // Инициализация WebApp Telegram
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.enableClosingConfirmation();
-        
-        // Показываем кнопку "Назад"
-        tg.BackButton.show();
-        tg.BackButton.onClick(() => {
-            tg.close();
-        });
-        
-        // Генерация бинарного дождя
-        function initBinaryRain() {
-            const chars = "01";
-            const container = document.getElementById('binaryRain');
-            const fontSize = 14;
-            const columns = Math.floor(window.innerWidth / fontSize);
-            const rows = Math.floor(window.innerHeight / fontSize);
-            
-            for (let i = 0; i < columns; i++) {
-                const column = document.createElement('div');
-                column.style.position = 'absolute';
-                column.style.top = '-50px';
-                column.style.left = (i * fontSize) + 'px';
-                column.style.width = fontSize + 'px';
-                column.style.color = 'rgba(0, 255, 0, 0.5)';
-                column.style.fontSize = fontSize + 'px';
-                column.style.fontFamily = 'Courier New, monospace';
-                column.style.whiteSpace = 'nowrap';
-                column.style.writingMode = 'vertical-rl';
-                column.style.textOrientation = 'upright';
-                
-                let text = '';
-                for (let j = 0; j < rows; j++) {
-                    text += chars.charAt(Math.floor(Math.random() * chars.length));
-                }
-                column.textContent = text;
-                
-                container.appendChild(column);
-                
-                // Анимация падения
-                let position = -50;
-                const speed = 2 + Math.random() * 3;
-                
-                function animate() {
-                    position += speed;
-                    if (position > window.innerHeight) {
-                        position = -50;
-                        // Обновляем текст при достижении низа
-                        let newText = '';
-                        for (let j = 0; j < rows; j++) {
-                            newText += chars.charAt(Math.floor(Math.random() * chars.length));
-                        }
-                        column.textContent = newText;
-                    }
-                    column.style.top = position + 'px';
-                    requestAnimationFrame(animate);
-                }
-                
-                // Запускаем анимацию с задержкой
-                setTimeout(() => {
-                    animate();
-                }, Math.random() * 5000);
-            }
-        }
-        
-        // База данных почтовых аккаунтов (в реальном приложении храните на сервере!)
-        const SMTP_ACCOUNTS = [
-            { email: "korlithiobtennick@mail.ru", password: "feDLSiueGT89APb81v74", server: "smtp.mail.ru", port: 587 },
-            { email: "avyavya.vyaavy@mail.ru", password: "zmARvx1MRvXppZV6xkXj", server: "smtp.mail.ru", port: 587 },
-            // Добавьте другие аккаунты в таком же формате
-        ];
-        
-        // Получатели жалоб
-        const RECEIVERS = [
-            "abuse@telegram.org",
-            "dmca@telegram.org",
-            "support@telegram.org"
-        ];
-        
-        // Шаблоны жалоб
-        const COMPLAINT_TEMPLATES = {
-            spam: (data) => `URGENT: SPAM COMPLAINT\n\nUser: ${data.username}\nID: ${data.user_id}\nChat: ${data.chat_link}\nProof: ${data.violation_link}\n\nPlease take immediate action.`,
-            doxing: (data) => `URGENT: DOXING COMPLAINT\n\nUser: ${data.username}\nID: ${data.user_id}\nChat: ${data.chat_link}\nProof: ${data.violation_link}\n\nThis user is sharing private information without consent.`,
-            abuse: (data) => `URGENT: ABUSE COMPLAINT\n\nUser: ${data.username}\nID: ${data.user_id}\nChat: ${data.chat_link}\nProof: ${data.violation_link}\n\nThis user is violating Telegram's terms of service.`,
-            session: (data) => `URGENT: SESSION HIJACK\n\nUser: ${data.username}\nID: ${data.user_id}\n\nI believe my account has been compromised. Please reset all active sessions.`,
-            premium: (data) => `URGENT: PREMIUM ABUSE\n\nUser: ${data.username}\nID: ${data.user_id}\n\nThis account is using Telegram Premium for spamming and abuse.`,
-            virtual: (data) => `URGENT: VIRTUAL NUMBER\n\nUser: ${data.username}\nID: ${data.user_id}\n\nThis account is using a virtual number not owned by the user.`,
-            personal_data: (data) => `URGENT: PERSONAL DATA LEAK\n\nChannel: ${data.channel_link}\nProof: ${data.violation_link}\n\nThis channel is sharing private personal information.`,
-            animal_abuse: (data) => `URGENT: ANIMAL ABUSE\n\nChannel: ${data.channel_link}\nProof: ${data.violation_link}\n\nThis channel contains animal abuse content.`,
-            cp: (data) => `URGENT: ILLEGAL CONTENT\n\nChannel: ${data.channel_link}\nProof: ${data.violation_link}\n\nThis channel contains illegal content.`,
-            drugs: (data) => `URGENT: DRUGS SELLING\n\nChannel: ${data.channel_link}\nProof: ${data.violation_link}\n\nThis channel is selling illegal substances.`,
-            bot_doxing: (data) => `URGENT: DOXING BOT\n\nBot: ${data.bot_username}\n\nThis bot is being used to collect and share personal information illegally.`
-        };
-        
-        // Переключение вкладок
-        function openTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
+        // Показываем выбранную секцию
+        function showSection(sectionId) {
+            // Скрываем все секции
+            document.querySelectorAll('.form-section').forEach(section => {
+                section.classList.remove('active');
             });
             
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            document.getElementById(tabName).classList.add('active');
-            event.currentTarget.classList.add('active');
+            // Показываем выбранную секцию
+            document.getElementById(sectionId).classList.add('active');
         }
         
-        // Показываем/скрываем дополнительные поля для аккаунтов
-        function toggleAccountFields() {
-            const accountType = document.getElementById('accountType').value;
-            const extraFields = document.getElementById('accountExtraFields');
+        // По умолчанию показываем секцию информации
+        showSection('info-section');
+        
+        // Функция для атаки аккаунтов
+        function startAccountAttack() {
+            const accountType = document.getElementById('account-type').value;
+            const username = document.getElementById('account-username').value;
+            const id = document.getElementById('account-id').value;
+            const chatLink = document.getElementById('account-chat-link').value;
+            const violationLink = document.getElementById('account-violation-link').value;
             
-            if (['spam', 'doxing', 'abuse'].includes(accountType)) {
-                extraFields.style.display = 'block';
-            } else {
-                extraFields.style.display = 'none';
+            if (!username || !id) {
+                updateStatus('account-status', 'Ошибка: заполните обязательные поля', 'error');
+                return;
             }
+            
+            updateStatus('account-status', 'Начало атаки...', 'success');
+            
+            // Симуляция процесса атаки
+            simulateAttack('account', accountType, username, id, chatLink, violationLink);
         }
         
-        // Функция для отправки жалобы (реальная реализация через SMTP)
-        async function sendComplaint(type, data) {
-            const template = COMPLAINT_TEMPLATES[type];
-            if (!template) {
-                return {
-                    status: 'error',
-                    message: 'Invalid complaint type'
-                };
+        // Функция для атаки каналов
+        function startChannelAttack() {
+            const channelType = document.getElementById('channel-type').value;
+            const channelLink = document.getElementById('channel-link').value;
+            const violationLink = document.getElementById('channel-violation-link').value;
+            
+            if (!channelLink || !violationLink) {
+                updateStatus('channel-status', 'Ошибка: заполните обязательные поля', 'error');
+                return;
             }
             
-            const subject = `URGENT: ${type.toUpperCase()} COMPLAINT`;
-            const body = template(data);
+            updateStatus('channel-status', 'Начало атаки...', 'success');
             
-            let successCount = 0;
-            let errorCount = 0;
-            const errors = [];
+            // Симуляция процесса атаки
+            simulateAttack('channel', channelType, channelLink, violationLink);
+        }
+        
+        // Функция для атаки ботов
+        function startBotAttack() {
+            const botType = document.getElementById('bot-type').value;
+            const botUsername = document.getElementById('bot-username').value;
             
-            // В реальном приложении эти запросы должны идти на ваш backend!
-            // Это демонстрационная реализация
-            for (const receiver of RECEIVERS) {
-                for (const account of SMTP_ACCOUNTS) {
-                    try {
-                        // Эмуляция отправки - в реальном приложении заменить на fetch к вашему backend
-                        console.log(`[SMTP] Sending from ${account.email} to ${receiver}`);
-                        console.log(`Subject: ${subject}`);
-                        console.log(`Body: ${body}`);
-                        
-                        // Имитация задержки сети
-                        await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-                        
-                        // Имитация случайных ошибок
-                        if (Math.random() > 0.2) { // 80% успешных отправок
-                            successCount++;
-                        } else {
-                            throw new Error('SMTP server unavailable');
-                        }
-                    } catch (error) {
-                        errorCount++;
-                        errors.push(`Failed to send from ${account.email} to ${receiver}: ${error.message}`);
-                    }
-                }
+            if (!botUsername) {
+                updateStatus('bot-status', 'Ошибка: укажите юзернейм бота', 'error');
+                return;
             }
             
-            if (successCount > 0) {
-                return {
-                    status: 'success',
-                    sent: successCount,
-                    failed: errorCount,
-                    errors: errors
-                };
-            } else {
-                return {
-                    status: 'error',
-                    message: 'All sending attempts failed',
-                    errors: errors
-                };
+            updateStatus('bot-status', 'Начало атаки...', 'success');
+            
+            // Симуляция процесса атаки
+            simulateAttack('bot', botType, botUsername);
+        }
+        
+        // Обновление статуса
+        function updateStatus(elementId, message, type = '') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `Статус: ${message}`;
+            element.className = 'status';
+            
+            if (type === 'error') {
+                element.classList.add('error');
+            } else if (type === 'success') {
+                element.classList.add('success');
             }
         }
         
-        // Обработчик отправки формы
-        async function handleFormSubmit(formType) {
-            const form = document.getElementById(`${formType}Form`);
-            const loading = document.getElementById(`${formType}Loading`);
-            const status = document.getElementById(`${formType}Status`);
-            const submitBtn = document.getElementById(`${formType}Submit`);
+        // Симуляция атаки (в реальном приложении здесь будет AJAX-запрос к бэкенду)
+        function simulateAttack(type, attackType, ...args) {
+            const progressBar = document.getElementById(`${type}-progress`);
+            const statusElement = document.getElementById(`${type}-status`);
             
-            // Блокируем форму на время отправки
-            submitBtn.disabled = true;
-            loading.style.display = 'block';
-            status.style.display = 'none';
-            
-            // Собираем данные формы
-            let type, data;
-            
-            if (formType === 'account') {
-                type = document.getElementById('accountType').value;
-                data = {
-                    username: document.getElementById('accountUsername').value.trim(),
-                    user_id: document.getElementById('accountId').value.trim()
-                };
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${progress}%`;
                 
-                if (['spam', 'doxing', 'abuse'].includes(type)) {
-                    data.chat_link = document.getElementById('accountChatLink').value.trim();
-                    data.violation_link = document.getElementById('accountViolationLink').value.trim();
-                }
-            } else if (formType === 'channel') {
-                type = document.getElementById('channelType').value;
-                data = {
-                    channel_link: document.getElementById('channelLink').value.trim(),
-                    violation_link = document.getElementById('channelViolationLink').value.trim()
-                };
-            } else if (formType === 'bot') {
-                type = document.getElementById('botType').value;
-                data = {
-                    bot_username: document.getElementById('botUsername').value.trim()
-                };
-            }
-            
-            try {
-                // Отправляем жалобу
-                const result = await sendComplaint(type, data);
-                
-                // Обрабатываем результат
-                if (result.status === 'success') {
-                    status.className = 'status success';
-                    status.innerHTML = `
-                        <div>[+] OPERATION SUCCESSFUL</div>
-                        <div>${result.sent} COMPLAINTS DELIVERED</div>
-                        ${result.failed > 0 ? `<div>[!] ${result.failed} FAILED ATTEMPTS</div>` : ''}
-                    `;
-                    
-                    // Сбрасываем форму после успешной отправки
-                    form.reset();
+                if (progress <= 25) {
+                    updateStatus(`${type}-status`, `Инициализация атаки (${progress}%)`);
+                } else if (progress <= 50) {
+                    updateStatus(`${type}-status`, `Подготовка данных (${progress}%)`);
+                } else if (progress <= 75) {
+                    updateStatus(`${type}-status`, `Отправка жалоб (${progress}%)`);
                 } else {
-                    status.className = 'status error';
-                    status.innerHTML = `
-                        <div>[-] OPERATION FAILED</div>
-                        <div>${result.message}</div>
-                        ${result.errors.length > 0 ? `<div>ERRORS:<br>${result.errors.slice(0, 3).join('<br>')}</div>` : ''}
-                    `;
+                    updateStatus(`${type}-status`, `Завершение операции (${progress}%)`);
                 }
-            } catch (error) {
-                status.className = 'status error';
-                status.innerHTML = `
-                    <div>[-] CRITICAL ERROR</div>
-                    <div>${error.message}</div>
-                `;
-            } finally {
-                loading.style.display = 'none';
-                status.style.display = 'block';
-                submitBtn.disabled = false;
                 
-                // Прокручиваем к статусу
-                status.scrollIntoView({ behavior: 'smooth' });
-            }
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    updateStatus(`${type}-status`, `Атака завершена! Отправлено ${getRandomNumber(50, 200)} жалоб`, 'success');
+                    
+                    // Сброс прогресса через 3 секунды
+                    setTimeout(() => {
+                        progressBar.style.width = '0%';
+                    }, 3000);
+                }
+            }, 200);
         }
         
-        // Инициализация при загрузке
-        document.addEventListener('DOMContentLoaded', () => {
-            // Запускаем бинарный дождь
-            initBinaryRain();
-            
-            // Инициализация полей для аккаунтов
-            toggleAccountFields();
-            
-            // Назначаем обработчики форм
-            document.getElementById('accountForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                handleFormSubmit('account');
-            });
-            
-            document.getElementById('channelForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                handleFormSubmit('channel');
-            });
-            
-            document.getElementById('botForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                handleFormSubmit('bot');
-            });
-            
-            // Анимация мигающего курсора для всех полей ввода
-            document.querySelectorAll('input, textarea').forEach(input => {
-                input.addEventListener('focus', () => {
-                    input.style.caretColor = 'var(--matrix-green)';
-                });
-            });
-        });
+        // Вспомогательная функция для генерации случайного числа
+        function getRandomNumber(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
     </script>
 </body>
 </html>
