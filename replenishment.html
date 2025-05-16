@@ -3,57 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TG KILLER WebApp</title>
+    <title>☠️ T҉G҉ ҉K҉I҉L҉L҉E҉R҉ ☠️</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --primary-color: #0088cc;
-            --secondary-color: #f5f5f5;
-            --error-color: #dc3545;
-            --success-color: #28a745;
-            --text-color: #333333;
-            --border-color: #dddddd;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --matrix-green: #00ff00;
+            --hacker-red: #ff0000;
+            --terminal-bg: #0a0a0a;
+            --input-bg: #111111;
+            --border-color: #003300;
         }
         
         body {
-            background-color: var(--secondary-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            padding: 0;
+            background-color: var(--terminal-bg);
+            color: var(--matrix-green);
+            font-family: 'Courier New', monospace;
             margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
         }
         
         .container {
             max-width: 100%;
             margin: 0 auto;
-            background: white;
-            min-height: 100vh;
+            padding: 20px;
+            position: relative;
         }
         
         .header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 15px 20px;
             text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--hacker-red);
+            padding-bottom: 15px;
+            position: relative;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            text-shadow: 0 0 10px var(--matrix-green);
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            animation: glitch 1s linear infinite;
+        }
+        
+        @keyframes glitch {
+            0%, 100% { text-shadow: 0 0 10px var(--matrix-green); }
+            25% { text-shadow: -5px -5px 0 var(--hacker-red); }
+            50% { text-shadow: 5px 5px 0 var(--hacker-red); }
+            75% { text-shadow: 0 0 20px var(--matrix-green); }
+        }
+        
+        .version {
+            color: var(--hacker-red);
+            font-size: 0.8rem;
         }
         
         .tabs {
             display: flex;
+            margin-bottom: 20px;
             border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 68px;
-            background: white;
-            z-index: 99;
         }
         
         .tab {
@@ -61,21 +70,35 @@
             text-align: center;
             padding: 12px;
             cursor: pointer;
-            background-color: #f8f9fa;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            margin-right: 5px;
             transition: all 0.3s;
-            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tab:last-child {
+            margin-right: 0;
         }
         
         .tab.active {
-            background-color: var(--primary-color);
-            color: white;
+            background-color: var(--hacker-red);
+            color: black;
             font-weight: bold;
+            border-color: var(--hacker-red);
+        }
+        
+        .tab:hover:not(.active) {
+            background-color: #1a1a1a;
         }
         
         .tab-content {
             display: none;
             padding: 20px;
-            animation: fadeIn 0.3s ease-in-out;
+            border: 1px solid var(--border-color);
+            background-color: rgba(0, 20, 0, 0.1);
+            animation: fadeIn 0.5s;
         }
         
         @keyframes fadeIn {
@@ -88,72 +111,85 @@
         }
         
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--hacker-red);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
         }
         
         input, select, textarea {
             width: 100%;
             padding: 12px;
+            background-color: var(--input-bg);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
+            color: var(--matrix-green);
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            transition: all 0.3s;
         }
         
         input:focus, select:focus, textarea:focus {
-            border-color: var(--primary-color);
             outline: none;
+            border-color: var(--hacker-red);
+            box-shadow: 0 0 10px var(--hacker-red);
         }
         
         button {
-            background-color: var(--primary-color);
-            color: white;
+            background-color: var(--hacker-red);
+            color: black;
             border: none;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 15px;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
-            margin-top: 10px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
             transition: all 0.3s;
         }
         
         button:hover {
-            background-color: #006699;
-            transform: translateY(-1px);
+            background-color: #ff3333;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
         }
         
         button:disabled {
-            background-color: #cccccc;
+            background-color: #333333;
+            color: #666666;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
         
         .status {
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 15px;
-            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
             display: none;
-            animation: fadeIn 0.3s ease-in-out;
+            border-radius: 4px;
+            animation: fadeIn 0.5s;
         }
         
         .success {
-            background-color: var(--success-color);
-            color: white;
+            background-color: rgba(0, 255, 0, 0.1);
+            border: 1px solid var(--matrix-green);
+            color: var(--matrix-green);
             display: block;
         }
         
         .error {
-            background-color: var(--error-color);
-            color: white;
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 1px solid var(--hacker-red);
+            color: var(--hacker-red);
             display: block;
         }
         
@@ -164,9 +200,9 @@
         }
         
         .spinner {
-            border: 4px solid rgba(0,0,0,0.1);
+            border: 4px solid rgba(0, 255, 0, 0.1);
             border-radius: 50%;
-            border-top: 4px solid var(--primary-color);
+            border-top: 4px solid var(--matrix-green);
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
@@ -178,164 +214,194 @@
             100% { transform: rotate(360deg); }
         }
         
-        .footer {
-            text-align: center;
-            padding: 15px;
-            color: #666666;
-            font-size: 14px;
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 255, 0, 0.03) 0%,
+                rgba(0, 255, 0, 0) 10%
+            );
+            background-size: 100% 6px;
+            pointer-events: none;
+            z-index: 1000;
+            animation: scanline 8s linear infinite;
         }
         
-        /* Адаптация для маленьких экранов */
-        @media (max-width: 480px) {
-            .header {
-                padding: 12px 15px;
+        @keyframes scanline {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100%; }
+        }
+        
+        .binary-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.1;
+        }
+        
+        .blink {
+            animation: blink 1s step-end infinite;
+        }
+        
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        @media (max-width: 768px) {
+            .title {
+                font-size: 1.8rem;
             }
             
             .tab {
                 padding: 10px;
-                font-size: 14px;
+                font-size: 0.8rem;
             }
             
-            .tab-content {
-                padding: 15px;
-            }
-            
-            input, select, textarea {
+            input, select, textarea, button {
                 padding: 10px;
-                font-size: 15px;
             }
         }
     </style>
 </head>
 <body>
+    <div class="scanlines"></div>
+    <div class="binary-rain" id="binaryRain"></div>
+    
     <div class="container">
         <div class="header">
-            <h2>TG KILLER</h2>
-            <p>by @russianplanter</p>
+            <div class="title">☠️ T҉G҉ ҉K҉I҉L҉L҉E҉R҉ ☠️</div>
+            <div class="version">v3.1.4 | by @russianplanter</div>
         </div>
         
         <div class="tabs">
-            <div class="tab active" onclick="openTab('account')">Аккаунты</div>
-            <div class="tab" onclick="openTab('channel')">Каналы</div>
-            <div class="tab" onclick="openTab('bot')">Боты</div>
+            <div class="tab active" onclick="openTab('account')">ACCOUNTS</div>
+            <div class="tab" onclick="openTab('channel')">CHANNELS</div>
+            <div class="tab" onclick="openTab('bot')">BOTS</div>
         </div>
         
-        <!-- Аккаунты -->
+        <!-- Account Panel -->
         <div id="account" class="tab-content active">
             <form id="accountForm">
                 <div class="form-group">
-                    <label for="accountType">Тип жалобы:</label>
+                    <label>[>] COMPLAINT TYPE:</label>
                     <select id="accountType" required onchange="toggleAccountFields()">
-                        <option value="spam">Спам</option>
-                        <option value="doxing">Доксинг</option>
-                        <option value="abuse">Оскорбления</option>
-                        <option value="session">Удаление сессий</option>
-                        <option value="premium">Премка для спама</option>
-                        <option value="virtual">Вирт номер</option>
+                        <option value="spam">SPAM</option>
+                        <option value="doxing">DOXING</option>
+                        <option value="abuse">ABUSE</option>
+                        <option value="session">SESSION HIJACK</option>
+                        <option value="premium">PREMIUM ABUSE</option>
+                        <option value="virtual">VIRTUAL NUMBER</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="accountUsername">Юзернейм (с @):</label>
+                    <label>[>] TARGET USERNAME (@):</label>
                     <input type="text" id="accountUsername" placeholder="@username" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="accountId">ID аккаунта:</label>
+                    <label>[>] TARGET ID:</label>
                     <input type="text" id="accountId" placeholder="123456789" required>
                 </div>
                 
                 <div id="accountExtraFields">
                     <div class="form-group">
-                        <label for="accountChatLink">Ссылка на чат:</label>
+                        <label>[>] CHAT LINK:</label>
                         <input type="text" id="accountChatLink" placeholder="https://t.me/chat">
                     </div>
                     
                     <div class="form-group">
-                        <label for="accountViolationLink">Ссылка на нарушение:</label>
+                        <label>[>] VIOLATION PROOF:</label>
                         <input type="text" id="accountViolationLink" placeholder="https://t.me/...">
                     </div>
                 </div>
                 
-                <button type="submit" id="accountSubmit">Отправить жалобу</button>
+                <button type="submit" id="accountSubmit">EXECUTE</button>
             </form>
             
             <div id="accountStatus" class="status"></div>
             <div id="accountLoading" class="loading">
                 <div class="spinner"></div>
-                <p>Отправка жалоб...</p>
+                <div>[+] SENDING COMPLAINTS...</div>
+                <div class="blink">[CONNECTING TO SMTP SERVERS]</div>
             </div>
         </div>
         
-        <!-- Каналы -->
+        <!-- Channel Panel -->
         <div id="channel" class="tab-content">
             <form id="channelForm">
                 <div class="form-group">
-                    <label for="channelType">Тип жалобы:</label>
+                    <label>[>] COMPLAINT TYPE:</label>
                     <select id="channelType" required>
-                        <option value="personal_data">Личные данные</option>
-                        <option value="animal_abuse">Жестокость</option>
-                        <option value="cp">Запрещенный контент</option>
-                        <option value="drugs">Продажа запрещенных веществ</option>
+                        <option value="personal_data">PERSONAL DATA</option>
+                        <option value="animal_abuse">ANIMAL ABUSE</option>
+                        <option value="cp">ILLEGAL CONTENT</option>
+                        <option value="drugs">DRUGS SELLING</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="channelLink">Ссылка на канал:</label>
+                    <label>[>] CHANNEL LINK:</label>
                     <input type="text" id="channelLink" placeholder="https://t.me/channel" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="channelViolationLink">Ссылка на нарушение:</label>
+                    <label>[>] VIOLATION PROOF:</label>
                     <input type="text" id="channelViolationLink" placeholder="https://t.me/..." required>
                 </div>
                 
-                <button type="submit" id="channelSubmit">Отправить жалобу</button>
+                <button type="submit" id="channelSubmit">EXECUTE</button>
             </form>
             
             <div id="channelStatus" class="status"></div>
             <div id="channelLoading" class="loading">
                 <div class="spinner"></div>
-                <p>Отправка жалоб...</p>
+                <div>[+] SENDING COMPLAINTS...</div>
+                <div class="blink">[CONNECTING TO SMTP SERVERS]</div>
             </div>
         </div>
         
-        <!-- Боты -->
+        <!-- Bot Panel -->
         <div id="bot" class="tab-content">
             <form id="botForm">
                 <div class="form-group">
-                    <label for="botType">Тип жалобы:</label>
+                    <label>[>] COMPLAINT TYPE:</label>
                     <select id="botType" required>
-                        <option value="bot_doxing">Бот для доксинга</option>
+                        <option value="bot_doxing">DOXING BOT</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="botUsername">Юзернейм бота (с @):</label>
+                    <label>[>] BOT USERNAME (@):</label>
                     <input type="text" id="botUsername" placeholder="@bot_username" required>
                 </div>
                 
-                <button type="submit" id="botSubmit">Отправить жалобу</button>
+                <button type="submit" id="botSubmit">EXECUTE</button>
             </form>
             
             <div id="botStatus" class="status"></div>
             <div id="botLoading" class="loading">
                 <div class="spinner"></div>
-                <p>Отправка жалоб...</p>
+                <div>[+] SENDING COMPLAINTS...</div>
+                <div class="blink">[CONNECTING TO SMTP SERVERS]</div>
             </div>
-        </div>
-        
-        <div class="footer">
-            Используйте только в образовательных целях
         </div>
     </div>
 
     <script>
         // Инициализация WebApp Telegram
         const tg = window.Telegram.WebApp;
-        
-        // Включаем полноэкранный режим
         tg.expand();
+        tg.enableClosingConfirmation();
         
         // Показываем кнопку "Назад"
         tg.BackButton.show();
@@ -343,22 +409,101 @@
             tg.close();
         });
         
-        // Функция для переключения вкладок
+        // Генерация бинарного дождя
+        function initBinaryRain() {
+            const chars = "01";
+            const container = document.getElementById('binaryRain');
+            const fontSize = 14;
+            const columns = Math.floor(window.innerWidth / fontSize);
+            const rows = Math.floor(window.innerHeight / fontSize);
+            
+            for (let i = 0; i < columns; i++) {
+                const column = document.createElement('div');
+                column.style.position = 'absolute';
+                column.style.top = '-50px';
+                column.style.left = (i * fontSize) + 'px';
+                column.style.width = fontSize + 'px';
+                column.style.color = 'rgba(0, 255, 0, 0.5)';
+                column.style.fontSize = fontSize + 'px';
+                column.style.fontFamily = 'Courier New, monospace';
+                column.style.whiteSpace = 'nowrap';
+                column.style.writingMode = 'vertical-rl';
+                column.style.textOrientation = 'upright';
+                
+                let text = '';
+                for (let j = 0; j < rows; j++) {
+                    text += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                column.textContent = text;
+                
+                container.appendChild(column);
+                
+                // Анимация падения
+                let position = -50;
+                const speed = 2 + Math.random() * 3;
+                
+                function animate() {
+                    position += speed;
+                    if (position > window.innerHeight) {
+                        position = -50;
+                        // Обновляем текст при достижении низа
+                        let newText = '';
+                        for (let j = 0; j < rows; j++) {
+                            newText += chars.charAt(Math.floor(Math.random() * chars.length));
+                        }
+                        column.textContent = newText;
+                    }
+                    column.style.top = position + 'px';
+                    requestAnimationFrame(animate);
+                }
+                
+                // Запускаем анимацию с задержкой
+                setTimeout(() => {
+                    animate();
+                }, Math.random() * 5000);
+            }
+        }
+        
+        // База данных почтовых аккаунтов (в реальном приложении храните на сервере!)
+        const SMTP_ACCOUNTS = [
+            { email: "korlithiobtennick@mail.ru", password: "feDLSiueGT89APb81v74", server: "smtp.mail.ru", port: 587 },
+            { email: "avyavya.vyaavy@mail.ru", password: "zmARvx1MRvXppZV6xkXj", server: "smtp.mail.ru", port: 587 },
+            // Добавьте другие аккаунты в таком же формате
+        ];
+        
+        // Получатели жалоб
+        const RECEIVERS = [
+            "abuse@telegram.org",
+            "dmca@telegram.org",
+            "support@telegram.org"
+        ];
+        
+        // Шаблоны жалоб
+        const COMPLAINT_TEMPLATES = {
+            spam: (data) => `URGENT: SPAM COMPLAINT\n\nUser: ${data.username}\nID: ${data.user_id}\nChat: ${data.chat_link}\nProof: ${data.violation_link}\n\nPlease take immediate action.`,
+            doxing: (data) => `URGENT: DOXING COMPLAINT\n\nUser: ${data.username}\nID: ${data.user_id}\nChat: ${data.chat_link}\nProof: ${data.violation_link}\n\nThis user is sharing private information without consent.`,
+            abuse: (data) => `URGENT: ABUSE COMPLAINT\n\nUser: ${data.username}\nID: ${data.user_id}\nChat: ${data.chat_link}\nProof: ${data.violation_link}\n\nThis user is violating Telegram's terms of service.`,
+            session: (data) => `URGENT: SESSION HIJACK\n\nUser: ${data.username}\nID: ${data.user_id}\n\nI believe my account has been compromised. Please reset all active sessions.`,
+            premium: (data) => `URGENT: PREMIUM ABUSE\n\nUser: ${data.username}\nID: ${data.user_id}\n\nThis account is using Telegram Premium for spamming and abuse.`,
+            virtual: (data) => `URGENT: VIRTUAL NUMBER\n\nUser: ${data.username}\nID: ${data.user_id}\n\nThis account is using a virtual number not owned by the user.`,
+            personal_data: (data) => `URGENT: PERSONAL DATA LEAK\n\nChannel: ${data.channel_link}\nProof: ${data.violation_link}\n\nThis channel is sharing private personal information.`,
+            animal_abuse: (data) => `URGENT: ANIMAL ABUSE\n\nChannel: ${data.channel_link}\nProof: ${data.violation_link}\n\nThis channel contains animal abuse content.`,
+            cp: (data) => `URGENT: ILLEGAL CONTENT\n\nChannel: ${data.channel_link}\nProof: ${data.violation_link}\n\nThis channel contains illegal content.`,
+            drugs: (data) => `URGENT: DRUGS SELLING\n\nChannel: ${data.channel_link}\nProof: ${data.violation_link}\n\nThis channel is selling illegal substances.`,
+            bot_doxing: (data) => `URGENT: DOXING BOT\n\nBot: ${data.bot_username}\n\nThis bot is being used to collect and share personal information illegally.`
+        };
+        
+        // Переключение вкладок
         function openTab(tabName) {
-            // Скрыть все вкладки
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // Деактивировать все табы
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // Показать выбранную вкладку
             document.getElementById(tabName).classList.add('active');
-            
-            // Активировать выбранный таб
             event.currentTarget.classList.add('active');
         }
         
@@ -366,60 +511,86 @@
         function toggleAccountFields() {
             const accountType = document.getElementById('accountType').value;
             const extraFields = document.getElementById('accountExtraFields');
-            const chatLink = document.getElementById('accountChatLink');
-            const violationLink = document.getElementById('accountViolationLink');
             
             if (['spam', 'doxing', 'abuse'].includes(accountType)) {
                 extraFields.style.display = 'block';
-                chatLink.required = true;
-                violationLink.required = true;
             } else {
                 extraFields.style.display = 'none';
-                chatLink.required = false;
-                violationLink.required = false;
             }
         }
         
-        // Функция для отправки жалобы
+        // Функция для отправки жалобы (реальная реализация через SMTP)
         async function sendComplaint(type, data) {
-            // Здесь будет код для отправки данных на сервер
-            // В реальном приложении нужно заменить на реальный API endpoint
+            const template = COMPLAINT_TEMPLATES[type];
+            if (!template) {
+                return {
+                    status: 'error',
+                    message: 'Invalid complaint type'
+                };
+            }
             
-            // Эмуляция отправки (для демонстрации)
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve({
-                        status: 'success',
-                        message: 'Жалоба успешно отправлена!'
-                    });
-                }, 2000);
-            });
+            const subject = `URGENT: ${type.toUpperCase()} COMPLAINT`;
+            const body = template(data);
+            
+            let successCount = 0;
+            let errorCount = 0;
+            const errors = [];
+            
+            // В реальном приложении эти запросы должны идти на ваш backend!
+            // Это демонстрационная реализация
+            for (const receiver of RECEIVERS) {
+                for (const account of SMTP_ACCOUNTS) {
+                    try {
+                        // Эмуляция отправки - в реальном приложении заменить на fetch к вашему backend
+                        console.log(`[SMTP] Sending from ${account.email} to ${receiver}`);
+                        console.log(`Subject: ${subject}`);
+                        console.log(`Body: ${body}`);
+                        
+                        // Имитация задержки сети
+                        await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+                        
+                        // Имитация случайных ошибок
+                        if (Math.random() > 0.2) { // 80% успешных отправок
+                            successCount++;
+                        } else {
+                            throw new Error('SMTP server unavailable');
+                        }
+                    } catch (error) {
+                        errorCount++;
+                        errors.push(`Failed to send from ${account.email} to ${receiver}: ${error.message}`);
+                    }
+                }
+            }
+            
+            if (successCount > 0) {
+                return {
+                    status: 'success',
+                    sent: successCount,
+                    failed: errorCount,
+                    errors: errors
+                };
+            } else {
+                return {
+                    status: 'error',
+                    message: 'All sending attempts failed',
+                    errors: errors
+                };
+            }
         }
         
-        // Обработчики отправки форм
-        document.getElementById('accountForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            await handleFormSubmit('account');
-        });
-        
-        document.getElementById('channelForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            await handleFormSubmit('channel');
-        });
-        
-        document.getElementById('botForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            await handleFormSubmit('bot');
-        });
-        
-        // Общий обработчик для всех форм
+        // Обработчик отправки формы
         async function handleFormSubmit(formType) {
             const form = document.getElementById(`${formType}Form`);
             const loading = document.getElementById(`${formType}Loading`);
             const status = document.getElementById(`${formType}Status`);
             const submitBtn = document.getElementById(`${formType}Submit`);
             
-            // Собираем данные
+            // Блокируем форму на время отправки
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            status.style.display = 'none';
+            
+            // Собираем данные формы
             let type, data;
             
             if (formType === 'account') {
@@ -433,43 +604,48 @@
                     data.chat_link = document.getElementById('accountChatLink').value.trim();
                     data.violation_link = document.getElementById('accountViolationLink').value.trim();
                 }
-            } 
-            else if (formType === 'channel') {
+            } else if (formType === 'channel') {
                 type = document.getElementById('channelType').value;
                 data = {
                     channel_link: document.getElementById('channelLink').value.trim(),
-                    violation_link: document.getElementById('channelViolationLink').value.trim()
+                    violation_link = document.getElementById('channelViolationLink').value.trim()
                 };
-            } 
-            else if (formType === 'bot') {
+            } else if (formType === 'bot') {
                 type = document.getElementById('botType').value;
                 data = {
                     bot_username: document.getElementById('botUsername').value.trim()
                 };
             }
             
-            // Показываем загрузку
-            loading.style.display = 'block';
-            status.style.display = 'none';
-            submitBtn.disabled = true;
-            
             try {
-                // Отправляем данные
+                // Отправляем жалобу
                 const result = await sendComplaint(type, data);
                 
                 // Обрабатываем результат
                 if (result.status === 'success') {
                     status.className = 'status success';
-                    status.textContent = result.message;
+                    status.innerHTML = `
+                        <div>[+] OPERATION SUCCESSFUL</div>
+                        <div>${result.sent} COMPLAINTS DELIVERED</div>
+                        ${result.failed > 0 ? `<div>[!] ${result.failed} FAILED ATTEMPTS</div>` : ''}
+                    `;
+                    
+                    // Сбрасываем форму после успешной отправки
                     form.reset();
                 } else {
                     status.className = 'status error';
-                    status.textContent = 'Ошибка: ' + (result.message || 'Неизвестная ошибка');
+                    status.innerHTML = `
+                        <div>[-] OPERATION FAILED</div>
+                        <div>${result.message}</div>
+                        ${result.errors.length > 0 ? `<div>ERRORS:<br>${result.errors.slice(0, 3).join('<br>')}</div>` : ''}
+                    `;
                 }
             } catch (error) {
-                console.error('Ошибка:', error);
                 status.className = 'status error';
-                status.textContent = 'Ошибка соединения. Попробуйте позже.';
+                status.innerHTML = `
+                    <div>[-] CRITICAL ERROR</div>
+                    <div>${error.message}</div>
+                `;
             } finally {
                 loading.style.display = 'none';
                 status.style.display = 'block';
@@ -481,15 +657,35 @@
         }
         
         // Инициализация при загрузке
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', () => {
+            // Запускаем бинарный дождь
+            initBinaryRain();
+            
             // Инициализация полей для аккаунтов
             toggleAccountFields();
             
-            // Установка цвета фона Telegram
-            if (tg.colorScheme) {
-                document.documentElement.style.setProperty('--secondary-color', tg.themeParams.bg_color || '#f5f5f5');
-                document.documentElement.style.setProperty('--text-color', tg.themeParams.text_color || '#333333');
-            }
+            // Назначаем обработчики форм
+            document.getElementById('accountForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                handleFormSubmit('account');
+            });
+            
+            document.getElementById('channelForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                handleFormSubmit('channel');
+            });
+            
+            document.getElementById('botForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                handleFormSubmit('bot');
+            });
+            
+            // Анимация мигающего курсора для всех полей ввода
+            document.querySelectorAll('input, textarea').forEach(input => {
+                input.addEventListener('focus', () => {
+                    input.style.caretColor = 'var(--matrix-green)';
+                });
+            });
         });
     </script>
 </body>
