@@ -1,1173 +1,496 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Пополнение баланса</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TG KILLER WebApp</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: background 0.3s ease;
-            z-index: 1000;
-        }
-
-        .back-btn:hover {
-            background: #9932CC;
-        }
-
-        .back-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: white;
-        }
         :root {
-            --primary-color: #8A2BE2;
-            --secondary-color: #BA55D3;
-            --danger-color: #ff4444;
-            --success-color: #4CAF50;
-            --warning-color: #FFA500;
-            --text-color: #333;
-            --dark-bg: #1a0633;
+            --primary-color: #0088cc;
+            --secondary-color: #f5f5f5;
+            --error-color: #dc3545;
+            --success-color: #28a745;
+            --text-color: #333333;
+            --border-color: #dddddd;
         }
-
+        
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
-
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--primary-color);
+            background-color: var(--secondary-color);
             color: var(--text-color);
-            line-height: 1.5;
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
         }
-
+        
         .container {
-            width: 100%;
-            max-width: 500px;
-            padding: 20px;
-        }
-
-        .card {
+            max-width: 100%;
+            margin: 0 auto;
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            padding: 24px;
-            margin-bottom: 20px;
+            min-height: 100vh;
         }
-
-        h1, h2, h3 {
-            color: var(--primary-color);
+        
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
             text-align: center;
-        }
-
-        h1 { font-size: 24px; margin-bottom: 20px; }
-        h2 { font-size: 20px; margin: 20px 0 15px; }
-        h3 { font-size: 18px; margin: 15px 0 10px; }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #555;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-
-        input:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
-        }
-
-        .amount-buttons {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .amount-btn {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: white;
-            font-size: 16px;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .amount-btn.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        .method-tabs {
-            display: flex;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 16px;
-            border: 1px solid #ddd;
-        }
-
-        .method-tab {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            background: white;
-            cursor: pointer;
-        }
-
-        .method-tab.active {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .payment-details {
-            background: #f9f9f9;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 16px;
-            display: none;
-        }
-
-        .payment-details.active {
-            display: block;
-        }
-
-        .payment-comment {
-            background: rgba(138, 43, 226, 0.1);
-            padding: 12px;
-            border-radius: 8px;
-            margin: 12px 0;
-            font-weight: bold;
-            text-align: center;
-            font-size: 16px;
-            border: 1px dashed var(--primary-color);
-        }
-
-        .comment-hint {
-            font-size: 13px;
-            color: #666;
-            margin-top: 4px;
-            text-align: center;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .btn-success {
-            background: var(--success-color);
-        }
-
-        .btn-danger {
-            background: var(--danger-color);
-        }
-
-        .btn-secondary {
-            background: var(--secondary-color);
-        }
-
-        .transaction-item {
-            background: white;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .transaction-status {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-right: 8px;
-        }
-
-        .status-pending {
-            background: var(--warning-color);
-            color: white;
-        }
-
-        .status-completed {
-            background: var(--success-color);
-            color: white;
-        }
-
-        .status-failed {
-            background: var(--danger-color);
-            color: white;
-        }
-
-        .admin-panel {
-            background: #f0f0f0;
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .admin-controls {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .admin-btn {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .approve-btn {
-            background: var(--success-color);
-            color: white;
-        }
-
-        .reject-btn {
-            background: var(--danger-color);
-            color: white;
-        }
-
-        .loading-overlay {
-            position: fixed;
+            position: sticky;
             top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+        }
+        
+        .tabs {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            color: white;
-            flex-direction: column;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 68px;
+            background: white;
+            z-index: 99;
         }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-bottom: 16px;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
-        }
-
-        .stars-info {
+        
+        .tab {
+            flex: 1;
             text-align: center;
-            margin: 10px 0;
+            padding: 12px;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .tab.active {
+            background-color: var(--primary-color);
+            color: white;
             font-weight: bold;
         }
-
-        .rate-info {
-            font-size: 14px;
-            color: #666;
-            text-align: center;
+        
+        .tab-content {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
             margin-bottom: 15px;
         }
-
-        .promo-container {
-            margin: 15px 0;
-            padding: 15px;
-            background: #f5f5f5;
-            border-radius: 10px;
-            border: 1px solid #e0e0e0;
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
         }
-
-        .promo-input-group {
-            display: flex;
-            gap: 8px;
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
             margin-top: 10px;
+            transition: all 0.3s;
         }
-
-        .promo-input {
-            flex: 1;
+        
+        button:hover {
+            background-color: #006699;
+            transform: translateY(-1px);
         }
-
-        .promo-btn {
-            width: auto;
-            padding: 0 15px;
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
         }
-
-        .promo-success {
-            color: var(--success-color);
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        .promo-error {
-            color: var(--danger-color);
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        .promo-bonus-info {
-            font-size: 14px;
-            color: var(--success-color);
-            font-weight: bold;
-            margin-top: 5px;
+        
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
             text-align: center;
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .success {
+            background-color: var(--success-color);
+            color: white;
+            display: block;
+        }
+        
+        .error {
+            background-color: var(--error-color);
+            color: white;
+            display: block;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: #666666;
+            font-size: 14px;
+        }
+        
+        /* Адаптация для маленьких экранов */
+        @media (max-width: 480px) {
+            .header {
+                padding: 12px 15px;
+            }
+            
+            .tab {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .tab-content {
+                padding: 15px;
+            }
+            
+            input, select, textarea {
+                padding: 10px;
+                font-size: 15px;
+            }
         }
     </style>
 </head>
 <body>
-     <a href="javascript:history.back()" class="back-btn">
-        <svg viewBox="0 0 24 24">
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-        </svg>
-        Назад
-    </a>
-    
     <div class="container">
-        <div class="card">
-            <h1>Пополнение баланса</h1>
-            
-            <form id="depositForm">
+        <div class="header">
+            <h2>TG KILLER</h2>
+            <p>by @russianplanter</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="openTab('account')">Аккаунты</div>
+            <div class="tab" onclick="openTab('channel')">Каналы</div>
+            <div class="tab" onclick="openTab('bot')">Боты</div>
+        </div>
+        
+        <!-- Аккаунты -->
+        <div id="account" class="tab-content active">
+            <form id="accountForm">
                 <div class="form-group">
-                    <label for="username">Ваш Telegram</label>
-                    <input type="text" id="username" placeholder="@username" required>
+                    <label for="accountType">Тип жалобы:</label>
+                    <select id="accountType" required onchange="toggleAccountFields()">
+                        <option value="spam">Спам</option>
+                        <option value="doxing">Доксинг</option>
+                        <option value="abuse">Оскорбления</option>
+                        <option value="session">Удаление сессий</option>
+                        <option value="premium">Премка для спама</option>
+                        <option value="virtual">Вирт номер</option>
+                    </select>
                 </div>
                 
                 <div class="form-group">
-                    <label>Сумма пополнения (звёзды)</label>
-                    <div class="amount-buttons">
-                        <button type="button" class="amount-btn" data-amount="50">50</button>
-                        <button type="button" class="amount-btn" data-amount="100">100</button>
-                        <button type="button" class="amount-btn" data-amount="200">200</button>
-                        <button type="button" class="amount-btn" data-amount="500">500</button>
-                        <button type="button" class="amount-btn" data-amount="1000">1000</button>
-                        <input type="number" id="customAmount" class="amount-btn" placeholder="Другая сумма" min="50">
-                    </div>
-                    <div class="rate-info">1 звезда = 1.45₽ (мин. 50 звёзд)</div>
-                    <div class="stars-info" id="amountInRub">0 звёзд = 0₽</div>
-                    <div id="promoBonusInfo" class="promo-bonus-info" style="display: none;">+5% бонус по промокоду: <span id="activePromoCode"></span></div>
-                </div>
-
-                <!-- Промокод секция -->
-                <div class="promo-container">
-                    <h3>Промокод</h3>
-                    <div id="promoForm">
-                        <div class="promo-input-group">
-                            <input type="text" id="promoCode" class="promo-input" placeholder="Введите промокод">
-                            <button type="button" class="btn btn-secondary promo-btn" id="applyPromoBtn">Применить</button>
-                        </div>
-                        <div id="promoMessage"></div>
-                    </div>
-                    <div id="activePromoSection" style="display: none;">
-                        <div class="promo-success">Активный промокод: <span id="currentPromoCode"></span></div>
-                        <button type="button" class="btn btn-secondary promo-btn" id="removePromoBtn" style="margin-top: 10px;">Удалить</button>
-                    </div>
+                    <label for="accountUsername">Юзернейм (с @):</label>
+                    <input type="text" id="accountUsername" placeholder="@username" required>
                 </div>
                 
                 <div class="form-group">
-                    <label>Способ оплата</label>
-                    <div class="method-tabs">
-                        <div class="method-tab active" data-method="phone">По номеру</div>
-                        <div class="method-tab" data-method="card">По карте</div>
-                        <div class="method-tab" data-method="crypto">USDT</div>
+                    <label for="accountId">ID аккаунта:</label>
+                    <input type="text" id="accountId" placeholder="123456789" required>
+                </div>
+                
+                <div id="accountExtraFields">
+                    <div class="form-group">
+                        <label for="accountChatLink">Ссылка на чат:</label>
+                        <input type="text" id="accountChatLink" placeholder="https://t.me/chat">
                     </div>
                     
-                    <div class="payment-details active" id="phoneDetails">
-                        <p><strong>Номер телефона:</strong> +79282067832</p>
-                        <div class="payment-comment">
-                            <div>Комментарий к платежу:</div>
-                            <div style="margin: 8px 0; font-size: 18px;" id="paymentComment"></div>
-                            <div class="comment-hint">Обязательно укажите этот комментарий при переводе</div>
-                        </div>
-                    </div>
-                    
-                    <div class="payment-details" id="cardDetails">
-                        <p><strong>Номер карты:</strong>2204320381304726</p>
-                        <p><strong>Получатель:</strong> Даниил Валерьевич С.</p>
-                        <div class="payment-comment">
-                            <div>Комментарий к платежу:</div>
-                            <div style="margin: 8px 0; font-size: 18px;" id="paymentCommentCard"></div>
-                            <div class="comment-hint">Обязательно укажите этот комментарий при переводе</div>
-                        </div>
-                    </div>
-                    
-                    <div class="payment-details" id="cryptoDetails">
-                        <p><strong>Адрес USDT (TRC20):</strong> TDK32aHYsa8EK5JfFPYpM4nFLwm22knSaB</p>
-                        <div class="payment-comment">
-                            <div>Комментарий к платежу:</div>
-                            <div style="margin: 8px 0; font-size: 18px;" id="paymentCommentCrypto"></div>
-                            <div class="comment-hint">Обязательно укажите этот комментарий при переводе</div>
-                        </div>
+                    <div class="form-group">
+                        <label for="accountViolationLink">Ссылка на нарушение:</label>
+                        <input type="text" id="accountViolationLink" placeholder="https://t.me/...">
                     </div>
                 </div>
                 
-                <button type="submit" class="btn" id="submitBtn">
-                    <span id="btnText">Пополнить</span>
-                </button>
+                <button type="submit" id="accountSubmit">Отправить жалобу</button>
             </form>
+            
+            <div id="accountStatus" class="status"></div>
+            <div id="accountLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Отправка жалоб...</p>
+            </div>
         </div>
-
-        <div class="card" id="transactionsCard">
-            <h2>Мои транзакции</h2>
-            <div id="transactionsList"></div>
+        
+        <!-- Каналы -->
+        <div id="channel" class="tab-content">
+            <form id="channelForm">
+                <div class="form-group">
+                    <label for="channelType">Тип жалобы:</label>
+                    <select id="channelType" required>
+                        <option value="personal_data">Личные данные</option>
+                        <option value="animal_abuse">Жестокость</option>
+                        <option value="cp">Запрещенный контент</option>
+                        <option value="drugs">Продажа запрещенных веществ</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="channelLink">Ссылка на канал:</label>
+                    <input type="text" id="channelLink" placeholder="https://t.me/channel" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="channelViolationLink">Ссылка на нарушение:</label>
+                    <input type="text" id="channelViolationLink" placeholder="https://t.me/..." required>
+                </div>
+                
+                <button type="submit" id="channelSubmit">Отправить жалобу</button>
+            </form>
+            
+            <div id="channelStatus" class="status"></div>
+            <div id="channelLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Отправка жалоб...</p>
+            </div>
         </div>
-
-        <div class="admin-panel" id="adminPanel">
-            <h2>Админ-панель</h2>
-            <div id="adminTransactions"></div>
+        
+        <!-- Боты -->
+        <div id="bot" class="tab-content">
+            <form id="botForm">
+                <div class="form-group">
+                    <label for="botType">Тип жалобы:</label>
+                    <select id="botType" required>
+                        <option value="bot_doxing">Бот для доксинга</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="botUsername">Юзернейм бота (с @):</label>
+                    <input type="text" id="botUsername" placeholder="@bot_username" required>
+                </div>
+                
+                <button type="submit" id="botSubmit">Отправить жалобу</button>
+            </form>
+            
+            <div id="botStatus" class="status"></div>
+            <div id="botLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Отправка жалоб...</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            Используйте только в образовательных целях
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
     <script>
-        // Инициализация Firebase
-        const firebaseConfig = {
-            databaseURL: "https://stars-207f2-default-rtdb.firebaseio.com/",
-            apiKey: "rfIdLaULMIe2uo0h3pygEj3lNjAUWrkEOgsyhSD1nE8"
-        };
-        
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        
-        // Инициализация Telegram WebApp
+        // Инициализация WebApp Telegram
         const tg = window.Telegram.WebApp;
-        if (tg) {
-            tg.expand();
-        }
         
-        // Конфигурация
-        const config = {
-            telegramSupport: "@support",
-            minStars: 50,
-            maxStars: 10000,
-            starRate: 1.45,
-            adminIds: ["1062148525", "1290724329"],
-            promoBonusPercent: 5, // 5% бонус пользователю
-            referrerBonusPercent: 15, // 15% бонус тому, кто дал промокод
-            baseUrl: window.location.origin + window.location.pathname,
-            platformMargin: 0.05
-        };
+        // Включаем полноэкранный режим
+        tg.expand();
         
-        // Основные переменные
-        let currentUser = null;
-        let selectedStars = 0;
-        let selectedMethod = "phone";
-        let paymentComment = 'ID' + Math.floor(100000 + Math.random() * 900000);
-        let isAdmin = false;
-        let activePromoCode = null;
-
-        // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', async () => {
-            showLoading("Инициализация...");
-            
-            try {
-                // Установка комментария
-                document.getElementById('paymentComment').textContent = paymentComment;
-                document.getElementById('paymentCommentCard').textContent = paymentComment;
-                document.getElementById('paymentCommentCrypto').textContent = paymentComment;
-                
-                // Получаем данные пользователя Telegram
-                const tgUser = tg?.initDataUnsafe?.user;
-                if (tgUser) {
-                    document.getElementById('username').value = tgUser.username ? `@${tgUser.username}` : '';
-                    currentUser = await updateTelegramUser(tgUser);
-                    
-                    // Проверяем, является ли пользователь администратором
-                    isAdmin = config.adminIds.includes(tgUser.id.toString());
-                    if (isAdmin) {
-                        document.getElementById('adminPanel').style.display = 'block';
-                        loadAdminTransactions();
-                    }
-                    
-                    // Проверяем активный промокод пользователя
-                    const userRef = database.ref(`users/${tgUser.id.toString()}`);
-                    const snapshot = await userRef.once('value');
-                    
-                    if (snapshot.exists() && snapshot.val().activePromoCode) {
-                        activePromoCode = snapshot.val().activePromoCode;
-                        showActivePromoCode(activePromoCode);
-                    }
-                    
-                    loadUserTransactions(tgUser.id.toString());
-                } else {
-                    loadUserTransactions('anonymous');
-                }
-                
-                initForm();
-                hideLoading();
-            } catch (error) {
-                console.error("Ошибка инициализации:", error);
-                hideLoading();
-                showError("Произошла ошибка при загрузке. Пожалуйста, попробуйте позже.");
-            }
+        // Показываем кнопку "Назад"
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => {
+            tg.close();
         });
-
-        // Обновление данных пользователя
-        async function updateTelegramUser(tgUser) {
-            if (!tgUser?.id) return;
+        
+        // Функция для переключения вкладок
+        function openTab(tabName) {
+            // Скрыть все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
             
-            const userId = tgUser.id.toString();
-            const userRef = database.ref(`users/${userId}`);
-            const snapshot = await userRef.once('value');
+            // Деактивировать все табы
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
             
-            const userData = {
-                id: userId,
-                username: tgUser.username || '',
-                first_name: tgUser.first_name || '',
-                last_name: tgUser.last_name || '',
-                last_active: firebase.database.ServerValue.TIMESTAMP
-            };
+            // Показать выбранную вкладку
+            document.getElementById(tabName).classList.add('active');
             
-            if (!snapshot.exists()) {
-                userData.created_at = firebase.database.ServerValue.TIMESTAMP;
-                userData.balance = 0;
-                await userRef.set(userData);
+            // Активировать выбранный таб
+            event.currentTarget.classList.add('active');
+        }
+        
+        // Показываем/скрываем дополнительные поля для аккаунтов
+        function toggleAccountFields() {
+            const accountType = document.getElementById('accountType').value;
+            const extraFields = document.getElementById('accountExtraFields');
+            const chatLink = document.getElementById('accountChatLink');
+            const violationLink = document.getElementById('accountViolationLink');
+            
+            if (['spam', 'doxing', 'abuse'].includes(accountType)) {
+                extraFields.style.display = 'block';
+                chatLink.required = true;
+                violationLink.required = true;
             } else {
-                await userRef.update(userData);
+                extraFields.style.display = 'none';
+                chatLink.required = false;
+                violationLink.required = false;
             }
-            
-            return { key: userId, ref: userRef };
         }
-
-        // Инициализация формы
-        function initForm() {
-            // Обработчики кнопок суммы
-            document.querySelectorAll('.amount-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const stars = parseInt(this.dataset.amount) || parseInt(this.value) || 0;
-                    selectStars(stars);
-                });
+        
+        // Функция для отправки жалобы
+        async function sendComplaint(type, data) {
+            // Здесь будет код для отправки данных на сервер
+            // В реальном приложении нужно заменить на реальный API endpoint
+            
+            // Эмуляция отправки (для демонстрации)
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve({
+                        status: 'success',
+                        message: 'Жалоба успешно отправлена!'
+                    });
+                }, 2000);
             });
-            
-            // Обработчик ввода произвольной суммы
-            document.getElementById('customAmount').addEventListener('input', function() {
-                const stars = parseInt(this.value) || 0;
-                selectStars(stars);
-            });
-
-            // Обработчики вкладок методов оплаты
-            document.querySelectorAll('.method-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    selectedMethod = this.dataset.method;
-                    
-                    document.querySelectorAll('.payment-details').forEach(d => d.classList.remove('active'));
-                    document.getElementById(`${selectedMethod}Details`).classList.add('active');
-                });
-            });
-            
-            // Обработчик кнопки применения промокода
-            document.getElementById('applyPromoBtn').addEventListener('click', applyPromoCode);
-            
-            // Обработчик кнопки удаления промокода
-            document.getElementById('removePromoBtn').addEventListener('click', removePromoCode);
         }
         
-        // Применение промокода
-        async function applyPromoCode() {
-            const promoCodeInput = document.getElementById('promoCode');
-            const promoCode = promoCodeInput.value.trim().toUpperCase();
-            const promoMessage = document.getElementById('promoMessage');
-            
-            if (!promoCode) {
-                promoMessage.className = 'promo-error';
-                promoMessage.textContent = 'Введите промокод';
-                return;
-            }
-            
-            showLoading("Проверка промокода...");
-            
-            try {
-                // Проверяем, существует ли такой промокод
-                const usersRef = database.ref('users');
-                const snapshot = await usersRef.orderByChild('referralCode').equalTo(promoCode).once('value');
-                
-                if (!snapshot.exists()) {
-                    hideLoading();
-                    promoMessage.className = 'promo-error';
-                    promoMessage.textContent = 'Промокод не найден';
-                    return;
-                }
-                
-                // Получаем данные пользователя, которому принадлежит промокод
-                let promoOwner = null;
-                snapshot.forEach(child => {
-                    promoOwner = {
-                        id: child.key,
-                        ...child.val()
-                    };
-                });
-                
-                // Проверяем, что пользователь не применяет свой же промокод
-                if (currentUser && promoOwner.id === currentUser.key) {
-                    hideLoading();
-                    promoMessage.className = 'promo-error';
-                    promoMessage.textContent = 'Нельзя использовать свой промокод';
-                    return;
-                }
-                
-                // Сохраняем промокод для текущего пользователя
-                await database.ref(`users/${currentUser.key}`).update({
-                    activePromoCode: promoCode,
-                    promoUsed: firebase.database.ServerValue.TIMESTAMP,
-                    referredBy: promoOwner.id // Сохраняем кто пригласил
-                });
-                
-                // Обновляем UI
-                activePromoCode = promoCode;
-                showActivePromoCode(promoCode);
-                promoCodeInput.value = '';
-                promoMessage.textContent = '';
-                
-                hideLoading();
-                showMessage("Промокод успешно применен! Вы получите +5% к сумме пополнения.");
-            } catch (error) {
-                hideLoading();
-                console.error("Ошибка применения промокода:", error);
-                promoMessage.className = 'promo-error';
-                promoMessage.textContent = 'Ошибка применения промокода';
-            }
-        }
-        
-        // Удаление промокода
-        async function removePromoCode() {
-            showLoading("Удаление промокода...");
-            
-            try {
-                await database.ref(`users/${currentUser.key}`).update({
-                    activePromoCode: null
-                });
-                
-                hideActivePromoCode();
-                hideLoading();
-                showMessage("Промокод удален");
-            } catch (error) {
-                hideLoading();
-                console.error("Ошибка удаления промокода:", error);
-                showError("Не удалось удалить промокод");
-            }
-        }
-        
-        // Показать активный промокод
-        function showActivePromoCode(promoCode) {
-            document.getElementById('promoForm').style.display = 'none';
-            document.getElementById('activePromoSection').style.display = 'block';
-            document.getElementById('currentPromoCode').textContent = promoCode;
-            document.getElementById('promoBonusInfo').style.display = 'block';
-            document.getElementById('activePromoCode').textContent = promoCode;
-            
-            // Обновляем отображение суммы с учетом бонуса
-            updateAmountInRub();
-        }
-
-        // Скрыть активный промокод
-        function hideActivePromoCode() {
-            document.getElementById('promoForm').style.display = 'block';
-            document.getElementById('activePromoSection').style.display = 'none';
-            document.getElementById('promoBonusInfo').style.display = 'none';
-            activePromoCode = null;
-            
-            // Обновляем отображение суммы без бонуса
-            updateAmountInRub();
-        }
-        
-        // Выбор суммы в звездах
-        function selectStars(stars) {
-            selectedStars = stars;
-            
-            // Обновляем активные кнопки
-            document.querySelectorAll('.amount-btn').forEach(btn => {
-                const btnStars = parseInt(btn.dataset.amount) || 0;
-                btn.classList.toggle('active', btnStars === stars && stars > 0);
-            });
-            
-            // Обновляем поле произвольной суммы
-            if (stars > 0 && !document.querySelector(`.amount-btn[data-amount="${stars}"]`)) {
-                document.getElementById('customAmount').value = stars;
-            } else if (stars === 0) {
-                document.getElementById('customAmount').value = '';
-            }
-            
-            // Обновляем отображение суммы в рублях
-            updateAmountInRub();
-        }
-        
-        // Обновление отображение суммы в рублях
-        function updateAmountInRub() {
-            let stars = selectedStars;
-            let bonusStars = 0;
-            
-            if (activePromoCode && stars > 0) {
-                bonusStars = Math.floor(stars * (config.promoBonusPercent / 100));
-            }
-            
-            const totalStars = stars + bonusStars;
-            const rub = (stars * config.starRate).toFixed(2);
-            
-            if (bonusStars > 0) {
-                document.getElementById('amountInRub').innerHTML = 
-                    `${stars} звёзд + ${bonusStars} бонус = ${totalStars} звёзд (${rub}₽)`;
-            } else {
-                document.getElementById('amountInRub').textContent = 
-                    `${stars} звёзд = ${rub}₽`;
-            }
-        }
-
-        // Загрузка транзакций пользователя
-        function loadUserTransactions(userId) {
-            const container = document.getElementById('transactionsList');
-            container.innerHTML = '<p>Загрузка истории...</p>';
-            
-            database.ref('transactions')
-                .orderByChild('userId')
-                .equalTo(userId)
-                .limitToLast(10)
-                .once('value', snapshot => {
-                    container.innerHTML = '';
-                    
-                    if (!snapshot.exists()) {
-                        container.innerHTML = '<p>Нет транзакций</p>';
-                        return;
-                    }
-                    
-                    const transactions = [];
-                    snapshot.forEach(child => {
-                        transactions.push({
-                            id: child.key,
-                            ...child.val()
-                        });
-                    });
-                    
-                    transactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                    
-                    transactions.forEach(t => {
-                        container.appendChild(createTransactionElement(t));
-                    });
-                });
-        }
-        
-        // Создание элемента транзакции
-        function createTransactionElement(t) {
-            const el = document.createElement('div');
-            el.className = 'transaction-item';
-            
-            const methods = { 
-                'phone': 'По номеру', 
-                'card': 'По карте', 
-                'crypto': 'USDT' 
-            };
-            
-            const statuses = {
-                'pending': { class: 'status-pending', text: 'Ожидает' },
-                'completed': { class: 'status-completed', text: 'Одобрено' },
-                'failed': { class: 'status-failed', text: 'Отклонено' }
-            };
-            
-            const status = statuses[t.status] || { class: '', text: t.status };
-            const date = t.timestamp ? new Date(t.timestamp).toLocaleString('ru-RU') : '';
-            const rub = (t.stars * config.starRate).toFixed(2);
-            
-            let bonusInfo = '';
-            if (t.bonusStars) {
-                bonusInfo = `<div>Бонус: +${t.bonusStars} звёзд (промокод: ${t.promoCode || 'нет'})</div>`;
-            }
-            
-            el.innerHTML = `
-                <div>
-                    <span class="transaction-status ${status.class}">${status.text}</span>
-                    <strong>${t.stars} звёзд (${rub}₽)</strong>
-                </div>
-                ${bonusInfo}
-                <div>Метод: ${methods[t.method] || t.method}</div>
-                <div>Комментарий: ${t.comment || 'нет'}</div>
-                <small>${date}</small>
-            `;
-            
-            return el;
-        }
-
-        // Загрузка транзакций для админ-панели
-        function loadAdminTransactions() {
-            const container = document.getElementById('adminTransactions');
-            container.innerHTML = '<p>Загрузка транзакций...</p>';
-            
-            database.ref('transactions')
-                .orderByChild('timestamp')
-                .limitToLast(50)
-                .once('value', snapshot => {
-                    container.innerHTML = '';
-                    
-                    if (!snapshot.exists()) {
-                        container.innerHTML = '<p>Нет транзакций</p>';
-                        return;
-                    }
-                    
-                    const transactions = [];
-                    snapshot.forEach(child => {
-                        transactions.push({
-                            id: child.key,
-                            ...child.val()
-                        });
-                    });
-                    
-                    transactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                    
-                    transactions.forEach(t => {
-                        container.appendChild(createAdminTransactionElement(t));
-                    });
-                });
-        }
-        
-        // Создание элемента транзакции для админ-панели
-        function createAdminTransactionElement(t) {
-            const el = document.createElement('div');
-            el.className = 'transaction-item';
-            
-            const methods = { 
-                'phone': 'По номеру', 
-                'card': 'По карте', 
-                'crypto': 'USDT' 
-            };
-            
-            const statuses = {
-                'pending': { class: 'status-pending', text: 'Ожидает' },
-                'completed': { class: 'status-completed', text: 'Одобрено' },
-                'failed': { class: 'status-failed', text: 'Отклонено' }
-            };
-            
-            const status = statuses[t.status] || { class: '', text: t.status };
-            const date = t.timestamp ? new Date(t.timestamp).toLocaleString('ru-RU') : '';
-            const rub = (t.stars * config.starRate).toFixed(2);
-            
-            let bonusInfo = '';
-            if (t.bonusStars) {
-                bonusInfo = `<div>Бонус: +${t.bonusStars} звёзд (промокод: ${t.promoCode || 'нет'})</div>`;
-            }
-            
-            el.innerHTML = `
-                <div>
-                    <span class="transaction-status ${status.class}">${status.text}</span>
-                    <strong>${t.username || 'Аноним'}</strong>
-                </div>
-                <div>${t.stars} звёзд (${rub}₽) - ${methods[t.method] || t.method}</div>
-                ${bonusInfo}
-                <div>Комментарий: ${t.comment || 'нет'}</div>
-                <small>${date}</small>
-                
-                ${t.status === 'pending' ? `
-                <div class="admin-controls">
-                    <button class="admin-btn approve-btn" onclick="updateTransactionStatus('${t.id}', 'completed', ${t.stars + (t.bonusStars || 0)}, '${t.userId}')">
-                        Одобрить
-                    </button>
-                    <button class="admin-btn reject-btn" onclick="updateTransactionStatus('${t.id}', 'failed')">
-                        Отклонить
-                    </button>
-                </div>
-                ` : ''}
-            `;
-            
-            return el;
-        }
-
-        // Обновление статуса транзакции
-        async function updateTransactionStatus(id, status, stars, userId) {
-            showLoading("Обновление статуса...");
-            
-            try {
-                // Обновляем статус транзакции
-                const transactionRef = database.ref(`transactions/${id}`);
-                const transactionSnapshot = await transactionRef.once('value');
-                const transaction = transactionSnapshot.val();
-                
-                await transactionRef.update({ status });
-                
-                // Если статус "completed", добавляем звёзды пользователю
-                if (status === 'completed' && userId && stars) {
-                    const userRef = database.ref(`users/${userId}`);
-                    
-                    // Используем транзакцию для безопасного обновления баланса
-                    await userRef.transaction(user => {
-                        if (user) {
-                            user.balance = (user.balance || 0) + stars;
-                        }
-                        return user;
-                    });
-                    
-                    // Если был использован промокод - начисляем бонусы
-                    if (transaction.promoCode) {
-                        await processPromoBonuses(transaction, userId, stars);
-                    }
-                }
-                
-                hideLoading();
-                showMessage("Статус транзакции обновлен");
-                loadAdminTransactions();
-            } catch (error) {
-                hideLoading();
-                console.error("Ошибка обновления статуса:", error);
-                showError("Не удалось обновить статус транзакции");
-            }
-        }
-
-        // Обработка бонусов за промокод
-        async function processPromoBonuses(transaction, userId, stars) {
-            try {
-                // Получаем данные пользователя
-                const userRef = database.ref(`users/${userId}`);
-                const userSnapshot = await userRef.once('value');
-                const userData = userSnapshot.val();
-                
-                // 1. Начисляем 5% бонус пользователю (уже сделано при подтверждении транзакции)
-                
-                // 2. Начисляем 15% тому, кто дал промокод
-                if (userData.referredBy) {
-                    const referrerId = userData.referredBy;
-                    const referrerRef = database.ref(`users/${referrerId}`);
-                    const referrerSnapshot = await referrerRef.once('value');
-                    const referrerData = referrerSnapshot.val();
-                    
-                    if (referrerData) {
-                        const referrerBonus = Math.floor(transaction.stars * (config.referrerBonusPercent / 100));
-                        
-                        // Обновляем баланс реферера
-                        await referrerRef.transaction(user => {
-                            if (user) {
-                                user.balance = (user.balance || 0) + referrerBonus;
-                                
-                                // Сохраняем историю начислений
-                                const bonusHistory = {
-                                    type: 'referrer_bonus',
-                                    fromUserId: userId,
-                                    fromUsername: transaction.username,
-                                    stars: transaction.stars,
-                                    bonus: referrerBonus,
-                                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                                };
-                                
-                                if (!user.bonusHistory) {
-                                    user.bonusHistory = {};
-                                }
-                                
-                                user.bonusHistory[transaction.id] = bonusHistory;
-                            }
-                            return user;
-                        });
-                        
-                        console.log(`Начислено ${referrerBonus} звёзд рефереру ${referrerData.username}`);
-                    }
-                }
-            } catch (error) {
-                console.error("Ошибка обработки бонусов:", error);
-            }
-        }
-
-        // Обработка формы
-        document.getElementById('depositForm').addEventListener('submit', async function(e) {
+        // Обработчики отправки форм
+        document.getElementById('accountForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            await handleFormSubmit('account');
+        });
+        
+        document.getElementById('channelForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await handleFormSubmit('channel');
+        });
+        
+        document.getElementById('botForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await handleFormSubmit('bot');
+        });
+        
+        // Общий обработчик для всех форм
+        async function handleFormSubmit(formType) {
+            const form = document.getElementById(`${formType}Form`);
+            const loading = document.getElementById(`${formType}Loading`);
+            const status = document.getElementById(`${formType}Status`);
+            const submitBtn = document.getElementById(`${formType}Submit`);
             
-            const btn = document.getElementById('submitBtn');
-            const btnText = document.getElementById('btnText');
-            const username = document.getElementById('username').value.trim();
+            // Собираем данные
+            let type, data;
             
-            // Валидация
-            if (!username.startsWith('@') || username.length < 5) {
-                showError("Username должен начинаться с @ и содержать не менее 5 символов");
-                return;
-            }
-            
-            if (selectedStars < config.minStars) {
-                showError(`Минимальная сумма пополнения - ${config.minStars} звёзд`);
-                return;
-            }
-            
-            if (selectedStars > config.maxStars) {
-                showError(`Максимальная сумма пополнения - ${config.maxStars} звёзд`);
-                return;
-            }
-
-            btn.disabled = true;
-            btnText.textContent = 'Обработка...';
-            
-            try {
-                showLoading("Создание транзакции...");
-                
-                const userId = currentUser?.key || 'anonymous';
-                const rub = (selectedStars * config.starRate).toFixed(2);
-                
-                // Рассчитываем бонусные звезды
-                let bonusStars = 0;
-                if (activePromoCode) {
-                    bonusStars = Math.floor(selectedStars * (config.promoBonusPercent / 100));
-                }
-                
-                const transactionData = {
-                    userId: userId,
-                    username: username,
-                    stars: selectedStars,
-                    bonusStars: bonusStars,
-                    rub: rub,
-                    method: selectedMethod,
-                    status: 'pending',
-                    comment: paymentComment,
-                    promoCode: activePromoCode || null,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
+            if (formType === 'account') {
+                type = document.getElementById('accountType').value;
+                data = {
+                    username: document.getElementById('accountUsername').value.trim(),
+                    user_id: document.getElementById('accountId').value.trim()
                 };
                 
-                const transactionRef = database.ref('transactions').push();
-                await transactionRef.set(transactionData);
-                
-                if (userId !== 'anonymous') {
-                    await database.ref(`users/${userId}/transactions/${transactionRef.key}`).set(true);
+                if (['spam', 'doxing', 'abuse'].includes(type)) {
+                    data.chat_link = document.getElementById('accountChatLink').value.trim();
+                    data.violation_link = document.getElementById('accountViolationLink').value.trim();
                 }
+            } 
+            else if (formType === 'channel') {
+                type = document.getElementById('channelType').value;
+                data = {
+                    channel_link: document.getElementById('channelLink').value.trim(),
+                    violation_link: document.getElementById('channelViolationLink').value.trim()
+                };
+            } 
+            else if (formType === 'bot') {
+                type = document.getElementById('botType').value;
+                data = {
+                    bot_username: document.getElementById('botUsername').value.trim()
+                };
+            }
+            
+            // Показываем загрузку
+            loading.style.display = 'block';
+            status.style.display = 'none';
+            submitBtn.disabled = true;
+            
+            try {
+                // Отправляем данные
+                const result = await sendComplaint(type, data);
                 
-                showSuccess(btn, btnText, "Заявка на пополнение создана! Ожидайте подтверждения.");
-                loadUserTransactions(userId);
-                
-                // Генерируем новый комментарий для следующего платежа
-                paymentComment = 'ID' + Math.floor(100000 + Math.random() * 900000);
-                document.getElementById('paymentComment').textContent = paymentComment;
-                document.getElementById('paymentCommentCard').textContent = paymentComment;
-                document.getElementById('paymentCommentCrypto').textContent = paymentComment;
-                
-                hideLoading();
+                // Обрабатываем результат
+                if (result.status === 'success') {
+                    status.className = 'status success';
+                    status.textContent = result.message;
+                    form.reset();
+                } else {
+                    status.className = 'status error';
+                    status.textContent = 'Ошибка: ' + (result.message || 'Неизвестная ошибка');
+                }
             } catch (error) {
-                hideLoading();
                 console.error('Ошибка:', error);
-                showError(btn, btnText, 'Произошла ошибка при создании транзакции');
+                status.className = 'status error';
+                status.textContent = 'Ошибка соединения. Попробуйте позже.';
+            } finally {
+                loading.style.display = 'none';
+                status.style.display = 'block';
+                submitBtn.disabled = false;
+                
+                // Прокручиваем к статусу
+                status.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            // Инициализация полей для аккаунтов
+            toggleAccountFields();
+            
+            // Установка цвета фона Telegram
+            if (tg.colorScheme) {
+                document.documentElement.style.setProperty('--secondary-color', tg.themeParams.bg_color || '#f5f5f5');
+                document.documentElement.style.setProperty('--text-color', tg.themeParams.text_color || '#333333');
             }
         });
-
-        // Показать загрузку
-        function showLoading(message) {
-            let overlay = document.querySelector('.loading-overlay');
-            
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.className = 'loading-overlay';
-                overlay.innerHTML = `
-                    <div class="spinner"></div>
-                    <div>${message || 'Загрузка...'}</div>
-                `;
-                document.body.appendChild(overlay);
-            } else {
-                overlay.querySelector('div:last-child').textContent = message || 'Загрузка...';
-            }
-        }
-
-        // Скрыть загрузку
-        function hideLoading() {
-            const overlay = document.querySelector('.loading-overlay');
-            if (overlay) {
-                overlay.remove();
-            }
-        }
-
-        // Показать сообщение
-        function showMessage(message) {
-            alert(message);
-        }
-
-        // Показать успех
-        function showSuccess(btn, btnText, message) {
-            if (btn && btnText) {
-                btn.classList.add('btn-success');
-                btnText.textContent = 'Успешно!';
-                
-                setTimeout(() => {
-                btn.classList.remove('btn-success');
-                btn.disabled = false;
-                btnText.textContent = 'Пополнить';
-                }, 2000);
-            }
-            
-            alert(message);
-        }
-
-        // Показать ошибку
-        function showError(btn, btnText, message) {
-            if (btn && btnText) {
-                btn.classList.add('btn-danger');
-                btnText.textContent = 'Ошибка';
-                
-                setTimeout(() => {
-                    btn.classList.remove('btn-danger');
-                    btn.disabled = false;
-                    btnText.textContent = 'Пополнить';
-                }, 2000);
-            }
-            
-            alert(message);
-        }
-
-        // Глобальные функции для вызова из HTML
-        window.updateTransactionStatus = updateTransactionStatus;
     </script>
 </body>
 </html>
